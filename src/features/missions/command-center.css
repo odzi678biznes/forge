@@ -1,0 +1,183 @@
+.cc {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.cc__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.cc__brand {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  font-size: var(--t-small);
+  color: var(--text-faint);
+}
+
+.cc__today {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+/*
+ * Blok rekomendacji. Przycisk startu musi byc widoczny bez przewijania
+ * (sek. 7.1), dlatego caly blok jest zwarty i nie rosnie z trescia.
+ */
+.cc__mission {
+  background: linear-gradient(160deg, var(--bg-raised), var(--bg-deep));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cc__eyebrow {
+  margin: 0;
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--progress);
+}
+
+.cc__title {
+  margin: 0;
+  font-size: var(--t-hero);
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.cc__rationale {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--text-muted);
+}
+
+.cc__facts {
+  margin: var(--space-2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.cc__facts div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cc__facts dt {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.cc__facts dd {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 600;
+}
+
+.cc__start {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--t-body);
+  font-weight: 650;
+  color: var(--bg-abyss);
+  background: var(--progress);
+  border: none;
+  border-radius: var(--radius);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.cc__start:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px var(--progress-glow);
+}
+
+.cc__start kbd {
+  background: rgba(7, 10, 15, 0.25);
+  border-color: rgba(7, 10, 15, 0.35);
+  color: var(--bg-abyss);
+}
+
+/* Alternatywy sa wyraznie ciche - to wybor, nie druga rekomendacja. */
+.cc__alts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.cc__alt {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.cc__alt:hover {
+  border-color: var(--line-strong);
+}
+
+.cc__alt-title {
+  font-weight: 600;
+}
+
+.cc__alt-meta {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.cc__alt-why {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.cc__map-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.cc__map-head h2 {
+  margin: 0;
+  font-size: var(--t-title);
+}
+
+.cc__map-note {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.cc__nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}

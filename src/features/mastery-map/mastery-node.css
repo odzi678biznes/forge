@@ -1,0 +1,89 @@
+.node {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.node__track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 8;
+}
+
+.node__fill {
+  fill: none;
+  stroke: var(--progress);
+  stroke-width: 8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px var(--progress-glow));
+  /* Zmiana poziomu ma byc widoczna jako ruch, bo to realny awans. */
+  transition: stroke-dasharray var(--dur-slow) var(--ease);
+}
+
+/* Powtorka wymagalna zmienia obwod na bursztynowy - to wyzwanie, nie alarm. */
+.node__fill--due {
+  stroke: var(--challenge);
+  filter: drop-shadow(0 0 10px var(--challenge-glow));
+}
+
+.node__level {
+  fill: var(--text);
+  font-size: 2rem;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.node__max {
+  fill: var(--text-faint);
+  font-size: 0.75rem;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.node__error {
+  fill: var(--challenge);
+}
+
+.node__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.node__name {
+  font-weight: 600;
+}
+
+.node__label {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.node__due {
+  font-size: var(--t-micro);
+  color: var(--challenge);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Puls wylacznie przy faktycznym awansie kompetencji. */
+.node--changed .node__fill {
+  animation: node-pulse var(--dur-slow) var(--ease);
+}
+
+@keyframes node-pulse {
+  0% {
+    filter: drop-shadow(0 0 0 var(--progress-glow));
+  }
+  55% {
+    filter: drop-shadow(0 0 22px var(--progress));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px var(--progress-glow));
+  }
+}

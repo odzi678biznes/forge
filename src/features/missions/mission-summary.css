@@ -1,0 +1,97 @@
+.sum {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.sum__eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--progress);
+}
+
+.sum__title {
+  margin: 0;
+  font-size: var(--t-hero);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.sum__sub {
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+}
+
+.sum__changes h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--t-title);
+}
+
+.sum__list {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sum__reason {
+  color: var(--text-muted);
+}
+
+.sum__none {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.sum__nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+/*
+ * Komunikat o przerwie jest spokojny i bez presji. Blueprint sek. 14 zakazuje
+ * kar za przerwanie i powiadomien grajacych na leku przed strata.
+ */
+.sum__break,
+.sum__pause {
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.sum__break {
+  border-color: var(--challenge-dim);
+}
+
+.sum__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.sum__primary {
+  padding: var(--space-3) var(--space-8);
+  font-weight: 650;
+  color: var(--bg-abyss);
+  background: var(--progress);
+  border: none;
+  border-radius: var(--radius);
+}
+
+.sum__secondary {
+  padding: var(--space-3) var(--space-8);
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
