@@ -247,3 +247,91 @@
   color: var(--text-muted);
   max-width: 56ch;
 }
+
+/* --- Rytm tygodnia i tryb dnia (sek. 4.4 i 7.1) -------------------------- */
+
+.rhythm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.rhythm__bar {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.rhythm__day {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.rhythm__day--on {
+  background: var(--progress);
+}
+
+/*
+ * Dni buforowe wygladaja inaczej, ale NIE jak brak. Blueprint sek. 4.4:
+ * dwa dni buforowe w tygodniu sa normalnym elementem systemu.
+ */
+.rhythm__day--buffer {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--line) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.rhythm__day--on.rhythm__day--buffer {
+  background: var(--progress-dim);
+}
+
+.rhythm__note,
+.rhythm__daily {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.rhythm__daily {
+  font-size: var(--t-micro);
+  color: var(--text-faint);
+}
+
+.rhythm__modes {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.rhythm__mode {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.rhythm__mode span {
+  font-size: var(--t-micro);
+  color: var(--text-faint);
+}
+
+.rhythm__mode--on {
+  border-color: var(--progress);
+  color: var(--progress);
+}
+
+.rhythm__mode--on span {
+  color: var(--progress);
+}

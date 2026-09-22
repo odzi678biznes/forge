@@ -20,6 +20,52 @@ interface Props {
   feedback: AnsweredStep | null;
   onSubmit: (answer: string, hintLevel: HintLevel, confidence: Confidence) => void;
   onAdvance: () => void;
+  /** Termin zakonczenia proby czasowej w ms epoch; brak = misja bez limitu. */
+  deadlineAt?: number | null;
+  /** Wywolywane raz, gdy czas proby czasowej sie skonczy. */
+  onTimeUp?: () => void;
+}
+
+/**
+ * Licznik proby czasowej - Blueprint sek. 4.3.
+ *
+ * Widoczny WYLACZNIE w misji, ktora uzytkownik wybral swiadomie. Blueprint
+ * sek. 14 zakazuje sztucznej presji czasu, wiec zwykle misje nie dostaja
+ * licznika nawet w tle.
+ */
+function useCountdown(deadlineAt: number | null | undefined, onTimeUp?: () => void) {
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (deadlineAt === null || deadlineAt === undefined) {
+      setRemaining(null);
+      return;
+    }
+    firedRef.current = false;
+
+    const tick = () => {
+      const left = deadlineAt - Date.now();
+      setRemaining(globalThis.Math.max(0, left));
+      if (left <= 0 && !firedRef.current) {
+        firedRef.current = true;
+        onTimeUp?.();
+      }
+    };
+
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [deadlineAt, onTimeUp]);
+
+  return remaining;
+}
+
+function formatClock(ms: number): string {
+  const total = globalThis.Math.floor(ms / 1000);
+  const m = globalThis.Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 const CONFIDENCE_OPTIONS: Array<{ value: Confidence; label: string }> = [
@@ -28,7 +74,17 @@ const CONFIDENCE_OPTIONS: Array<{ value: Confidence; label: string }> = [
   { value: 'sure', label: 'Jestem pewny' },
 ];
 
-export function Arena({ selection, step, total, feedback, onSubmit, onAdvance }: Props) {
+export function Arena({
+  selection,
+  step,
+  total,
+  feedback,
+  onSubmit,
+  onAdvance,
+  deadlineAt,
+  onTimeUp,
+}: Props) {
+  const remaining = useCountdown(deadlineAt, onTimeUp);
   const { question } = selection;
   const [answer, setAnswer] = useState('');
   const [confidence, setConfidence] = useState<Confidence>('partial');
@@ -79,6 +135,17 @@ export function Arena({ selection, step, total, feedback, onSubmit, onAdvance }:
         <span className="arena__count">
           Pytanie {step} z {total}
         </span>
+        {remaining !== null && (
+          <span
+            className={
+              remaining <= 60_000 ? 'arena__clock arena__clock--low' : 'arena__clock'
+            }
+            role="timer"
+            aria-live="off"
+          >
+            {formatClock(remaining)}
+          </span>
+        )}
         <button
           type="button"
           className="arena__why"

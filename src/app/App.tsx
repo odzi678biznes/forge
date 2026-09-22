@@ -4,9 +4,10 @@ import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
 import { MasteryMap } from '@/features/mastery-map/MasteryMap';
 import { ErrorLab } from '@/features/error-lab/ErrorLab';
-import { repairFor, trainingFor } from '@/learning-engine/mission';
+import { repairFor, timeTrial, trainingFor } from '@/learning-engine/mission';
 import { DiagnosticIntro } from '@/features/diagnostics/DiagnosticIntro';
 import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportView';
+import { WeeklyReportView } from '@/features/weekly-review/WeeklyReportView';
 
 export function App() {
   const {
@@ -21,6 +22,8 @@ export function App() {
     previewPlan,
     choosePlan,
     diagnosticSize,
+    setDayMode,
+    finishMissionNow,
   } = useForge();
 
   if (state.screen === 'loading') {
@@ -39,6 +42,10 @@ export function App() {
         }}
         onAdvance={() => {
           void advance();
+        }}
+        deadlineAt={state.missionDeadline}
+        onTimeUp={() => {
+          void finishMissionNow();
         }}
       />
     );
@@ -97,6 +104,16 @@ export function App() {
     );
   }
 
+  if (state.screen === 'weekly-report') {
+    return (
+      <WeeklyReportView
+        report={state.weekly}
+        rhythm={state.rhythm}
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
   if (state.screen === 'error-lab') {
     return (
       <ErrorLab
@@ -122,6 +139,12 @@ export function App() {
       onOpenDiagnostic={() => goTo('diagnostic-intro')}
       onOpenReport={state.report ? () => goTo('diagnostic-report') : null}
       hasPlan={state.savedPlan !== null}
+      daily={state.daily}
+      rhythm={state.rhythm}
+      dayMode={state.dayMode}
+      onDayMode={(mode) => { void setDayMode(mode); }}
+      onOpenWeekly={() => goTo('weekly-report')}
+      onTimeTrial={() => beginMission(timeTrial())}
     />
   );
 }

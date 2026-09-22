@@ -36,6 +36,33 @@ export interface MissionPlan {
   questionCount: number;
   /** Kompetencja wskazana przez uzytkownika z mapy albo z dziennika bledow. */
   focusSkillId?: string;
+  /**
+   * Budzet czasu na cala misje w ms. Ustawiany WYLACZNIE dla prob czasowych,
+   * ktore uzytkownik wybiera sam (sek. 4.3). Blueprint sek. 14 zakazuje
+   * sztucznej presji czasu, wiec zwykle misje nie maja limitu.
+   */
+  timeLimitMs?: number;
+}
+
+/** Ile sekund na zadanie otwarte w warunkach egzaminacyjnych. */
+export const SECONDS_PER_EXAM_QUESTION = 90;
+
+/**
+ * Proba czasowa - Blueprint sek. 4.3 i 7.5.
+ *
+ * To jedyna misja z licznikiem czasu i jedyna, ktora uzytkownik uruchamia
+ * swiadomie po to, zeby poczuc presje arkusza. Uplyw czasu KONCZY misje,
+ * ale nie zeruje wynikow i nie odbiera niczego, co zostalo juz zrobione.
+ */
+export function timeTrial(): MissionPlan {
+  const count = MISSION_LENGTHS['time-trial'];
+  return {
+    kind: 'time-trial',
+    title: 'Proba czasowa',
+    rationale: `${count} zadan w warunkach arkusza. Licznik konczy misje, ale nie kasuje tego, co juz rozwiazales.`,
+    questionCount: count,
+    timeLimitMs: count * SECONDS_PER_EXAM_QUESTION * 1000,
+  };
 }
 
 /** Misja z klikniecia w wezel mapy kompetencji (sek. 7.3). */

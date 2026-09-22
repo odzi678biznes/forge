@@ -5,6 +5,7 @@ import {
   type Attempt,
   type HintLevel,
   type Confidence,
+  type DayMode,
   type Mission,
   type Question,
   type SavedPlan,
@@ -31,6 +32,8 @@ import {
   type DiagnosticReport,
   type PlanVariant,
 } from '@/learning-engine/diagnostics';
+import { planDay, weekRhythm, type DailyPlan, type WeekRhythm } from '@/learning-engine/planner';
+import { buildWeeklyReport, type WeeklyReport } from '@/learning-engine/weekly-report';
 
 /**
  * Kompozycja pionowego wycinka (Blueprint sek. 18).
@@ -48,7 +51,8 @@ export type Screen =
   | 'mastery-map'
   | 'error-lab'
   | 'diagnostic-intro'
-  | 'diagnostic-report';
+  | 'diagnostic-report'
+  | 'weekly-report';
 
 export interface AnsweredStep {
   selection: Selection;
@@ -81,7 +85,19 @@ export interface ForgeState {
   savedPlan: SavedPlan | null;
   /** Ile sond zostalo w biezacej diagnozie. */
   diagnosticRemaining: number;
+  /** Dzisiejszy zestaw wynikajacy z planu i trybu dnia (sek. 15, Etap 5). */
+  daily: DailyPlan;
+  /** Rytm tygodnia - dni aktywne wobec zaplanowanych (sek. 4.4). */
+  rhythm: WeekRhythm;
+  /** Raport tygodniowy (sek. 7.6). */
+  weekly: WeeklyReport;
+  dayMode: DayMode;
+  /** Termin zakonczenia proby czasowej albo null (sek. 4.3). */
+  missionDeadline: number | null;
 }
+
+/** Klucz preferencji trybu dnia. */
+const DAY_MODE_KEY = 'dayMode';
 
 const SKILLS = MATH_SKILLS;
 const QUESTIONS = MATH_QUESTIONS;
@@ -109,6 +125,9 @@ export function useForge(storage?: StoragePort) {
   const [missionsToday, setMissionsToday] = useState(0);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [dayMode, setDayModeState] = useState<DayMode>('standard');
+  const [missionDeadline, setMissionDeadline] = useState<number | null>(null);
   // Kolejka sond diagnostycznych. Gdy niepusta, 'advance' bierze pytanie
   // stad zamiast pytac selektor - diagnoza ma staly przekroj, nie adaptacje.
   const [diagnosticQueue, setDiagnosticQueue] = useState<Question[]>([]);
@@ -136,8 +155,16 @@ export function useForge(storage?: StoragePort) {
       setAttempts(await s.loadAttempts());
       setSavedPlan(await s.loadPlan());
 
-      const missions = await s.loadMissions();
-      setMissionsToday(missions.filter((m) => isToday(m.startedAt)).length);
+      const loaded = await s.loadMissions();
+      setMissions(loaded);
+      setMissionsToday(loaded.filter((m) => isToday(m.startedAt)).length);
+
+      const prefs = await s.loadPreferences();
+      const savedMode = prefs.find((x) => x.key === DAY_MODE_KEY)?.value;
+      if (savedMode === 'minimum' || savedMode === 'standard' || savedMode === 'strong') {
+        setDayModeState(savedMode);
+      }
+
       setReady(true);
       setScreen('command-center');
     })();
@@ -194,6 +221,11 @@ export function useForge(storage?: StoragePort) {
 
       askedRef.current.add(first.question.id);
       startedAtRef.current = Date.now();
+      // Licznik dostaja WYLACZNIE proby czasowe (sek. 4.3). Zwykla misja
+      // nie ma terminu, bo sek. 14 zakazuje sztucznej presji czasu.
+      setMissionDeadline(
+        chosen.timeLimitMs === undefined ? null : Date.now() + chosen.timeLimitMs,
+      );
       setMission(m);
       setPlan(chosen);
       setSteps([]);
@@ -341,6 +373,30 @@ export function useForge(storage?: StoragePort) {
     asProbe,
   ]);
 
+  /**
+   * Konczy misje przed czasem — uzywane przez licznik proby czasowej.
+   *
+   * Uplyw czasu zamyka misje, ale NIE kasuje juz zapisanych prob i nie
+   * odbiera awansow. Blueprint sek. 14 zakazuje kar za przerwanie.
+   */
+  const finishMissionNow = useCallback(async () => {
+    if (!mission || mission.finishedAt !== null) return;
+
+    const finished: Mission = {
+      ...mission,
+      questionIds: [...askedRef.current],
+      finishedAt: Date.now(),
+    };
+    await port().saveMission(finished);
+    setMission(finished);
+    setMissions((prev) => [...prev.filter((m) => m.id !== finished.id), finished]);
+    setMissionsToday((n) => n + 1);
+    setMissionDeadline(null);
+    setCurrent(null);
+    setFeedback(null);
+    setScreen('summary');
+  }, [mission]);
+
   // -------------------------------------------------------------------------
   // Diagnoza (sek. 15, Etap 3)
   // -------------------------------------------------------------------------
@@ -441,6 +497,44 @@ export function useForge(storage?: StoragePort) {
     [attempts],
   );
 
+  // -------------------------------------------------------------------------
+  // Plan dnia, rytm i raport (sek. 15, Etap 5)
+  // -------------------------------------------------------------------------
+
+  const setDayMode = useCallback(async (next: DayMode) => {
+    setDayModeState(next);
+    await port().setPreference(DAY_MODE_KEY, next);
+  }, []);
+
+  const daily = useMemo(
+    () =>
+      planDay({
+        plan: savedPlan,
+        skills: SKILLS,
+        states: skillStates,
+        mode: dayMode,
+        daysSinceLastSession,
+        now: Date.now(),
+      }),
+    [savedPlan, skillStates, dayMode, daysSinceLastSession],
+  );
+
+  const rhythm = useMemo(() => weekRhythm(missions, Date.now()), [missions]);
+
+  const weekly = useMemo(
+    () =>
+      buildWeeklyReport({
+        attempts,
+        skills: SKILLS,
+        states: skillStates,
+        now: Date.now(),
+        missionsFinished: missions.filter(
+          (m) => m.finishedAt !== null && m.startedAt >= Date.now() - 7 * 86_400_000,
+        ).length,
+      }),
+    [attempts, skillStates, missions],
+  );
+
   const state: ForgeState = {
     screen: ready ? screen : 'loading',
     skillStates,
@@ -457,15 +551,22 @@ export function useForge(storage?: StoragePort) {
     report,
     savedPlan,
     diagnosticRemaining: diagnosticQueue.length,
+    missionDeadline,
+    daily,
+    rhythm,
+    weekly,
+    dayMode,
   };
 
   return {
     state,
     skills: SKILLS,
     topics: TOPICS,
+    setDayMode,
     beginMission,
     submitAnswer,
     advance,
+    finishMissionNow,
     toCommandCenter,
     goTo,
     startDiagnostic,

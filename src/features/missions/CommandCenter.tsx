@@ -1,6 +1,7 @@
-import { MasteryLevel, type Skill, type SkillState } from '@/data/types';
+import { MasteryLevel, type DayMode, type Skill, type SkillState } from '@/data/types';
 import type { MissionPlan } from '@/learning-engine/mission';
 import { openErrorCount, type ErrorGroup } from '@/learning-engine/error-lab';
+import { MODE_LABELS, MODE_LOAD, type DailyPlan, type WeekRhythm } from '@/learning-engine/planner';
 import { MasteryNode } from '@/features/mastery-map/MasteryNode';
 import './command-center.css';
 
@@ -27,6 +28,12 @@ interface Props {
   onOpenReport: (() => void) | null;
   /** Czy uzytkownik przeszedl juz diagnoze i ma aktywny plan. */
   hasPlan: boolean;
+  daily: DailyPlan;
+  rhythm: WeekRhythm;
+  dayMode: DayMode;
+  onDayMode: (mode: DayMode) => void;
+  onOpenWeekly: () => void;
+  onTimeTrial: () => void;
 }
 
 export function CommandCenter({
@@ -42,6 +49,12 @@ export function CommandCenter({
   onOpenDiagnostic,
   onOpenReport,
   hasPlan,
+  daily,
+  rhythm,
+  dayMode,
+  onDayMode,
+  onOpenWeekly,
+  onTimeTrial,
 }: Props) {
   const openErrors = openErrorCount(errorGroups);
   const solvedIndependently = [...states.values()].filter(
@@ -58,6 +71,43 @@ export function CommandCenter({
             : `Dzis ukonczone misje: ${missionsToday}.`}
         </p>
       </header>
+
+      <section className="rhythm" aria-label="Rytm tygodnia">
+        <div className="rhythm__bar" aria-hidden>
+          {Array.from({ length: 7 }, (_, i) => (
+            <span
+              key={i}
+              className={[
+                'rhythm__day',
+                i < rhythm.activeDays ? 'rhythm__day--on' : '',
+                // Dni buforowe sa oznaczone inaczej: sek. 4.4 traktuje je
+                // jako normalny element tygodnia, nie jako brak.
+                i >= rhythm.plannedDays ? 'rhythm__day--buffer' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            />
+          ))}
+        </div>
+        <p className="rhythm__note">{rhythm.note}</p>
+
+        <div className="rhythm__modes" role="radiogroup" aria-label="Tryb dnia">
+          {(Object.keys(MODE_LABELS) as DayMode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={dayMode === m}
+              className={dayMode === m ? 'rhythm__mode rhythm__mode--on' : 'rhythm__mode'}
+              onClick={() => onDayMode(m)}
+            >
+              {MODE_LABELS[m]}
+              <span>{MODE_LOAD[m]}</span>
+            </button>
+          ))}
+        </div>
+        <p className="rhythm__daily">{daily.rationale}</p>
+      </section>
 
       {!hasPlan && (
         <section className="cc__diag-invite">
@@ -140,6 +190,12 @@ export function CommandCenter({
                 Powtorz diagnoze
               </button>
             )}
+            <button type="button" className="cc__link" onClick={onOpenWeekly}>
+              Raport tygodniowy
+            </button>
+            <button type="button" className="cc__link" onClick={onTimeTrial}>
+              Proba czasowa
+            </button>
             <button type="button" className="cc__link" onClick={onOpenErrorLab}>
               Laboratorium bledow
               {openErrors > 0 && <span className="cc__badge">{openErrors}</span>}
