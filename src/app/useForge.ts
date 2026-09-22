@@ -10,10 +10,7 @@ import {
 } from '@/data/types';
 import { createStorage } from '@/data/create-storage';
 import type { StoragePort } from '@/data/storage-port';
-import {
-  QUADRATIC_QUESTIONS,
-  QUADRATIC_SKILLS,
-} from '@content/math/funkcja-kwadratowa';
+import { MATH_QUESTIONS, MATH_SKILLS } from '@content/math/index';
 import { selectNextQuestion, type Selection } from '@/learning-engine/selector';
 import { applyAttempt, type MasteryTransition } from '@/learning-engine/mastery';
 import { scheduleReview } from '@/learning-engine/review';
@@ -69,8 +66,8 @@ export interface ForgeState {
   errorGroups: ErrorGroup[];
 }
 
-const SKILLS = QUADRATIC_SKILLS;
-const QUESTIONS = QUADRATIC_QUESTIONS;
+const SKILLS = MATH_SKILLS;
+const QUESTIONS = MATH_QUESTIONS;
 
 export function useForge(storage?: StoragePort) {
   // Bez podanego portu wybieramy go przy starcie: SQLite w powloce Tauri,
