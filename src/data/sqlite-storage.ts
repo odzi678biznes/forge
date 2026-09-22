@@ -7,6 +7,9 @@ import {
   type HintLevel,
   type Mission,
   type MissionKind,
+  type Preference,
+  type PlanVariantId,
+  type SavedPlan,
   type SkillState,
 } from './types';
 import {
@@ -56,6 +59,21 @@ interface AttemptRow {
   error_id: string | null;
   grading_version: string;
   graded_by: string;
+}
+
+interface PlanRow {
+  id: string;
+  variant: string;
+  created_at: number;
+  deadline: number | null;
+  targets: string;
+  diagnosis_snapshot: string;
+  active: number;
+}
+
+interface PreferenceRow {
+  key: string;
+  value: string;
 }
 
 interface MissionRow {
@@ -175,11 +193,59 @@ export class SqliteStorage implements StoragePort {
     );
   }
 
+  async loadPlan(): Promise<SavedPlan | null> {
+    const rows = await this.require().select<PlanRow[]>(
+      'SELECT * FROM plans WHERE active = 1 ORDER BY created_at DESC LIMIT 1',
+    );
+    const row = rows[0];
+    return row ? toPlan(row) : null;
+  }
+
+  /** Nowy plan zastepuje poprzedni, ale go nie kasuje - historia zostaje. */
+  async savePlan(plan: SavedPlan): Promise<void> {
+    const db = this.require();
+    await db.execute('UPDATE plans SET active = 0 WHERE active = 1');
+    await db.execute(
+      `INSERT INTO plans
+         (id, variant, created_at, deadline, targets, diagnosis_snapshot, active)
+       VALUES ($1, $2, $3, $4, $5, $6, 1)
+       ON CONFLICT (id) DO UPDATE SET
+         variant = excluded.variant,
+         deadline = excluded.deadline,
+         targets = excluded.targets,
+         diagnosis_snapshot = excluded.diagnosis_snapshot,
+         active = 1`,
+      [
+        plan.id,
+        plan.variant,
+        plan.createdAt,
+        plan.deadline,
+        JSON.stringify(plan.targets),
+        JSON.stringify(plan.diagnosisSnapshot),
+      ],
+    );
+  }
+
+  async loadPreferences(): Promise<Preference[]> {
+    const rows = await this.require().select<PreferenceRow[]>('SELECT * FROM preferences');
+    return rows.map((r) => ({ key: r.key, value: r.value }));
+  }
+
+  async setPreference(key: string, value: string): Promise<void> {
+    await this.require().execute(
+      `INSERT INTO preferences (key, value) VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+      [key, value],
+    );
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions] = await Promise.all([
+    const [skillStates, attempts, missions, plan, preferences] = await Promise.all([
       this.loadSkillStates(),
       this.loadAttempts(),
       this.loadMissions(),
+      this.loadPlan(),
+      this.loadPreferences(),
     ]);
     return {
       version: SNAPSHOT_VERSION,
@@ -187,6 +253,8 @@ export class SqliteStorage implements StoragePort {
       skillStates,
       attempts,
       missions,
+      plan,
+      preferences,
     };
   }
 
@@ -197,6 +265,8 @@ export class SqliteStorage implements StoragePort {
     for (const s of snapshot.skillStates) await this.saveSkillState(s);
     for (const a of snapshot.attempts) await this.appendAttempt(a);
     for (const m of snapshot.missions) await this.saveMission(m);
+    for (const pref of snapshot.preferences ?? []) await this.setPreference(pref.key, pref.value);
+    if (snapshot.plan) await this.savePlan(snapshot.plan);
   }
 
   async clear(): Promise<void> {
@@ -204,6 +274,8 @@ export class SqliteStorage implements StoragePort {
     await db.execute('DELETE FROM attempts');
     await db.execute('DELETE FROM missions');
     await db.execute('DELETE FROM skill_states');
+    await db.execute('DELETE FROM plans');
+    await db.execute('DELETE FROM preferences');
   }
 
   async close(): Promise<void> {
@@ -251,6 +323,27 @@ function toAttempt(r: AttemptRow): Attempt {
     gradingVersion: r.grading_version,
     gradedBy: r.graded_by as Attempt['gradedBy'],
   };
+}
+
+function toPlan(r: PlanRow): SavedPlan {
+  return {
+    id: r.id,
+    variant: r.variant as PlanVariantId,
+    createdAt: r.created_at,
+    deadline: r.deadline,
+    targets: parseJsonArray(r.targets),
+    diagnosisSnapshot: parseJsonArray(r.diagnosis_snapshot),
+  };
+}
+
+/** Uszkodzony JSON w kolumnie nie moze wywrocic wczytywania planu. */
+function parseJsonArray<T>(raw: string): T[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 function toMission(r: MissionRow): Mission {

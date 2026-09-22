@@ -10,8 +10,16 @@ import { isDue } from './review';
  * warunek: uzytkownik ma umiec wyjasnic, dlaczego dostal wlasnie to.
  */
 
-/** Blueprint sek. 3: misja to 8-15 minut, o z gory znanej liczbie pytan. */
-export const MISSION_LENGTHS: Record<MissionKind, number> = {
+/**
+ * Blueprint sek. 3: misja to 8-15 minut, o z gory znanej liczbie pytan.
+ *
+ * Diagnoza jest tu swiadomie pominieta: jej dlugosc rowna sie liczbie
+ * kompetencji w korpusie, wiec wynika z tresci, a nie ze stalej. Wpisanie
+ * tu zera byloby wartoscia klamiaca o tym, ze misja nie ma pytan.
+ */
+export type FixedLengthMission = Exclude<MissionKind, 'diagnostic'>;
+
+export const MISSION_LENGTHS: Record<FixedLengthMission, number> = {
   warmup: 3,
   training: 5,
   'mixed-patrol': 8,
@@ -155,7 +163,7 @@ export function startMission(plan: MissionPlan, id: string, now: number): Missio
   };
 }
 
-function plan(kind: MissionKind, title: string, rationale: string[]): MissionPlan {
+function plan(kind: FixedLengthMission, title: string, rationale: string[]): MissionPlan {
   return {
     kind,
     title,

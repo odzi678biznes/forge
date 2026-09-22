@@ -1,4 +1,4 @@
-import type { Attempt, Mission, SkillState } from './types';
+import type { Attempt, Mission, Preference, SavedPlan, SkillState } from './types';
 import {
   SNAPSHOT_VERSION,
   validateSnapshot,
@@ -15,13 +15,18 @@ import {
  */
 
 const DB_NAME = 'forge';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORES = {
   skillStates: 'skillStates',
   attempts: 'attempts',
   missions: 'missions',
+  plan: 'plan',
+  preferences: 'preferences',
 } as const;
+
+/** Aktywny plan jest jeden, wiec trzymamy go pod stalym kluczem. */
+const ACTIVE_PLAN_KEY = 'active';
 
 export class IndexedDbStorage implements StoragePort {
   private db: IDBDatabase | null = null;
@@ -44,6 +49,13 @@ export class IndexedDbStorage implements StoragePort {
         }
         if (!db.objectStoreNames.contains(STORES.missions)) {
           db.createObjectStore(STORES.missions, { keyPath: 'id' });
+        }
+        // Migracja v2: plan nauki i preferencje.
+        if (!db.objectStoreNames.contains(STORES.plan)) {
+          db.createObjectStore(STORES.plan);
+        }
+        if (!db.objectStoreNames.contains(STORES.preferences)) {
+          db.createObjectStore(STORES.preferences, { keyPath: 'key' });
         }
       };
 
@@ -76,11 +88,40 @@ export class IndexedDbStorage implements StoragePort {
     return this.write(STORES.missions, mission);
   }
 
+  async loadPlan(): Promise<SavedPlan | null> {
+    const db = this.require();
+    return new Promise((resolve, reject) => {
+      const req = db.transaction(STORES.plan, 'readonly').objectStore(STORES.plan).get(ACTIVE_PLAN_KEY);
+      req.onsuccess = () => resolve((req.result as SavedPlan | undefined) ?? null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async savePlan(plan: SavedPlan): Promise<void> {
+    const db = this.require();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.plan, 'readwrite');
+      tx.objectStore(STORES.plan).put(plan, ACTIVE_PLAN_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async loadPreferences(): Promise<Preference[]> {
+    return this.readAll<Preference>(STORES.preferences);
+  }
+
+  async setPreference(key: string, value: string): Promise<void> {
+    return this.write(STORES.preferences, { key, value });
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions] = await Promise.all([
+    const [skillStates, attempts, missions, plan, preferences] = await Promise.all([
       this.loadSkillStates(),
       this.loadAttempts(),
       this.loadMissions(),
+      this.loadPlan(),
+      this.loadPreferences(),
     ]);
     return {
       version: SNAPSHOT_VERSION,
@@ -88,6 +129,8 @@ export class IndexedDbStorage implements StoragePort {
       skillStates,
       attempts,
       missions,
+      plan,
+      preferences,
     };
   }
 
@@ -102,6 +145,8 @@ export class IndexedDbStorage implements StoragePort {
       ...snapshot.skillStates.map((s) => this.saveSkillState(s)),
       ...snapshot.attempts.map((a) => this.appendAttempt(a)),
       ...snapshot.missions.map((m) => this.saveMission(m)),
+      ...(snapshot.preferences ?? []).map((p) => this.setPreference(p.key, p.value)),
+      ...(snapshot.plan ? [this.savePlan(snapshot.plan)] : []),
     ]);
   }
 

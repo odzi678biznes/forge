@@ -10,12 +10,20 @@ pub const DB_URL: &str = "sqlite:forge.db";
 /// rozjechalaby bazy uzytkownikow, ktorzy ja wykonali; nowa wersja dostaje
 /// wlasny numer.
 fn migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "schemat poczatkowy: kompetencje, proby, misje",
-        kind: MigrationKind::Up,
-        sql: include_str!("../migrations/001_initial.sql"),
-    }]
+    vec![
+        Migration {
+            version: 1,
+            description: "schemat poczatkowy: kompetencje, proby, misje",
+            kind: MigrationKind::Up,
+            sql: include_str!("../migrations/001_initial.sql"),
+        },
+        Migration {
+            version: 2,
+            description: "plan nauki i preferencje",
+            kind: MigrationKind::Up,
+            sql: include_str!("../migrations/002_plan.sql"),
+        },
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

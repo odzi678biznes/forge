@@ -5,10 +5,23 @@ import { Arena } from '@/features/questions/Arena';
 import { MasteryMap } from '@/features/mastery-map/MasteryMap';
 import { ErrorLab } from '@/features/error-lab/ErrorLab';
 import { repairFor, trainingFor } from '@/learning-engine/mission';
+import { DiagnosticIntro } from '@/features/diagnostics/DiagnosticIntro';
+import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportView';
 
 export function App() {
-  const { state, skills, beginMission, submitAnswer, advance, toCommandCenter, goTo } =
-    useForge();
+  const {
+    state,
+    skills,
+    beginMission,
+    submitAnswer,
+    advance,
+    toCommandCenter,
+    goTo,
+    startDiagnostic,
+    previewPlan,
+    choosePlan,
+    diagnosticSize,
+  } = useForge();
 
   if (state.screen === 'loading') {
     return <p className="boot">Wczytywanie profilu...</p>;
@@ -60,6 +73,30 @@ export function App() {
     );
   }
 
+  if (state.screen === 'diagnostic-intro') {
+    return (
+      <DiagnosticIntro
+        probeCount={diagnosticSize}
+        hasPreviousPlan={state.savedPlan !== null}
+        onStart={startDiagnostic}
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
+  if (state.screen === 'diagnostic-report' && state.report) {
+    return (
+      <DiagnosticReportView
+        report={state.report}
+        preview={previewPlan}
+        onChoose={(variant, deadline) => {
+          void choosePlan(variant, deadline);
+        }}
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
   if (state.screen === 'error-lab') {
     return (
       <ErrorLab
@@ -82,6 +119,9 @@ export function App() {
       onStart={beginMission}
       onOpenMap={() => goTo('mastery-map')}
       onOpenErrorLab={() => goTo('error-lab')}
+      onOpenDiagnostic={() => goTo('diagnostic-intro')}
+      onOpenReport={state.report ? () => goTo('diagnostic-report') : null}
+      hasPlan={state.savedPlan !== null}
     />
   );
 }

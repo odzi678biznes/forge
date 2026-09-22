@@ -1,0 +1,326 @@
+.diag {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.diag__back {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.diag__back:hover {
+  color: var(--progress);
+}
+
+.diag__eyebrow {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--progress);
+}
+
+.diag__title {
+  margin: 0;
+  font-size: var(--t-hero);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.diag__sub,
+.diag__lead p {
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+  max-width: 58ch;
+}
+
+.diag__facts {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.diag__facts div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.diag__facts dt {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.diag__facts dd {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 600;
+}
+
+/*
+ * Blok „czego to nie zrobi" jest celowo równie widoczny co reszta.
+ * Sek. 14: zero obietnic bez pokrycia.
+ */
+.diag__honest {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+}
+
+.diag__honest h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--t-body);
+  color: var(--text-muted);
+}
+
+.diag__honest ul {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--text-muted);
+}
+
+.diag__note {
+  margin: var(--space-4) 0 0;
+  font-size: var(--t-small);
+  color: var(--text-faint);
+}
+
+.diag__warn {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--challenge-dim);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  color: var(--text-muted);
+}
+
+.diag__section h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--t-title);
+}
+
+.diag__section--warn {
+  border-left: 3px solid var(--challenge);
+  padding-left: var(--space-6);
+}
+
+.diag__hint {
+  margin: 0 0 var(--space-4);
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  max-width: 58ch;
+}
+
+.diag__list {
+  margin: 0;
+  padding-left: var(--space-6);
+  color: var(--text);
+}
+
+/* --- Luki działów -------------------------------------------------------- */
+
+.gaps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gap__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.gap__name {
+  font-weight: 600;
+}
+
+.gap__count {
+  font-size: var(--t-small);
+  color: var(--challenge);
+}
+
+.gap__bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.gap__fill {
+  display: block;
+  height: 100%;
+  background: var(--progress);
+  transition: width var(--dur-slow) var(--ease);
+}
+
+.gap__meta {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--t-micro);
+  color: var(--text-faint);
+}
+
+/* --- Warianty ------------------------------------------------------------ */
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+
+.variant {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.variant--on {
+  border-color: var(--progress);
+  box-shadow: 0 0 0 1px var(--progress-glow);
+}
+
+.variant__name {
+  font-weight: 650;
+  font-size: var(--t-body);
+}
+
+.variant__targets,
+.variant__load {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.variant__load {
+  color: var(--progress);
+}
+
+/* Kompromis wariantu jest podany wprost, a nie schowany. */
+.variant__tradeoff {
+  font-size: var(--t-micro);
+  color: var(--text-faint);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+}
+
+.diag__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 16rem;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.diag__field input {
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-deep);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color-scheme: dark;
+}
+
+.verdict {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+/* Niedomykający się termin jest bursztynowy, nie czerwony (sek. 14). */
+.verdict--tight {
+  border-color: var(--challenge);
+  color: var(--text);
+}
+
+/* --- Kolejność pracy ----------------------------------------------------- */
+
+.steps {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.step__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.step__name {
+  font-weight: 600;
+}
+
+.step__levels {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  color: var(--progress);
+}
+
+.step__topic {
+  display: block;
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.step__reason {
+  display: block;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.diag__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.diag__primary {
+  padding: var(--space-4) var(--space-8);
+  font-weight: 650;
+  color: var(--bg-abyss);
+  background: var(--progress);
+  border: none;
+  border-radius: var(--radius);
+}
+
+.diag__secondary {
+  padding: var(--space-4) var(--space-8);
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}

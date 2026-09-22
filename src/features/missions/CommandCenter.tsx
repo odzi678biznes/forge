@@ -22,6 +22,11 @@ interface Props {
   onStart: (plan: MissionPlan) => void;
   onOpenMap: () => void;
   onOpenErrorLab: () => void;
+  onOpenDiagnostic: () => void;
+  /** Powrot do gotowego, ale jeszcze nieprzyjetego raportu diagnozy. */
+  onOpenReport: (() => void) | null;
+  /** Czy uzytkownik przeszedl juz diagnoze i ma aktywny plan. */
+  hasPlan: boolean;
 }
 
 export function CommandCenter({
@@ -34,6 +39,9 @@ export function CommandCenter({
   onStart,
   onOpenMap,
   onOpenErrorLab,
+  onOpenDiagnostic,
+  onOpenReport,
+  hasPlan,
 }: Props) {
   const openErrors = openErrorCount(errorGroups);
   const solvedIndependently = [...states.values()].filter(
@@ -50,6 +58,24 @@ export function CommandCenter({
             : `Dzis ukonczone misje: ${missionsToday}.`}
         </p>
       </header>
+
+      {!hasPlan && (
+        <section className="cc__diag-invite">
+          <p className="cc__diag-title">Nie masz jeszcze planu</p>
+          <p className="cc__diag-text">
+            {onOpenReport
+              ? 'Diagnoza jest ukonczona, ale plan nie zostal jeszcze przyjety. Wynik czeka - nie trzeba jej powtarzac.'
+              : 'Diagnoza przekrojowa ustawi kolejnosc pracy na podstawie tego, co rozwiazesz. Bez niej aplikacja zgaduje, od czego zaczac.'}
+          </p>
+          <button
+            type="button"
+            className="cc__link"
+            onClick={onOpenReport ?? onOpenDiagnostic}
+          >
+            {onOpenReport ? 'Zobacz wynik diagnozy' : 'Przejdz diagnoze'} &rarr;
+          </button>
+        </section>
+      )}
 
       <section className="cc__mission" aria-labelledby="cc-mission-title">
         <p className="cc__eyebrow">Rekomendowana misja</p>
@@ -109,6 +135,11 @@ export function CommandCenter({
             <button type="button" className="cc__link" onClick={onOpenMap}>
               Pelna mapa &rarr;
             </button>
+            {hasPlan && (
+              <button type="button" className="cc__link" onClick={onOpenDiagnostic}>
+                Powtorz diagnoze
+              </button>
+            )}
             <button type="button" className="cc__link" onClick={onOpenErrorLab}>
               Laboratorium bledow
               {openErrors > 0 && <span className="cc__badge">{openErrors}</span>}

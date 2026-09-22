@@ -228,10 +228,81 @@ describe('cykl zycia', () => {
     expect(select).toHaveBeenCalledTimes(1);
   });
 
-  it('czyszczenie usuwa proby przed kompetencjami', async () => {
+  it('czyszczenie usuwa proby przed kompetencjami i obejmuje wszystkie tabele', async () => {
     await (await ready()).clear();
     const order = execute.mock.calls.map(([sql]) => String(sql));
+
+    // Proby odwoluja sie do kompetencji, wiec ida pierwsze.
     expect(order[0]).toContain('DELETE FROM attempts');
-    expect(order).toHaveLength(3);
+    for (const tabela of ['attempts', 'missions', 'skill_states', 'plans', 'preferences']) {
+      expect(order.some((s) => s.includes(`DELETE FROM ${tabela}`)), tabela).toBe(true);
+    }
+  });
+});
+
+describe('plan i preferencje', () => {
+  it('wczytuje wylacznie aktywny plan', async () => {
+    select.mockResolvedValueOnce([
+      {
+        id: 'p-1',
+        variant: 'realistic',
+        created_at: 100,
+        deadline: 200,
+        targets: '[{"skillId":"s-1","targetLevel":3}]',
+        diagnosis_snapshot: '[{"skillId":"s-1","level":1}]',
+        active: 1,
+      },
+    ]);
+
+    const plan = await (await ready()).loadPlan();
+    const [sql] = select.mock.calls[0] ?? [];
+    expect(String(sql)).toContain('active = 1');
+    expect(plan?.variant).toBe('realistic');
+    expect(plan?.targets).toEqual([{ skillId: 's-1', targetLevel: 3 }]);
+    expect(plan?.diagnosisSnapshot).toEqual([{ skillId: 's-1', level: 1 }]);
+  });
+
+  it('brak planu to null, nie blad', async () => {
+    select.mockResolvedValueOnce([]);
+    expect(await (await ready()).loadPlan()).toBeNull();
+  });
+
+  it('zapis nowego planu dezaktywuje poprzedni zamiast go kasowac', async () => {
+    await (await ready()).savePlan({
+      id: 'p-2',
+      variant: 'minimum',
+      createdAt: 1,
+      deadline: null,
+      targets: [],
+      diagnosisSnapshot: [],
+    });
+    const sqls = execute.mock.calls.map(([s]) => String(s));
+    expect(sqls[0]).toContain('UPDATE plans SET active = 0');
+    expect(sqls[1]).toContain('INSERT INTO plans');
+    expect(sqls.some((s) => s.includes('DELETE FROM plans'))).toBe(false);
+  });
+
+  it('uszkodzony JSON w planie nie wywraca wczytywania profilu', async () => {
+    select.mockResolvedValueOnce([
+      {
+        id: 'p-1',
+        variant: 'minimum',
+        created_at: 1,
+        deadline: null,
+        targets: 'to nie jest json',
+        diagnosis_snapshot: '{}',
+        active: 1,
+      },
+    ]);
+    const plan = await (await ready()).loadPlan();
+    expect(plan?.targets).toEqual([]);
+    expect(plan?.diagnosisSnapshot).toEqual([]);
+  });
+
+  it('preferencja jest zapisywana przez upsert, nie duplikowana', async () => {
+    await (await ready()).setPreference('dayMode', 'standard');
+    const [sql, params] = execute.mock.calls[0] ?? [];
+    expect(String(sql)).toContain('ON CONFLICT (key) DO UPDATE');
+    expect(params).toEqual(['dayMode', 'standard']);
   });
 });

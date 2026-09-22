@@ -221,3 +221,29 @@
   flex-wrap: wrap;
   gap: var(--space-8);
 }
+
+/*
+ * Zaproszenie do diagnozy pokazuje sie tylko wtedy, gdy planu jeszcze nie ma.
+ * Po jego przyjeciu znika - nie jest to stale wezwanie do dzialania.
+ */
+.cc__diag-invite {
+  padding: var(--space-4) var(--space-6);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.cc__diag-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cc__diag-text {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  max-width: 56ch;
+}

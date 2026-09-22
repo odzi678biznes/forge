@@ -199,7 +199,9 @@ export type MissionKind =
   | 'repair'
   | 'boss'
   | 'time-trial'
-  | 'comeback';
+  | 'comeback'
+  /** Przekrojowa diagnoza - jedna sonda na kompetencje (sek. 15, Etap 3). */
+  | 'diagnostic';
 
 export interface Mission {
   id: string;
@@ -210,4 +212,36 @@ export interface Mission {
   questionIds: string[];
   startedAt: number;
   finishedAt: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// Plan nauki (Etap 3 i 5)
+// ---------------------------------------------------------------------------
+
+export type PlanVariantId = 'minimum' | 'realistic' | 'ambitious';
+
+/** Tryb dnia - Blueprint sek. 7.1, przelacznik minimum / standard / mocny. */
+export type DayMode = 'minimum' | 'standard' | 'strong';
+
+/**
+ * Zapisany plan nauki. Trzymamy CELE, a nie wyliczone liczby misji:
+ * szacunki zmienia sie razem z wersja silnika, a cele sa decyzja uzytkownika
+ * i musza przetrwac aktualizacje aplikacji.
+ */
+export interface SavedPlan {
+  id: string;
+  variant: PlanVariantId;
+  createdAt: number;
+  /** Termin egzaminu w ms epoch albo null. */
+  deadline: number | null;
+  /** Docelowy poziom dla kazdej kompetencji objetej planem. */
+  targets: Array<{ skillId: string; targetLevel: MasteryLevel }>;
+  /** Migawka diagnozy, z ktorej plan powstal - do porownania postepu. */
+  diagnosisSnapshot: Array<{ skillId: string; level: MasteryLevel }>;
+}
+
+/** Preferencje uzytkownika - proste pary klucz/wartosc. */
+export interface Preference {
+  key: string;
+  value: string;
 }

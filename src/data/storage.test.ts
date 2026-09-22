@@ -185,3 +185,83 @@ describe('walidacja kopii', () => {
     expect(() => validateSnapshot(null)).toThrow(SnapshotValidationError);
   });
 });
+
+describe('plan nauki i preferencje', () => {
+  const plan = {
+    id: 'p-1',
+    variant: 'realistic' as const,
+    createdAt: 100,
+    deadline: 200,
+    targets: [{ skillId: 's-1', targetLevel: MasteryLevel.Transfer }],
+    diagnosisSnapshot: [{ skillId: 's-1', level: MasteryLevel.Recognised }],
+  };
+
+  it('brak planu przy pierwszym uruchomieniu to null, nie blad', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    expect(await store.loadPlan()).toBeNull();
+    expect(await store.loadPreferences()).toEqual([]);
+  });
+
+  it('plan przezywa restart aplikacji', async () => {
+    const name = freshName();
+    const first = new IndexedDbStorage(name);
+    await first.init();
+    await first.savePlan(plan);
+    await first.setPreference('dayMode', 'standard');
+    first.close();
+
+    const second = new IndexedDbStorage(name);
+    await second.init();
+    expect(await second.loadPlan()).toEqual(plan);
+    expect(await second.loadPreferences()).toEqual([{ key: 'dayMode', value: 'standard' }]);
+  });
+
+  it('nowy plan zastepuje poprzedni, nie dokleja sie obok', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.savePlan(plan);
+    await store.savePlan({ ...plan, id: 'p-2', variant: 'minimum' });
+    expect((await store.loadPlan())?.variant).toBe('minimum');
+  });
+
+  it('ta sama preferencja jest nadpisywana, nie duplikowana', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.setPreference('dayMode', 'minimum');
+    await store.setPreference('dayMode', 'strong');
+    const prefs = await store.loadPreferences();
+    expect(prefs).toHaveLength(1);
+    expect(prefs[0]?.value).toBe('strong');
+  });
+
+  it('eksport obejmuje plan i preferencje, import je odtwarza', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.savePlan(plan);
+    await store.setPreference('dayMode', 'strong');
+
+    const snapshot: unknown = JSON.parse(JSON.stringify(await store.exportAll()));
+    await store.clear();
+    expect(await store.loadPlan()).toBeNull();
+
+    await store.importAll(snapshot);
+    expect(await store.loadPlan()).toEqual(plan);
+    expect(await store.loadPreferences()).toEqual([{ key: 'dayMode', value: 'strong' }]);
+  });
+
+  it('starsza kopia bez planu i preferencji nadal sie importuje', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    // Kopia sprzed dodania tych pol - odrzucenie jej byloby utrata danych.
+    await store.importAll({
+      version: 1,
+      exportedAt: 0,
+      skillStates: [],
+      attempts: [],
+      missions: [],
+    });
+    expect(await store.loadPlan()).toBeNull();
+    expect(await store.loadPreferences()).toEqual([]);
+  });
+});

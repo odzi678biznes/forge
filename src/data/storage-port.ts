@@ -1,4 +1,4 @@
-import type { Attempt, Mission, SkillState } from './types';
+import type { Attempt, Mission, Preference, SavedPlan, SkillState } from './types';
 
 /**
  * Port trwalosci.
@@ -21,6 +21,13 @@ export interface StoragePort {
   loadMissions(): Promise<Mission[]>;
   saveMission(mission: Mission): Promise<void>;
 
+  /** Aktywny plan nauki albo null, gdy diagnoza jeszcze nie przeszla. */
+  loadPlan(): Promise<SavedPlan | null>;
+  savePlan(plan: SavedPlan): Promise<void>;
+
+  loadPreferences(): Promise<Preference[]>;
+  setPreference(key: string, value: string): Promise<void>;
+
   /** Eksport do jawnego JSON (sek. 12). */
   exportAll(): Promise<SnapshotV1>;
   /** Import z walidacja schematu (sek. 12). */
@@ -38,6 +45,9 @@ export interface SnapshotV1 {
   skillStates: SkillState[];
   attempts: Attempt[];
   missions: Mission[];
+  /** Pola dopisane w wersji 1 po pierwszym wydaniu - kopie bez nich sa wazne. */
+  plan?: SavedPlan | null;
+  preferences?: Preference[];
 }
 
 export class SnapshotValidationError extends Error {
@@ -100,5 +110,8 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     skillStates: snap.skillStates as SkillState[],
     attempts: snap.attempts as Attempt[],
     missions: snap.missions as Mission[],
+    // Starsze kopie nie maja tych pol - to nie jest powod do odrzucenia.
+    plan: snap.plan ?? null,
+    preferences: Array.isArray(snap.preferences) ? snap.preferences : [],
   };
 }

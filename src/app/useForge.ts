@@ -6,11 +6,13 @@ import {
   type HintLevel,
   type Confidence,
   type Mission,
+  type Question,
+  type SavedPlan,
   type SkillState,
 } from '@/data/types';
 import { createStorage } from '@/data/create-storage';
 import type { StoragePort } from '@/data/storage-port';
-import { MATH_QUESTIONS, MATH_SKILLS } from '@content/math/index';
+import { MATH_QUESTIONS, MATH_SKILLS, MATH_TOPICS } from '@content/math/index';
 import { selectNextQuestion, type Selection } from '@/learning-engine/selector';
 import { applyAttempt, type MasteryTransition } from '@/learning-engine/mastery';
 import { scheduleReview } from '@/learning-engine/review';
@@ -22,6 +24,13 @@ import {
   type MissionPlan,
 } from '@/learning-engine/mission';
 import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
+import {
+  analyseDiagnostic,
+  buildDiagnosticSet,
+  buildPlan,
+  type DiagnosticReport,
+  type PlanVariant,
+} from '@/learning-engine/diagnostics';
 
 /**
  * Kompozycja pionowego wycinka (Blueprint sek. 18).
@@ -37,7 +46,9 @@ export type Screen =
   | 'arena'
   | 'summary'
   | 'mastery-map'
-  | 'error-lab';
+  | 'error-lab'
+  | 'diagnostic-intro'
+  | 'diagnostic-report';
 
 export interface AnsweredStep {
   selection: Selection;
@@ -64,10 +75,17 @@ export interface ForgeState {
   missionsToday: number;
   /** Dziennik bledow pogrupowany po przyczynie (sek. 7.4). */
   errorGroups: ErrorGroup[];
+  /** Raport z ostatniej diagnozy albo null (sek. 15, Etap 3). */
+  report: DiagnosticReport | null;
+  /** Aktywny plan nauki albo null, gdy diagnoza jeszcze nie przeszla. */
+  savedPlan: SavedPlan | null;
+  /** Ile sond zostalo w biezacej diagnozie. */
+  diagnosticRemaining: number;
 }
 
 const SKILLS = MATH_SKILLS;
 const QUESTIONS = MATH_QUESTIONS;
+const TOPICS = MATH_TOPICS;
 
 export function useForge(storage?: StoragePort) {
   // Bez podanego portu wybieramy go przy starcie: SQLite w powloce Tauri,
@@ -90,6 +108,11 @@ export function useForge(storage?: StoragePort) {
   const [feedback, setFeedback] = useState<AnsweredStep | null>(null);
   const [missionsToday, setMissionsToday] = useState(0);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
+  // Kolejka sond diagnostycznych. Gdy niepusta, 'advance' bierze pytanie
+  // stad zamiast pytac selektor - diagnoza ma staly przekroj, nie adaptacje.
+  const [diagnosticQueue, setDiagnosticQueue] = useState<Question[]>([]);
+  const diagnosticMissionRef = useRef<string | null>(null);
   const [recentSkillIds, setRecentSkillIds] = useState<string[]>([]);
   const askedRef = useRef<Set<string>>(new Set());
   const startedAtRef = useRef<number>(Date.now());
@@ -111,6 +134,7 @@ export function useForge(storage?: StoragePort) {
       setSkillStates(map);
 
       setAttempts(await s.loadAttempts());
+      setSavedPlan(await s.loadPlan());
 
       const missions = await s.loadMissions();
       setMissionsToday(missions.filter((m) => isToday(m.startedAt)).length);
@@ -231,14 +255,61 @@ export function useForge(storage?: StoragePort) {
     [current, mission, skillStates],
   );
 
+  /**
+   * Buduje pozorny wybor dla sondy diagnostycznej.
+   *
+   * Diagnoza nie przechodzi przez selektor: jej sens polega na stalym
+   * przekroju wszystkich kompetencji, a nie na adaptacji do biezacych
+   * wynikow. Arena przyjmuje ten sam ksztalt danych co przy zwyklej misji.
+   */
+  const asProbe = useCallback((question: Question): Selection | null => {
+    const skill = SKILLS.find((s) => s.id === question.skillId);
+    if (!skill) return null;
+    return {
+      question,
+      skill,
+      rule: 'fallback',
+      breakdown: {
+        reviewDue: 0,
+        skillGap: 0,
+        examValue: skill.examValue,
+        errorFrequency: 0,
+        interleaveNeed: 0,
+        total: 0,
+      },
+      reasons: [
+        'Sonda diagnostyczna.',
+        'Diagnoza sprawdza kazda kompetencje raz, niezaleznie od wynikow.',
+      ],
+    };
+  }, []);
+
   /** Przejscie do kolejnego pytania albo domkniecie misji. */
   const advance = useCallback(async () => {
     if (!mission || !plan) return;
     setFeedback(null);
 
+    // Tryb diagnozy: kolejne pytanie bierzemy z ustalonej kolejki.
+    if (diagnosticQueue.length > 0) {
+      const [head, ...rest] = diagnosticQueue;
+      const probe = head ? asProbe(head) : null;
+      if (probe) {
+        setDiagnosticQueue(rest);
+        askedRef.current.add(probe.question.id);
+        startedAtRef.current = Date.now();
+        setCurrent(probe);
+        return;
+      }
+    }
+
     const done = steps.length >= plan.questionCount;
     const recent = [current?.skill.id ?? '', ...recentSkillIds].filter(Boolean);
-    const next = done ? null : pickNext(skillStates, recent, plan.focusSkillId);
+    const next =
+      plan.kind === 'diagnostic'
+        ? null
+        : done
+          ? null
+          : pickNext(skillStates, recent, plan.focusSkillId);
 
     if (!next) {
       const finished: Mission = {
@@ -250,14 +321,110 @@ export function useForge(storage?: StoragePort) {
       setMission(finished);
       setMissionsToday((n) => n + 1);
       setCurrent(null);
-      setScreen('summary');
+      // Diagnoza konczy sie raportem, a nie zwyklym podsumowaniem misji.
+      setScreen(plan.kind === 'diagnostic' ? 'diagnostic-report' : 'summary');
       return;
     }
 
     askedRef.current.add(next.question.id);
     startedAtRef.current = Date.now();
     setCurrent(next);
-  }, [mission, plan, steps.length, current, recentSkillIds, pickNext, skillStates]);
+  }, [
+    mission,
+    plan,
+    steps.length,
+    current,
+    recentSkillIds,
+    pickNext,
+    skillStates,
+    diagnosticQueue,
+    asProbe,
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Diagnoza (sek. 15, Etap 3)
+  // -------------------------------------------------------------------------
+
+  const diagnosticSet = useMemo(() => buildDiagnosticSet(SKILLS, QUESTIONS), []);
+
+  const startDiagnostic = useCallback(() => {
+    const [first, ...rest] = diagnosticSet;
+    const probe = first ? asProbe(first) : null;
+    if (!probe) return;
+
+    const id = `m-diag-${Date.now()}`;
+    diagnosticMissionRef.current = id;
+    askedRef.current = new Set([probe.question.id]);
+    startedAtRef.current = Date.now();
+
+    setMission({
+      id,
+      kind: 'diagnostic',
+      title: 'Diagnoza',
+      rationale: 'Przekrojowy pomiar wszystkich kompetencji.',
+      questionIds: [],
+      startedAt: Date.now(),
+      finishedAt: null,
+    });
+    setPlan({
+      kind: 'diagnostic',
+      title: 'Diagnoza',
+      rationale: 'Jedna sonda na kompetencje.',
+      questionCount: diagnosticSet.length,
+    });
+    setDiagnosticQueue(rest);
+    setSteps([]);
+    setFeedback(null);
+    setCurrent(probe);
+    setScreen('arena');
+  }, [diagnosticSet, asProbe]);
+
+  /**
+   * Raport liczony wylacznie z prob nalezacych do misji diagnostycznej.
+   * Zwykle misje nie zanieczyszczaja pomiaru.
+   */
+  const report = useMemo((): DiagnosticReport | null => {
+    const id = diagnosticMissionRef.current;
+    const probes = attempts.filter((a) =>
+      id === null ? a.missionId.startsWith('m-diag-') : a.missionId === id,
+    );
+    if (probes.length === 0) return null;
+    return analyseDiagnostic(probes, SKILLS, TOPICS, Date.now());
+  }, [attempts]);
+
+  /** Podglad planu dla wariantu - liczony na zywo, bez zapisu. */
+  const previewPlan = useCallback(
+    (variant: PlanVariant, deadline: number | null) =>
+      report ? buildPlan(report, SKILLS, TOPICS, variant, deadline) : null,
+    [report],
+  );
+
+  const choosePlan = useCallback(
+    async (variant: PlanVariant, deadline: number | null) => {
+      if (!report) return;
+      const built = buildPlan(report, SKILLS, TOPICS, variant, deadline);
+
+      const toSave: SavedPlan = {
+        id: `p-${Date.now()}`,
+        variant,
+        createdAt: Date.now(),
+        deadline,
+        targets: built.steps.map((s) => ({
+          skillId: s.skillId,
+          targetLevel: s.targetLevel,
+        })),
+        diagnosisSnapshot: report.skills.map((d) => ({
+          skillId: d.skillId,
+          level: d.estimatedLevel,
+        })),
+      };
+
+      await port().savePlan(toSave);
+      setSavedPlan(toSave);
+      setScreen('command-center');
+    },
+    [report],
+  );
 
   const toCommandCenter = useCallback(() => {
     setMission(null);
@@ -287,16 +454,24 @@ export function useForge(storage?: StoragePort) {
     feedback,
     missionsToday,
     errorGroups,
+    report,
+    savedPlan,
+    diagnosticRemaining: diagnosticQueue.length,
   };
 
   return {
     state,
     skills: SKILLS,
+    topics: TOPICS,
     beginMission,
     submitAnswer,
     advance,
     toCommandCenter,
     goTo,
+    startDiagnostic,
+    previewPlan,
+    choosePlan,
+    diagnosticSize: diagnosticSet.length,
   };
 }
 
