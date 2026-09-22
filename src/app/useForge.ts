@@ -8,7 +8,7 @@ import {
   type Mission,
   type SkillState,
 } from '@/data/types';
-import { IndexedDbStorage } from '@/data/indexeddb-storage';
+import { createStorage } from '@/data/create-storage';
 import type { StoragePort } from '@/data/storage-port';
 import {
   QUADRATIC_QUESTIONS,
@@ -72,8 +72,17 @@ export interface ForgeState {
 const SKILLS = QUADRATIC_SKILLS;
 const QUESTIONS = QUADRATIC_QUESTIONS;
 
-export function useForge(storage: StoragePort = new IndexedDbStorage()) {
-  const store = useRef(storage);
+export function useForge(storage?: StoragePort) {
+  // Bez podanego portu wybieramy go przy starcie: SQLite w powloce Tauri,
+  // IndexedDB w przegladarce. Testy wstrzykuja wlasna implementacje.
+  const store = useRef<StoragePort | null>(storage ?? null);
+
+  /** Port po inicjalizacji. Wywolania uzytkownika zachodza dopiero po niej. */
+  const port = (): StoragePort => {
+    const s = store.current;
+    if (!s) throw new Error('Trwalosc nie zostala jeszcze zainicjowana.');
+    return s;
+  };
   const [ready, setReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('loading');
   const [skillStates, setSkillStates] = useState<Map<string, SkillState>>(new Map());
@@ -92,7 +101,8 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const s = store.current;
+      const s = store.current ?? (await createStorage());
+      store.current = s;
       await s.init();
       const saved = await s.loadSkillStates();
       if (cancelled) return;
@@ -218,8 +228,8 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
       setFeedback(step);
       setRecentSkillIds((prev) => [current.skill.id, ...prev].slice(0, 10));
 
-      await store.current.appendAttempt(attempt);
-      await store.current.saveSkillState(saved);
+      await port().appendAttempt(attempt);
+      await port().saveSkillState(saved);
     },
     [current, mission, skillStates],
   );
@@ -239,7 +249,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
         questionIds: [...askedRef.current],
         finishedAt: Date.now(),
       };
-      await store.current.saveMission(finished);
+      await port().saveMission(finished);
       setMission(finished);
       setMissionsToday((n) => n + 1);
       setCurrent(null);

@@ -2,7 +2,7 @@
 
 Lokalna aplikacja treningowa do matury. Implementacja według `docs/blueprint-v2.md`.
 
-**Stan: Etap 1 (pionowy wycinek) ukończony. Etap 0 ukończony częściowo — brakuje powłoki Tauri.**
+**Stan: Etap 0, 1 i 2 ukończone.**
 
 ---
 
@@ -10,45 +10,52 @@ Lokalna aplikacja treningowa do matury. Implementacja według `docs/blueprint-v2
 
 ```bash
 npm install
-npm run dev
+npm run tauri:dev
 ```
-
-Aplikacja startuje na `http://localhost:1420`.
 
 | Polecenie | Działanie |
 |---|---|
-| `npm run dev` | serwer deweloperski |
+| `npm run tauri:dev` | aplikacja desktopowa (Tauri + SQLite) |
+| `npm run tauri:build` | instalator Windows (NSIS) |
+| `npm run dev` | sam interfejs w przeglądarce (IndexedDB) |
 | `npm test` | testy jednostkowe (Vitest) |
 | `npm run typecheck` | kontrola typów |
-| `npm run build` | build produkcyjny |
+
+Wymagania: Node 20+, Rust stable, VS Build Tools z workloadem C++.
 
 ---
 
 ## Co działa
 
-Pełna pętla z sekcji 18 blueprintu, bez atrap:
+**Etap 0 — fundament.** Powłoka Tauri 2, SQLite z migracjami po stronie Rusta,
+minimalne capabilities, CSP bez `unsafe-eval`, instalator NSIS.
 
-1. Centrum dowodzenia z jedną rekomendowaną misją i jej uzasadnieniem.
-2. Arena zadania — pełny ekran, obsługa klawiaturą, LaTeX przez KaTeX.
-3. Zapis odpowiedzi, deklarowanej pewności i poziomu użytej pomocy.
-4. Natychmiastowy feedback z nazwaniem przyczyny błędu.
-5. Podsumowanie misji ze zmianami kompetencji.
-6. Węzeł mapy kompetencji animowany wyłącznie przy realnym awansie.
-7. Trwały zapis — dane przeżywają restart aplikacji.
+**Etap 1 — pętla nauki.** Centrum dowodzenia z jedną rekomendowaną misją →
+arena pełnoekranowa z LaTeX-em → drabina podpowiedzi → feedback nazywający
+przyczynę błędu → podsumowanie ze zmianami kompetencji.
 
-Zweryfikowane ręcznie: pełny przebieg misji, restart z odzyskaniem danych,
-brak przewijania poziomego przy powiększeniu 200%.
+**Etap 2 — mapa i dziennik błędów.** Graf zależności kompetencji z klikalnymi
+węzłami, laboratorium błędów grupujące po przyczynie, misje celowane.
+
+Zweryfikowane ręcznie: pełny przebieg misji klawiaturą, restart z odzyskaniem
+danych, brak przewijania poziomego przy powiększeniu 200%, „Napraw teraz"
+startujące od zadania fundamentalnego.
 
 ---
 
 ## Decyzje projektowe warte zapamiętania
 
-### Trwałość stoi za portem, nie za SQLite
+### Trwałość stoi za portem, nie za konkretną bazą
 
-`src/data/storage-port.ts` definiuje interfejs, `indexeddb-storage.ts` go
-realizuje. Blueprint (sek. 9) wskazuje SQLite przez wtyczkę Tauri — ta
-implementacja dopisze się obok jako drugi adapter. Reguły nauki nie wiedzą,
-która trwałość działa, więc podmiana nie dotknie silnika.
+`src/data/storage-port.ts` definiuje interfejs. Dwie implementacje:
+
+| Adapter | Kiedy |
+|---|---|
+| `SqliteStorage` | powłoka Tauri — baza w katalogu danych aplikacji |
+| `IndexedDbStorage` | `npm run dev` i testy — praca nad UI bez budowania Rusta |
+
+`create-storage.ts` wybiera jedną z nich w czasie startu. Silnik nauki nie wie,
+która działa. Import SQLite jest dynamiczny, więc build webowy nie wymaga IPC.
 
 ### Awans kompetencji ma warunki, nie progi punktowe
 
@@ -81,6 +88,13 @@ a drabina stałych odstępów jest w całości wytłumaczalna użytkownikowi.
 Podstawa dowodowa dla rozłożonej praktyki jest umiarkowana — traktujemy te
 odstępy jako hipotezę do weryfikacji na danych, nie jako pewnik.
 
+### Błędy grupują się po przyczynie, nie po zadaniu
+
+`src/learning-engine/error-lab.ts`. Ten sam zgubiony znak w dwóch różnych
+zadaniach to jeden wpis do naprawy. Zamknięcie wpisu wymaga **trzech**
+poprawnych prób z rzędu na tej samej kompetencji; pomyłka w środku zeruje
+serię, a ponowne wystąpienie błędu otwiera wpis na nowo.
+
 ### Czego kod pilnuje, żeby nie złamać sekcji 14
 
 - Kolejna misja nigdy nie startuje automatycznie — jest tylko przycisk.
@@ -89,6 +103,15 @@ odstępy jako hipotezę do weryfikacji na danych, nie jako pewnik.
 - Test `mission.test.ts` blokuje słownictwo zawstydzające w komunikatach.
 - Brak koloru „porażki" w palecie — błąd jest informacją, nie alarmem.
 - Koszt podpowiedzi podany **przed** jej wzięciem, bez ukrytych kar.
+
+### Bezpieczeństwo powłoki
+
+`src-tauri/capabilities/default.json` nadaje dokładnie tyle, ile trzeba: okno
+i cztery operacje SQL na jednej bazie. Brak dostępu do systemu plików, sieci
+i powłoki. CSP nie dopuszcza `unsafe-eval`; czcionki KaTeX są bundlowane
+lokalnie, więc aplikacja działa offline. Wszystkie zapytania są
+parametryzowane — test sprawdza, że odpowiedź ucznia trafia do bazy jako
+wartość wiązana.
 
 ---
 
@@ -100,7 +123,7 @@ rachunkowo i pokryta testami spójności, ale materiał **nie został
 zweryfikowany względem informatora CKE**. To wycinek do domknięcia pętli
 produktowej, nie materiał egzaminacyjny.
 
-Testy treści (`funkcja-kwadratowa.test.ts`) pilnują m.in., żeby:
+Testy treści pilnują m.in., żeby:
 
 - żaden zadeklarowany typowy błąd nie pokrywał się z poprawną odpowiedzią,
 - podpowiedzi poziomów 1–4 nie zdradzały gotowego wyniku,
@@ -111,24 +134,14 @@ Testy treści (`funkcja-kwadratowa.test.ts`) pilnują m.in., żeby:
 
 ## Czego jeszcze nie ma
 
-- **Powłoka Tauri** — wymaga workloadu C++ (patrz niżej). Bez niej nie ma
-  instalatora Windows ani SQLite, więc Etap 0 jest niedomknięty.
-- Pełna mapa kompetencji jako widok (jest pojedynczy węzeł).
-- Laboratorium błędów, arkusze, raport tygodniowy, plan dnia.
-- Moduł informatyki, warstwa AI, głos.
+- Etap 3: diagnoza matematyczna i plan na jej podstawie.
+- Etap 4: moduł informatyki (edytor kodu, uruchamianie testów).
+- Etap 5: kalendarz, tryby dnia, raport tygodniowy, próby czasowe.
+- Etap 6: warstwa AI i głos.
+- Arkusze i tryb egzaminacyjny.
 - Testy Playwright (sekcja 16 ich wymaga; są tylko testy jednostkowe).
-
-## Dokończenie toolchainu Tauri
-
-Rust jest zainstalowany. Brakuje kompilatora C++ — bez niego Rust nie
-zlinkuje binarki Windows. Instalacja wymaga potwierdzenia UAC:
-
-```bash
-winget install --id Microsoft.VisualStudio.2022.BuildTools --override "--quiet --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-```
-
-Po instalacji: `rustc --version` powinno działać w nowym terminalu, a wtedy
-dopisujemy `src-tauri/` i adapter SQLite.
+- Eksport/import do pliku z poziomu interfejsu — logika i walidacja są
+  gotowe i przetestowane, brakuje przycisku.
 
 ---
 
@@ -138,13 +151,16 @@ dopisujemy `src-tauri/` i adapter SQLite.
 src/
   app/              kompozycja: stan, ekrany, powłoka
   components/       renderer LaTeX
-  data/             typy domeny, port trwałości, adapter IndexedDB
+  data/             typy, port trwałości, adaptery SQLite i IndexedDB
   design-system/    tokens
-  features/         missions, questions, mastery-map
-  learning-engine/  mastery, review, priority, selector, grading, mission
+  features/         missions, questions, mastery-map, error-lab
+  learning-engine/  mastery, review, priority, selector, grading,
+                    mission, error-lab
 content/math/       zadania + testy spójności treści
+src-tauri/          powłoka natywna, migracje SQL, capabilities
 docs/               blueprint
 ```
 
-Cała logika decyzyjna siedzi w `learning-engine` i jest czysta oraz pokryta
-testami. `app/` tylko łączy silnik z trwałością i widokiem.
+Cała logika decyzyjna siedzi w `learning-engine` i w `features/*/layout.ts`:
+funkcje czyste, bez Reacta i bez trwałości, pokryte testami. `app/` tylko
+łączy silnik z bazą i widokiem.

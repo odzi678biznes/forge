@@ -13,7 +13,16 @@ export default defineConfig({
   },
   // Tauri oczekuje stalego portu i nie chce czyscic ekranu przy bledzie.
   clearScreen: false,
-  server: { port: 1420, strictPort: true },
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: {
+      // src-tauri/target to artefakty kompilacji Rusta. Bez tego wykluczenia
+      // obserwator Vite probuje czytac pliki .dll w trakcie ich zapisu przez
+      // cargo i przewraca serwer deweloperski.
+      ignored: ['**/src-tauri/**'],
+    },
+  },
   build: { target: 'chrome110', sourcemap: true },
   test: {
     environment: 'node',

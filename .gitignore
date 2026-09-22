@@ -4,3 +4,7 @@ target/
 *.local
 .DS_Store
 src-tauri/target/
+src-tauri/gen/
+
+# Artefakty kompilacji TypeScriptu
+*.tsbuildinfo
