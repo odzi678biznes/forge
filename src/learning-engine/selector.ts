@@ -31,6 +31,16 @@ export interface SelectionInput {
   /** Kompetencje z ostatnich prob, od najnowszej. */
   recentSkillIds: string[];
   now: number;
+  /**
+   * Kompetencja wskazana przez uzytkownika - klikniecie w wezel mapy albo
+   * "Napraw teraz" w laboratorium bledow. Blueprint sek. 7.3 wymaga, zeby
+   * takie klikniecie uruchamialo trening, a nie otwieralo statystyki.
+   *
+   * Wybor uzytkownika ma pierwszenstwo przed punktacja, ale nie przed
+   * dostepnoscia tresci: gdy pytania tej kompetencji sie wyczerpia,
+   * wracamy do normalnego rankingu, zamiast zostawiac pusty ekran.
+   */
+  focusSkillId?: string;
 }
 
 export type SelectionRule =
@@ -60,6 +70,21 @@ const RULE_LABELS: Record<SelectionRule, string> = {
 };
 
 export function selectNextQuestion(input: SelectionInput): Selection | null {
+  const { focusSkillId } = input;
+
+  if (focusSkillId !== undefined) {
+    const focused = rank({ ...input, skills: input.skills.filter((s) => s.id === focusSkillId) });
+    if (focused) return focused;
+    // Pula wskazanej kompetencji wyczerpana - wracamy do pelnego rankingu.
+  }
+
+  // Rodzenstwo wlasciwosci rest jest zwolnione z noUnusedLocals, wiec to
+  // jest czysty sposob na usuniecie pola przy exactOptionalPropertyTypes.
+  const { focusSkillId: _dropped, ...withoutFocus } = input;
+  return rank(withoutFocus);
+}
+
+function rank(input: SelectionInput): Selection | null {
   const { skills, states, questions, askedQuestionIds, recentSkillIds, now } = input;
   const ctx: PriorityContext = { now, recentSkillIds };
 

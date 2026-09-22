@@ -1,5 +1,6 @@
 import { MasteryLevel, type Skill, type SkillState } from '@/data/types';
 import type { MissionPlan } from '@/learning-engine/mission';
+import { openErrorCount, type ErrorGroup } from '@/learning-engine/error-lab';
 import { MasteryNode } from '@/features/mastery-map/MasteryNode';
 import './command-center.css';
 
@@ -17,7 +18,10 @@ interface Props {
   skills: Skill[];
   states: Map<string, SkillState>;
   missionsToday: number;
+  errorGroups: ErrorGroup[];
   onStart: (plan: MissionPlan) => void;
+  onOpenMap: () => void;
+  onOpenErrorLab: () => void;
 }
 
 export function CommandCenter({
@@ -26,8 +30,12 @@ export function CommandCenter({
   skills,
   states,
   missionsToday,
+  errorGroups,
   onStart,
+  onOpenMap,
+  onOpenErrorLab,
 }: Props) {
+  const openErrors = openErrorCount(errorGroups);
   const solvedIndependently = [...states.values()].filter(
     (s) => s.level >= MasteryLevel.Independent,
   ).length;
@@ -94,9 +102,18 @@ export function CommandCenter({
       <section className="cc__map" aria-labelledby="cc-map-title">
         <div className="cc__map-head">
           <h2 id="cc-map-title">Mapa kompetencji</h2>
-          <p className="cc__map-note">
-            Samodzielnie lub wyzej: {solvedIndependently} z {skills.length}
-          </p>
+          <div className="cc__map-actions">
+            <p className="cc__map-note">
+              Samodzielnie lub wyzej: {solvedIndependently} z {skills.length}
+            </p>
+            <button type="button" className="cc__link" onClick={onOpenMap}>
+              Pelna mapa &rarr;
+            </button>
+            <button type="button" className="cc__link" onClick={onOpenErrorLab}>
+              Laboratorium bledow
+              {openErrors > 0 && <span className="cc__badge">{openErrors}</span>}
+            </button>
+          </div>
         </div>
         <div className="cc__nodes">
           {skills.map((skill) => {

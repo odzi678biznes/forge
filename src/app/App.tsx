@@ -2,9 +2,12 @@ import { useForge } from './useForge';
 import { CommandCenter } from '@/features/missions/CommandCenter';
 import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
+import { MasteryMap } from '@/features/mastery-map/MasteryMap';
+import { ErrorLab } from '@/features/error-lab/ErrorLab';
+import { repairFor, trainingFor } from '@/learning-engine/mission';
 
 export function App() {
-  const { state, skills, beginMission, submitAnswer, advance, toCommandCenter } =
+  const { state, skills, beginMission, submitAnswer, advance, toCommandCenter, goTo } =
     useForge();
 
   if (state.screen === 'loading') {
@@ -43,6 +46,31 @@ export function App() {
     );
   }
 
+  if (state.screen === 'mastery-map') {
+    return (
+      <MasteryMap
+        skills={skills}
+        states={state.skillStates}
+        // Klikniecie w wezel uruchamia trening, nie otwiera statystyk (sek. 7.3).
+        onSelect={(skill) =>
+          beginMission(trainingFor(skill, state.skillStates.get(skill.id)?.level ?? 0))
+        }
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
+  if (state.screen === 'error-lab') {
+    return (
+      <ErrorLab
+        groups={state.errorGroups}
+        skills={skills}
+        onRepair={(skill, cause) => beginMission(repairFor(skill, cause))}
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
   return (
     <CommandCenter
       recommended={state.recommended}
@@ -50,7 +78,10 @@ export function App() {
       skills={skills}
       states={state.skillStates}
       missionsToday={state.missionsToday}
+      errorGroups={state.errorGroups}
       onStart={beginMission}
+      onOpenMap={() => goTo('mastery-map')}
+      onOpenErrorLab={() => goTo('error-lab')}
     />
   );
 }

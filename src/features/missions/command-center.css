@@ -176,6 +176,46 @@
   color: var(--text-muted);
 }
 
+.cc__map-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.cc__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cc__link:hover {
+  color: var(--progress);
+}
+
+/*
+ * Odznaka liczy bledy czekajace na naprawe. Bursztyn, nie czerwien -
+ * to zaproszenie do cwiczenia, nie alarm (sek. 14).
+ */
+.cc__badge {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--challenge);
+  color: var(--bg-abyss);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
 .cc__nodes {
   display: flex;
   flex-wrap: wrap;

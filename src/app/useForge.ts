@@ -24,6 +24,7 @@ import {
   startMission,
   type MissionPlan,
 } from '@/learning-engine/mission';
+import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
 
 /**
  * Kompozycja pionowego wycinka (Blueprint sek. 18).
@@ -33,7 +34,13 @@ import {
  * (po zbudowaniu powloki Tauri) nie dotyka regul nauki.
  */
 
-export type Screen = 'loading' | 'command-center' | 'arena' | 'summary';
+export type Screen =
+  | 'loading'
+  | 'command-center'
+  | 'arena'
+  | 'summary'
+  | 'mastery-map'
+  | 'error-lab';
 
 export interface AnsweredStep {
   selection: Selection;
@@ -58,6 +65,8 @@ export interface ForgeState {
   /** Ostatnio oceniona odpowiedz - widoczna, dopoki uzytkownik nie przejdzie dalej. */
   feedback: AnsweredStep | null;
   missionsToday: number;
+  /** Dziennik bledow pogrupowany po przyczynie (sek. 7.4). */
+  errorGroups: ErrorGroup[];
 }
 
 const SKILLS = QUADRATIC_SKILLS;
@@ -74,6 +83,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
   const [steps, setSteps] = useState<AnsweredStep[]>([]);
   const [feedback, setFeedback] = useState<AnsweredStep | null>(null);
   const [missionsToday, setMissionsToday] = useState(0);
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [recentSkillIds, setRecentSkillIds] = useState<string[]>([]);
   const askedRef = useRef<Set<string>>(new Set());
   const startedAtRef = useRef<number>(Date.now());
@@ -92,6 +102,8 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
         map.set(skill.id, saved.find((x) => x.skillId === skill.id) ?? emptySkillState(skill.id));
       }
       setSkillStates(map);
+
+      setAttempts(await s.loadAttempts());
 
       const missions = await s.loadMissions();
       setMissionsToday(missions.filter((m) => isToday(m.startedAt)).length);
@@ -125,7 +137,11 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
   const options = useMemo(() => alternatives(recommended), [recommended]);
 
   const pickNext = useCallback(
-    (states: Map<string, SkillState>, recent: string[]): Selection | null =>
+    (
+      states: Map<string, SkillState>,
+      recent: string[],
+      focusSkillId?: string,
+    ): Selection | null =>
       selectNextQuestion({
         skills: SKILLS,
         states,
@@ -133,6 +149,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
         askedQuestionIds: askedRef.current,
         recentSkillIds: recent,
         now: Date.now(),
+        ...(focusSkillId === undefined ? {} : { focusSkillId }),
       }),
     [],
   );
@@ -141,7 +158,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
     (chosen: MissionPlan) => {
       askedRef.current = new Set();
       const m = startMission(chosen, `m-${Date.now()}`, Date.now());
-      const first = pickNext(skillStates, recentSkillIds);
+      const first = pickNext(skillStates, recentSkillIds, chosen.focusSkillId);
       if (!first) return;
 
       askedRef.current.add(first.question.id);
@@ -196,6 +213,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
       };
 
       setSkillStates(nextStates);
+      setAttempts((prev) => [...prev, attempt]);
       setSteps((prev) => [...prev, step]);
       setFeedback(step);
       setRecentSkillIds((prev) => [current.skill.id, ...prev].slice(0, 10));
@@ -213,7 +231,7 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
 
     const done = steps.length >= plan.questionCount;
     const recent = [current?.skill.id ?? '', ...recentSkillIds].filter(Boolean);
-    const next = done ? null : pickNext(skillStates, recent);
+    const next = done ? null : pickNext(skillStates, recent, plan.focusSkillId);
 
     if (!next) {
       const finished: Mission = {
@@ -242,6 +260,13 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
     setScreen('command-center');
   }, []);
 
+  const goTo = useCallback((next: Screen) => setScreen(next), []);
+
+  const errorGroups = useMemo(
+    () => buildErrorLab({ attempts, questions: QUESTIONS, skills: SKILLS }),
+    [attempts],
+  );
+
   const state: ForgeState = {
     screen: ready ? screen : 'loading',
     skillStates,
@@ -254,9 +279,18 @@ export function useForge(storage: StoragePort = new IndexedDbStorage()) {
     steps,
     feedback,
     missionsToday,
+    errorGroups,
   };
 
-  return { state, skills: SKILLS, beginMission, submitAnswer, advance, toCommandCenter };
+  return {
+    state,
+    skills: SKILLS,
+    beginMission,
+    submitAnswer,
+    advance,
+    toCommandCenter,
+    goTo,
+  };
 }
 
 function isToday(ts: number): boolean {

@@ -26,6 +26,30 @@ export interface MissionPlan {
   title: string;
   rationale: string;
   questionCount: number;
+  /** Kompetencja wskazana przez uzytkownika z mapy albo z dziennika bledow. */
+  focusSkillId?: string;
+}
+
+/** Misja z klikniecia w wezel mapy kompetencji (sek. 7.3). */
+export function trainingFor(skill: Skill, level: number): MissionPlan {
+  return {
+    kind: 'training',
+    title: skill.name,
+    rationale: `Wybrana z mapy. Obecny poziom: ${level} z 5.`,
+    questionCount: MISSION_LENGTHS.training,
+    focusSkillId: skill.id,
+  };
+}
+
+/** Misja z przycisku "Napraw teraz" w laboratorium bledow (sek. 7.4). */
+export function repairFor(skill: Skill, cause: string): MissionPlan {
+  return {
+    kind: 'repair',
+    title: 'Naprawa',
+    rationale: `${cause} Zaczynamy od fundamentu tej kompetencji.`,
+    questionCount: MISSION_LENGTHS.repair,
+    focusSkillId: skill.id,
+  };
 }
 
 export interface PlanningInput {

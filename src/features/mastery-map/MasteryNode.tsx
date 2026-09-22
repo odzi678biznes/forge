@@ -38,14 +38,21 @@ export function MasteryNode({ skill, state, justChanged = false, now = Date.now(
         aria-label={`${skill.name}: poziom ${level} z 5, ${MASTERY_LABELS[level]}`}
       >
         <circle cx={SIZE / 2} cy={SIZE / 2} r={R} className="node__track" />
-        <circle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={R}
-          className={`node__fill ${due ? 'node__fill--due' : ''}`}
-          strokeDasharray={`${CIRC * fill} ${CIRC}`}
-          transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-        />
+        {/*
+          Przy poziomie 0 nie rysujemy luku wcale. Zaokraglone zakonczenie
+          kreski renderuje sie nawet przy zerowej dlugosci i wygladaloby jak
+          rozpoczety postep tam, gdzie zadnego postepu nie ma.
+        */}
+        {fill > 0 && (
+          <circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={R}
+            className={`node__fill ${due ? 'node__fill--due' : ''}`}
+            strokeDasharray={`${CIRC * fill} ${CIRC}`}
+            transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
+          />
+        )}
         <text x="50%" y="48%" className="node__level">
           {level}
         </text>

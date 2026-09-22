@@ -157,6 +157,53 @@ describe('dobor kolejnego pytania', () => {
     expect(sel?.question.id).toBe('fit');
   });
 
+  it('wskazana kompetencja wygrywa z wyzej punktowana', () => {
+    const hot = {
+      skill: makeSkill({ id: 'hot', examValue: 1 }),
+      state: makeState({ skillId: 'hot', level: MasteryLevel.Unknown }),
+      questions: skillWith('hot', ['typical']),
+    };
+    const wybrana = {
+      skill: makeSkill({ id: 'wybrana', examValue: 0.1 }),
+      state: makeState({ skillId: 'wybrana', level: MasteryLevel.Transfer }),
+      questions: skillWith('wybrana', ['typical']),
+    };
+
+    const sel = selectNextQuestion(input([hot, wybrana], { focusSkillId: 'wybrana' }));
+    expect(sel?.skill.id).toBe('wybrana');
+  });
+
+  it('wyczerpana pula wskazanej kompetencji nie zostawia pustego ekranu', () => {
+    const wybrana = {
+      skill: makeSkill({ id: 'wybrana' }),
+      state: makeState({ skillId: 'wybrana' }),
+      questions: [makeQuestion({ id: 'q-wybrana', skillId: 'wybrana' })],
+    };
+    const inna = {
+      skill: makeSkill({ id: 'inna' }),
+      state: makeState({ skillId: 'inna' }),
+      questions: [makeQuestion({ id: 'q-inna', skillId: 'inna' })],
+    };
+
+    const sel = selectNextQuestion(
+      input([wybrana, inna], {
+        focusSkillId: 'wybrana',
+        askedQuestionIds: new Set(['q-wybrana']),
+      }),
+    );
+    expect(sel?.question.id).toBe('q-inna');
+  });
+
+  it('wskazanie kompetencji ze swiezym bledem zaczyna od fundamentu', () => {
+    const e = {
+      skill: makeSkill({ id: 's' }),
+      state: makeState({ skillId: 's', recentErrors: ['err-1'], independentStreak: 0 }),
+      questions: skillWith('s', ['typical', 'foundation']),
+    };
+    const sel = selectNextQuestion(input([e], { focusSkillId: 's' }));
+    expect(sel?.rule).toBe('foundation-repair');
+  });
+
   it('kazdy wybor niesie uzasadnienie dla uzytkownika', () => {
     const e = {
       skill: makeSkill({ id: 's' }),
