@@ -18,6 +18,15 @@ export interface Grade {
 }
 
 export function grade(question: Question, rawAnswer: string): Grade {
+  // Zadania programistyczne ocenia CodeRunner na testach. Porownanie tekstu
+  // odpowiedzi z polem `answer` daloby tu zawsze "zle" - glosny blad jest
+  // lepszy niz ciche, falszywe ocenienie ucznia.
+  if (question.format === 'code') {
+    throw new Error(
+      `Zadanie ${question.id} jest programistyczne - ocenia je CodeRunner, nie grade().`,
+    );
+  }
+
   const answer = normalise(rawAnswer);
 
   if (answer === '') {

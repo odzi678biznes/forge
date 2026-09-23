@@ -43,6 +43,7 @@ export function MissionSummary({
   const usedHints = steps.some((s) => s.hintLevel > 0);
   const transitions = steps.filter((s) => s.transition !== null);
   const changedSkillIds = new Set(transitions.map((s) => s.selection.skill.id));
+  const touchedSkillIds = new Set(steps.map((s) => s.selection.skill.id));
 
   const recommendBreak = missionsToday >= BREAK_POINT;
   const offerPause = missionsToday >= PAUSE_POINT && !recommendBreak;
@@ -87,7 +88,8 @@ export function MissionSummary({
       )}
 
       <section className="sum__nodes" aria-label="Kompetencje po misji">
-        {skills.map((skill) => {
+        {/* Tylko kompetencje z tej misji - sek. 5: zmiana konkretnej kompetencji, nie deszcz punktow. */}
+        {skills.filter((s) => touchedSkillIds.has(s.id)).map((skill) => {
           const state = states.get(skill.id);
           return state ? (
             <MasteryNode

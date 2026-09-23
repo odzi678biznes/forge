@@ -85,3 +85,10 @@ describe('ocenianie', () => {
     expect(GRADING_VERSION).toMatch(/\S/);
   });
 });
+
+describe('zadania programistyczne', () => {
+  it('grade() odmawia glosno zamiast cicho ocenic kod jako bledny', () => {
+    const q = makeQuestion({ format: 'code' });
+    expect(() => grade(q, 'function f(){}')).toThrow(/CodeRunner/);
+  });
+});

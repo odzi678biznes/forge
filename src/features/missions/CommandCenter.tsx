@@ -3,6 +3,7 @@ import type { MissionPlan } from '@/learning-engine/mission';
 import { openErrorCount, type ErrorGroup } from '@/learning-engine/error-lab';
 import { MODE_LABELS, MODE_LOAD, type DailyPlan, type WeekRhythm } from '@/learning-engine/planner';
 import { MasteryNode } from '@/features/mastery-map/MasteryNode';
+import { SUBJECT_LABELS, type SubjectId } from '@/app/useForge';
 import './command-center.css';
 
 /**
@@ -34,6 +35,8 @@ interface Props {
   onDayMode: (mode: DayMode) => void;
   onOpenWeekly: () => void;
   onTimeTrial: () => void;
+  subject: SubjectId;
+  onSubject: (next: SubjectId) => void;
 }
 
 export function CommandCenter({
@@ -55,16 +58,41 @@ export function CommandCenter({
   onDayMode,
   onOpenWeekly,
   onTimeTrial,
+  subject,
+  onSubject,
 }: Props) {
   const openErrors = openErrorCount(errorGroups);
-  const solvedIndependently = [...states.values()].filter(
-    (s) => s.level >= MasteryLevel.Independent,
+  // Mapa stanow obejmuje oba przedmioty - liczymy tylko biezacy, inaczej
+  // wynik nie zgadzalby sie z mianownikiem "z N".
+  const solvedIndependently = skills.filter(
+    (s) => (states.get(s.id)?.level ?? MasteryLevel.Unknown) >= MasteryLevel.Independent,
   ).length;
+
+  // Sek. 7.1: dzisiejszy wynik, nie lista wszystkich kompetencji. Pelny
+  // przekroj jest jednym kliknieciem dalej, na mapie.
+  const todaySkills = daily.skillIds
+    .map((id) => skills.find((s) => s.id === id))
+    .filter((s): s is Skill => s !== undefined);
+  const isMath = subject === 'math';
 
   return (
     <main className="cc">
       <header className="cc__head">
         <p className="cc__brand">FORGE</p>
+        <div className="cc__subjects" role="radiogroup" aria-label="Przedmiot">
+          {(Object.keys(SUBJECT_LABELS) as SubjectId[]).map((id) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={subject === id}
+              className={subject === id ? 'cc__subject cc__subject--on' : 'cc__subject'}
+              onClick={() => onSubject(id)}
+            >
+              {SUBJECT_LABELS[id]}
+            </button>
+          ))}
+        </div>
         <p className="cc__today">
           {missionsToday === 0
             ? 'Dzis jeszcze nie zaczynales.'
@@ -109,7 +137,8 @@ export function CommandCenter({
         <p className="rhythm__daily">{daily.rationale}</p>
       </section>
 
-      {!hasPlan && (
+      {/* Diagnoza jest matematyczna (sek. 15, Etap 3) - w informatyce nie ma czego zapraszac. */}
+      {isMath && !hasPlan && (
         <section className="cc__diag-invite">
           <p className="cc__diag-title">Nie masz jeszcze planu</p>
           <p className="cc__diag-text">
@@ -185,7 +214,7 @@ export function CommandCenter({
             <button type="button" className="cc__link" onClick={onOpenMap}>
               Pelna mapa &rarr;
             </button>
-            {hasPlan && (
+            {isMath && hasPlan && (
               <button type="button" className="cc__link" onClick={onOpenDiagnostic}>
                 Powtorz diagnoze
               </button>
@@ -202,8 +231,9 @@ export function CommandCenter({
             </button>
           </div>
         </div>
+        <p className="cc__nodes-label">Na dziś</p>
         <div className="cc__nodes">
-          {skills.map((skill) => {
+          {todaySkills.map((skill) => {
             const state = states.get(skill.id);
             return state ? (
               <MasteryNode key={skill.id} skill={skill} state={state} />

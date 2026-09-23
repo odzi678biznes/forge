@@ -85,7 +85,37 @@ export type QuestionKind =
   /** Fundament - sprawdza warunek wstepny. */
   | 'foundation';
 
-export type AnswerFormat = 'numeric' | 'exact-text' | 'multi-step';
+export type AnswerFormat = 'numeric' | 'exact-text' | 'multi-step' | 'code';
+
+/**
+ * Pojedynczy test zadania programistycznego (sek. 15, Etap 4).
+ *
+ * Typ mieszka w warstwie danych, a nie w silniku, bo opisuje TRESC zadania.
+ * Silnik oceniajacy go tylko czyta.
+ */
+export interface CodeTest {
+  name: string;
+  /** Argumenty przekazywane do funkcji rozwiazania. */
+  input: unknown[];
+  expected: unknown;
+  /**
+   * Test ukryty nie jest pokazywany przed uruchomieniem - inaczej zadanie
+   * dawaloby sie zaliczyc przez dopasowanie odpowiedzi do widocznych
+   * przypadkow, zamiast przez napisanie algorytmu.
+   */
+  hidden?: boolean;
+}
+
+/** Zadanie programistyczne oceniane na kontrolowanych testach. */
+export interface CodeTask {
+  /** Nazwa funkcji, ktora uczen ma napisac. */
+  functionName: string;
+  /** Sygnatura pokazywana uczniowi. */
+  signature: string;
+  /** Kod startowy w edytorze. */
+  starterCode: string;
+  tests: CodeTest[];
+}
 
 export interface Hint {
   level: Exclude<HintLevel, 0>;
@@ -109,6 +139,8 @@ export interface Question {
   hints: Hint[];
   /** Typowe bledy - klucz do Laboratorium bledow (sek. 7.4). */
   commonErrors: CommonError[];
+  /** Zadanie programistyczne - obecne wylacznie przy format === 'code'. */
+  code?: CodeTask;
   /** Trudnosc poczatkowa 1..5. */
   difficulty: number;
   source: string;

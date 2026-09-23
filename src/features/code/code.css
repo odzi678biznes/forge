@@ -1,0 +1,155 @@
+.code {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.code__label {
+  margin: 0;
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.code__signature {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.code__signature code {
+  font-family: var(--font-mono);
+  color: var(--progress);
+}
+
+.code__editor {
+  width: 100%;
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  tab-size: 2;
+  color: var(--text);
+  background: var(--bg-abyss);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  resize: vertical;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.code__editor:disabled {
+  color: var(--text-muted);
+}
+
+.code__tests ul {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.code__tests li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--t-small);
+}
+
+.code__test-name {
+  color: var(--text-muted);
+  min-width: 12ch;
+}
+
+.code__tests code {
+  font-family: var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.code__hidden {
+  margin: var(--space-2) 0 0;
+  font-size: var(--t-small);
+  color: var(--text-faint);
+}
+
+.code__run {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-8);
+  font-weight: 650;
+  color: var(--bg-abyss);
+  background: var(--progress);
+  border: none;
+  border-radius: var(--radius);
+}
+
+.code__run:disabled {
+  background: var(--line-strong);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.code__run kbd {
+  background: rgba(7, 10, 15, 0.25);
+  border-color: rgba(7, 10, 15, 0.35);
+  color: var(--bg-abyss);
+}
+
+/* --- Wyniki testów ------------------------------------------------------- */
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--t-small);
+}
+
+.result__mark {
+  width: 1ch;
+  font-family: var(--font-mono);
+}
+
+.result--ok .result__mark {
+  color: var(--correct);
+}
+
+/* Niezaliczony test jest neutralny, nie czerwony (sek. 14). */
+.result--miss .result__mark {
+  color: var(--challenge);
+}
+
+.result__name {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.result__hidden {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.result__detail {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

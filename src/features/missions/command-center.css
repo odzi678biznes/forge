@@ -335,3 +335,36 @@
 .rhythm__mode--on span {
   color: var(--progress);
 }
+
+/* --- Przełącznik przedmiotu ---------------------------------------------- */
+
+.cc__subjects {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.cc__subject {
+  padding: var(--space-1) var(--space-4);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.cc__subject--on {
+  background: var(--bg-overlay);
+  color: var(--progress);
+}
+
+.cc__nodes-label {
+  margin: 0 0 var(--space-4);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}

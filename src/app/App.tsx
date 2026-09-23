@@ -23,6 +23,7 @@ export function App() {
     choosePlan,
     diagnosticSize,
     setDayMode,
+    setSubject,
     finishMissionNow,
   } = useForge();
 
@@ -47,6 +48,7 @@ export function App() {
         onTimeUp={() => {
           void finishMissionNow();
         }}
+        running={state.running}
       />
     );
   }
@@ -139,6 +141,8 @@ export function App() {
       onOpenDiagnostic={() => goTo('diagnostic-intro')}
       onOpenReport={state.report ? () => goTo('diagnostic-report') : null}
       hasPlan={state.savedPlan !== null}
+      subject={state.subject}
+      onSubject={(next) => { void setSubject(next); }}
       daily={state.daily}
       rhythm={state.rhythm}
       dayMode={state.dayMode}

@@ -3,6 +3,8 @@ import { HINT_LADDER, type Confidence, type HintLevel } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
+import { CodeEditor } from '@/features/code/CodeEditor';
+import { CodeResults } from '@/features/code/CodeResults';
 import './arena.css';
 
 /**
@@ -24,6 +26,8 @@ interface Props {
   deadlineAt?: number | null;
   /** Wywolywane raz, gdy czas proby czasowej sie skonczy. */
   onTimeUp?: () => void;
+  /** Czy trwa uruchamianie testow kodu. */
+  running?: boolean;
 }
 
 /**
@@ -83,6 +87,7 @@ export function Arena({
   onAdvance,
   deadlineAt,
   onTimeUp,
+  running = false,
 }: Props) {
   const remaining = useCountdown(deadlineAt, onTimeUp);
   const { question } = selection;
@@ -91,15 +96,19 @@ export function Arena({
   const [hintLevel, setHintLevel] = useState<HintLevel>(0);
   const [whyOpen, setWhyOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const isCode = question.format === 'code' && question.code !== undefined;
   const continueRef = useRef<HTMLButtonElement>(null);
 
   // Nowe pytanie zaczyna sie czysto i z kursorem w polu odpowiedzi.
   useEffect(() => {
-    setAnswer('');
+    // Zadanie programistyczne startuje z kodem startowym, a nie z pustym polem.
+    setAnswer(question.format === 'code' ? question.code?.starterCode ?? '' : '');
     setConfidence('partial');
     setHintLevel(0);
     setWhyOpen(false);
-    inputRef.current?.focus();
+    if (question.format === 'code') editorRef.current?.focus();
+    else inputRef.current?.focus();
   }, [question.id]);
 
   // Po ocenie fokus idzie na "Dalej", zeby klawiatura wystarczyla (sek. 18).
@@ -116,7 +125,7 @@ export function Arena({
   const locked = feedback !== null;
 
   const submit = () => {
-    if (locked || answer.trim() === '') return;
+    if (locked || running || answer.trim() === '') return;
     onSubmit(answer, hintLevel, confidence);
   };
 
@@ -125,6 +134,10 @@ export function Arena({
       className="arena"
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
+          // W edytorze kodu Enter to nowa linia. Uruchomienie testow ma
+          // wlasny skrot (Ctrl+Enter) obslugiwany przez sam edytor.
+          const inEditor = (e.target as HTMLElement).tagName === 'TEXTAREA';
+          if (inEditor && !locked) return;
           e.preventDefault();
           if (locked) onAdvance();
           else submit();
@@ -174,19 +187,33 @@ export function Arena({
       </section>
 
       <section className="arena__answer">
-        <label className="arena__label" htmlFor="answer">
-          Twoja odpowiedz
-        </label>
-        <input
-          id="answer"
-          ref={inputRef}
-          className="arena__input"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          disabled={locked}
-          autoComplete="off"
-          inputMode="text"
-        />
+        {isCode && question.code ? (
+          <CodeEditor
+            ref={editorRef}
+            task={question.code}
+            value={answer}
+            onChange={setAnswer}
+            onRun={submit}
+            disabled={locked}
+            running={running}
+          />
+        ) : (
+          <>
+            <label className="arena__label" htmlFor="answer">
+              Twoja odpowiedz
+            </label>
+            <input
+              id="answer"
+              ref={inputRef}
+              className="arena__input"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              disabled={locked}
+              autoComplete="off"
+              inputMode="text"
+            />
+          </>
+        )}
 
         <fieldset className="arena__confidence" disabled={locked}>
           <legend>Na ile jestes pewny?</legend>
@@ -204,7 +231,7 @@ export function Arena({
           ))}
         </fieldset>
 
-        {!locked && (
+        {!locked && !isCode && (
           <button
             type="button"
             className="arena__submit"
@@ -271,11 +298,20 @@ function Feedback({
       role="status"
       aria-live="polite"
     >
-      <p className="fb__verdict">{correct ? 'Dobrze' : 'Jeszcze nie'}</p>
-
-      <p className="fb__note">
-        <Tex>{step.grade.note}</Tex>
+      <p className="fb__verdict">
+        {correct ? 'Dobrze' : step.grade.correctness === 'partial' ? 'Częściowo' : 'Jeszcze nie'}
       </p>
+
+      {/*
+        Notatka z uruchomienia kodu zawiera wartosci zwrocone przez kod ucznia.
+        Pokazujemy ja jako zwykly tekst - bez renderera LaTeX, zeby znak $
+        w wyniku ucznia nie byl interpretowany jako wzor.
+      */}
+      <p className="fb__note">
+        {step.code ? step.grade.note : <Tex>{step.grade.note}</Tex>}
+      </p>
+
+      {step.code && <CodeResults outcomes={step.code.outcomes} />}
 
       {step.grade.error && (
         <p className="fb__rule">
