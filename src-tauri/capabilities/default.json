@@ -20,6 +20,10 @@
     {
       "identifier": "sql:allow-close",
       "allow": [{ "url": "sqlite:forge.db" }]
-    }
+    },
+    "allow-ai-set-key",
+    "allow-ai-clear-key",
+    "allow-ai-key-status",
+    "allow-ai-tutor"
   ]
 }

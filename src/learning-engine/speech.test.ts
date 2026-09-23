@@ -1,0 +1,56 @@
+import { describe, expect, it } from 'vitest';
+import { latexToSpeech, promptToSpeech } from './speech';
+import { MATH_QUESTIONS } from '@content/math/index';
+import { CS_QUESTIONS } from '@content/cs/index';
+
+describe('wzory na tekst mowiony', () => {
+  it('potegi maja naturalne polskie nazwy', () => {
+    expect(latexToSpeech('x^2')).toBe('x do kwadratu');
+    expect(latexToSpeech('x^3')).toBe('x do sześcianu');
+    expect(latexToSpeech('2^{n}')).toBe('2 do potęgi n');
+  });
+
+  it('ulamki czyta jako "przez"', () => {
+    expect(latexToSpeech('\\dfrac{3}{5}')).toBe('3 przez 5');
+  });
+
+  it('logarytm czyta z podstawa', () => {
+    expect(latexToSpeech('\\log_2 32')).toBe('logarytm o podstawie 2 z 32');
+  });
+
+  it('rownanie kwadratowe brzmi jak zdanie', () => {
+    expect(latexToSpeech('x^2 - 6x + 5 = 0')).toBe(
+      'x do kwadratu minus 6x plus 5 równa się 0',
+    );
+  });
+
+  it('funkcje trygonometryczne i stopnie', () => {
+    expect(latexToSpeech('\\sin 30^\\circ')).toBe('sinus 30 stopni');
+  });
+
+  it('wartosc funkcji czyta jako "od", pochodna z primem', () => {
+    expect(latexToSpeech('f(x) = x^2')).toBe('f od x równa się x do kwadratu');
+    expect(latexToSpeech("f'(2)")).toBe('f prim od 2');
+    expect(latexToSpeech('P(A)')).toBe('P od A');
+  });
+
+  it('nawias po zmiennej to mnozenie, a nie funkcja', () => {
+    expect(latexToSpeech('x(10-x)')).not.toContain(' od ');
+  });
+});
+
+describe('cala tresc zadania', () => {
+  it('tekst zostaje, wzor jest czytany', () => {
+    expect(promptToSpeech('Oblicz $\\log_2 32$.')).toBe(
+      'Oblicz logarytm o podstawie 2 z 32.',
+    );
+  });
+
+  it('zadne zadanie z korpusu nie zostawia znacznikow LaTeX do przeczytania', () => {
+    for (const q of [...MATH_QUESTIONS, ...CS_QUESTIONS]) {
+      const spoken = promptToSpeech(q.prompt);
+      expect(spoken, q.id).not.toMatch(/[\\${}^_]/);
+      expect(spoken.trim().length, q.id).toBeGreaterThan(0);
+    }
+  });
+});

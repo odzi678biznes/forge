@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useForge } from './useForge';
 import { CommandCenter } from '@/features/missions/CommandCenter';
 import { MissionSummary } from '@/features/missions/MissionSummary';
@@ -8,11 +9,14 @@ import { repairFor, timeTrial, trainingFor } from '@/learning-engine/mission';
 import { DiagnosticIntro } from '@/features/diagnostics/DiagnosticIntro';
 import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportView';
 import { WeeklyReportView } from '@/features/weekly-review/WeeklyReportView';
+import { AiSettings } from '@/features/ai/AiSettings';
+import { createTutor } from '@/features/ai/tutor';
 
 export function App() {
   const {
     state,
     skills,
+    questions,
     beginMission,
     submitAnswer,
     advance,
@@ -26,6 +30,16 @@ export function App() {
     setSubject,
     finishMissionNow,
   } = useForge();
+
+  // AI jest opcjonalne i domyslnie wylaczone: wlacza je dopiero klucz
+  // podany w tej sesji (sek. 11). Tutor tworzymy raz na cale zycie aplikacji.
+  const tutor = useMemo(() => createTutor(), []);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  useEffect(() => {
+    if (tutor.unavailableReason) return;
+    void tutor.keyPresent().then(setAiEnabled).catch(() => setAiEnabled(false));
+  }, [tutor]);
+  const catalogue = useMemo(() => questions.flatMap((q) => q.commonErrors), [questions]);
 
   if (state.screen === 'loading') {
     return <p className="boot">Wczytywanie profilu...</p>;
@@ -49,6 +63,12 @@ export function App() {
           void finishMissionNow();
         }}
         running={state.running}
+        ai={{
+          tutor,
+          enabled: aiEnabled,
+          recentErrorIds: state.skillStates.get(state.current.skill.id)?.recentErrors ?? [],
+          catalogue,
+        }}
       />
     );
   }
@@ -106,6 +126,10 @@ export function App() {
     );
   }
 
+  if (state.screen === 'ai-settings') {
+    return <AiSettings tutor={tutor} onChange={setAiEnabled} onBack={toCommandCenter} />;
+  }
+
   if (state.screen === 'weekly-report') {
     return (
       <WeeklyReportView
@@ -149,6 +173,8 @@ export function App() {
       onDayMode={(mode) => { void setDayMode(mode); }}
       onOpenWeekly={() => goTo('weekly-report')}
       onTimeTrial={() => beginMission(timeTrial())}
+      onOpenAi={() => goTo('ai-settings')}
+      aiEnabled={aiEnabled}
     />
   );
 }

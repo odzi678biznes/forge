@@ -61,7 +61,8 @@ export type Screen =
   | 'error-lab'
   | 'diagnostic-intro'
   | 'diagnostic-report'
-  | 'weekly-report';
+  | 'weekly-report'
+  | 'ai-settings';
 
 export type SubjectId = 'math' | 'cs';
 
@@ -661,6 +662,7 @@ export function useForge(deps: ForgeDeps = {}) {
     state,
     skills,
     topics,
+    questions,
     setSubject,
     setDayMode,
     beginMission,

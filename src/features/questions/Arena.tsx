@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { HINT_LADDER, type Confidence, type HintLevel } from '@/data/types';
+import { HINT_LADDER, type CommonError, type Confidence, type HintLevel } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
 import { CodeEditor } from '@/features/code/CodeEditor';
 import { CodeResults } from '@/features/code/CodeResults';
+import { AiPanel } from '@/features/ai/AiPanel';
+import { useSpeech } from '@/features/ai/useSpeech';
+import type { AiTutor } from '@/features/ai/tutor';
 import './arena.css';
 
 /**
@@ -28,7 +31,25 @@ interface Props {
   onTimeUp?: () => void;
   /** Czy trwa uruchamianie testow kodu. */
   running?: boolean;
+  /** Opcjonalna warstwa AI - brak albo wylaczona oznacza zwykla arene. */
+  ai?: ArenaAi;
 }
+
+export interface ArenaAi {
+  tutor: AiTutor;
+  /** Czy AI jest wlaczone (aplikacja desktopowa i klucz w tej sesji). */
+  enabled: boolean;
+  /** Ostatnie bledy w tej kompetencji - do kontekstu AI (sek. 11, pkt 5). */
+  recentErrorIds: string[];
+  catalogue: CommonError[];
+}
+
+/**
+ * Szczebel pomocy przypisywany podpowiedzi AI. Odpowiada "przypomnieniu
+ * zasady": po nim odpowiedz przestaje byc samodzielna, ale nadal moze
+ * pchnac kompetencje z poziomu 1 na 2 (warunek: szczebel najwyzej 3).
+ */
+const AI_HINT_LEVEL: HintLevel = 3;
 
 /**
  * Licznik proby czasowej - Blueprint sek. 4.3.
@@ -88,7 +109,10 @@ export function Arena({
   deadlineAt,
   onTimeUp,
   running = false,
+  ai,
 }: Props) {
+  const speech = useSpeech();
+  const [reasoning, setReasoning] = useState('');
   const remaining = useCountdown(deadlineAt, onTimeUp);
   const { question } = selection;
   const [answer, setAnswer] = useState('');
@@ -107,6 +131,8 @@ export function Arena({
     setConfidence('partial');
     setHintLevel(0);
     setWhyOpen(false);
+    setReasoning('');
+    speech.stop();
     if (question.format === 'code') editorRef.current?.focus();
     else inputRef.current?.focus();
   }, [question.id]);
@@ -184,6 +210,20 @@ export function Arena({
         <h1 className="arena__question">
           <Tex>{question.prompt}</Tex>
         </h1>
+        {/* Odczyt tylko na żądanie i tylko lokalnym głosem (sek. 2 i 11). */}
+        <button
+          type="button"
+          className="speak"
+          disabled={speech.unavailableReason !== null}
+          title={speech.unavailableReason ?? undefined}
+          onClick={() => (speech.speaking ? speech.stop() : speech.speak(question.prompt))}
+        >
+          {speech.unavailableReason
+            ? 'Odczyt na głos niedostępny'
+            : speech.speaking
+              ? 'Zatrzymaj odczyt'
+              : 'Przeczytaj na głos'}
+        </button>
       </section>
 
       <section className="arena__answer">
@@ -272,7 +312,54 @@ export function Arena({
         )}
       </section>
 
+      {ai?.enabled && !locked && (
+        <AiPanel
+          task="hint"
+          tutor={ai.tutor}
+          input={{
+            question,
+            answer,
+            hintLevel,
+            recentErrorIds: ai.recentErrorIds,
+            errorCatalogue: ai.catalogue,
+          }}
+          // Podpowiedź AI to pomoc jak każda inna - odpowiedź przestaje być samodzielna.
+          onHintShown={() =>
+            setHintLevel((h) => (h >= AI_HINT_LEVEL ? h : AI_HINT_LEVEL))
+          }
+        />
+      )}
+
       {feedback && <Feedback step={feedback} onAdvance={onAdvance} buttonRef={continueRef} />}
+
+      {ai?.enabled && feedback && !isCode && (
+        <section className="ai">
+          <label className="arena__label" htmlFor="reasoning">
+            Twój tok rozumowania (opcjonalnie)
+          </label>
+          <textarea
+            id="reasoning"
+            className="ai__reasoning"
+            value={reasoning}
+            onChange={(e) => setReasoning(e.target.value)}
+            placeholder="Opisz kroki, którymi doszedłeś do odpowiedzi."
+          />
+          {reasoning.trim() !== '' && (
+            <AiPanel
+              task="assess"
+              tutor={ai.tutor}
+              input={{
+                question,
+                answer: feedback.userAnswer,
+                reasoning,
+                hintLevel: feedback.hintLevel,
+                recentErrorIds: ai.recentErrorIds,
+                errorCatalogue: ai.catalogue,
+              }}
+            />
+          )}
+        </section>
+      )}
     </main>
   );
 }
