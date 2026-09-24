@@ -1,5 +1,6 @@
 import type {
   CommonError,
+  Figure,
   Flashcard,
   FlashcardKind,
   Hint,
@@ -44,6 +45,8 @@ interface BaseSpec {
   steps: string[];
   /** Typowe błędy: odpowiedzi, które je zdradzają, przyczyna i złamana zasada. */
   errors: ErrorSpec[];
+  /** Wykres albo figura do zadania. */
+  figure?: Figure;
   source?: string;
 }
 
@@ -104,6 +107,7 @@ function base(spec: BaseSpec): Omit<Question, 'format' | 'answer' | 'acceptedVar
     difficulty: spec.difficulty,
     source: spec.source ?? AUTHORED,
     verified: false,
+    ...(spec.figure ? { figure: spec.figure } : {}),
   };
 }
 

@@ -33,6 +33,13 @@ import {
   EQUATIONS_SKILLS,
   EQUATIONS_TOPIC,
 } from './kurs/rownania';
+import {
+  FUNCTIONS_CARDS,
+  FUNCTIONS_LESSONS,
+  FUNCTIONS_QUESTIONS,
+  FUNCTIONS_SKILLS,
+  FUNCTIONS_TOPIC,
+} from './kurs/funkcje';
 
 /**
  * Korpus tresci matematycznej.
@@ -54,6 +61,7 @@ export const MATH_TOPICS: Topic[] = [
   NUMBERS_TOPIC,
   ALGEBRA_TOPIC,
   EQUATIONS_TOPIC,
+  FUNCTIONS_TOPIC,
   QUADRATIC_TOPIC,
   SEQUENCE_TOPIC,
   LOG_TOPIC,
@@ -67,6 +75,7 @@ export const MATH_SKILLS: Skill[] = [
   ...NUMBERS_SKILLS,
   ...ALGEBRA_SKILLS,
   ...EQUATIONS_SKILLS,
+  ...FUNCTIONS_SKILLS,
   ...QUADRATIC_SKILLS,
   ...SEQUENCE_SKILLS,
   ...LOG_SKILLS,
@@ -80,6 +89,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...NUMBERS_QUESTIONS,
   ...ALGEBRA_QUESTIONS,
   ...EQUATIONS_QUESTIONS,
+  ...FUNCTIONS_QUESTIONS,
   ...QUADRATIC_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
   ...LOG_QUESTIONS,
@@ -96,8 +106,8 @@ export const MATH_CORPUS: Corpus = {
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
-  lessons: [...NUMBERS_LESSONS, ...ALGEBRA_LESSONS, ...EQUATIONS_LESSONS],
-  flashcards: [...NUMBERS_CARDS, ...ALGEBRA_CARDS, ...EQUATIONS_CARDS],
+  lessons: [...NUMBERS_LESSONS, ...ALGEBRA_LESSONS, ...EQUATIONS_LESSONS, ...FUNCTIONS_LESSONS],
+  flashcards: [...NUMBERS_CARDS, ...ALGEBRA_CARDS, ...EQUATIONS_CARDS, ...FUNCTIONS_CARDS],
 };
 
 /** Kompetencje nalezace do danego dzialu. */
