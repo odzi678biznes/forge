@@ -2,6 +2,13 @@ import type { Question, Skill, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
 import { MATH } from './funkcja-kwadratowa';
 import { QUAD_CARDS, QUAD_LESSONS, QUAD_QUESTIONS, QUAD_SKILLS, QUAD_TOPIC } from './kurs/kwadratowa';
+import {
+  POLY_CARDS,
+  POLY_LESSONS,
+  POLY_QUESTIONS,
+  POLY_SKILLS,
+  POLY_TOPIC,
+} from './kurs/wielomiany';
 import { SEQUENCE_QUESTIONS, SEQUENCE_SKILLS, SEQUENCE_TOPIC } from './ciagi';
 import { LOG_QUESTIONS, LOG_SKILLS, LOG_TOPIC } from './logarytmy';
 import { TRIG_QUESTIONS, TRIG_SKILLS, TRIG_TOPIC } from './trygonometria';
@@ -67,6 +74,7 @@ export const MATH_TOPICS: Topic[] = [
   FUNCTIONS_TOPIC,
   LINEAR_TOPIC,
   QUAD_TOPIC,
+  POLY_TOPIC,
   SEQUENCE_TOPIC,
   LOG_TOPIC,
   TRIG_TOPIC,
@@ -82,6 +90,7 @@ export const MATH_SKILLS: Skill[] = [
   ...FUNCTIONS_SKILLS,
   ...LINEAR_SKILLS,
   ...QUAD_SKILLS,
+  ...POLY_SKILLS,
   ...SEQUENCE_SKILLS,
   ...LOG_SKILLS,
   ...TRIG_SKILLS,
@@ -97,6 +106,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...FUNCTIONS_QUESTIONS,
   ...LINEAR_QUESTIONS,
   ...QUAD_QUESTIONS,
+  ...POLY_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
   ...LOG_QUESTIONS,
   ...TRIG_QUESTIONS,
@@ -119,6 +129,7 @@ export const MATH_CORPUS: Corpus = {
     ...FUNCTIONS_LESSONS,
     ...LINEAR_LESSONS,
     ...QUAD_LESSONS,
+    ...POLY_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -127,6 +138,7 @@ export const MATH_CORPUS: Corpus = {
     ...FUNCTIONS_CARDS,
     ...LINEAR_CARDS,
     ...QUAD_CARDS,
+    ...POLY_CARDS,
   ],
 };
 
