@@ -46,6 +46,10 @@ function powerWord(exp: string): string {
 export function latexToSpeech(tex: string): string {
   // Stopnie zapisuje się jako potęgę, ale czyta jako jednostkę.
   let s = tex
+    // Układ równań: kolejne równania czytamy jako wyliczenie.
+    .replace(/\\begin\{cases\}|\\end\{cases\}/g, ' ')
+    .replace(/\\\\/g, ' oraz ')
+    .replace(/&/g, ' ')
     .replace(/\^\s*\{?\\circ\}?/g, ' stopni ')
     // Przecinek dziesiętny w klamrach i odstęp tysięcy.
     .replace(/\{,\}/g, ',')
