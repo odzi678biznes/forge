@@ -25,7 +25,13 @@ import {
   TRIG_LESSONS,
 } from './kurs/trygonometria';
 import { PLAN_CARDS, PLAN_LESSONS, PLAN_QUESTIONS, PLAN_SKILLS, PLAN_TOPIC } from './kurs/planimetria';
-import { GEO_QUESTIONS, GEO_SKILLS, GEO_TOPIC } from './geometria-analityczna';
+import {
+  GEO_CARDS,
+  GEO_COURSE_QUESTIONS,
+  GEO_COURSE_SKILLS,
+  GEO_COURSE_TOPIC,
+  GEO_LESSONS,
+} from './kurs/analityczna';
 import { DERIV_QUESTIONS, DERIV_SKILLS, DERIV_TOPIC } from './pochodne';
 import { PROB_QUESTIONS, PROB_SKILLS, PROB_TOPIC } from './prawdopodobienstwo';
 import {
@@ -92,7 +98,7 @@ export const MATH_TOPICS: Topic[] = [
   SEQ_TOPIC,
   TRIG_COURSE_TOPIC,
   PLAN_TOPIC,
-  GEO_TOPIC,
+  GEO_COURSE_TOPIC,
   DERIV_TOPIC,
   PROB_TOPIC,
 ];
@@ -109,7 +115,7 @@ export const MATH_SKILLS: Skill[] = [
   ...SEQ_SKILLS,
   ...TRIG_COURSE_SKILLS,
   ...PLAN_SKILLS,
-  ...GEO_SKILLS,
+  ...GEO_COURSE_SKILLS,
   ...DERIV_SKILLS,
   ...PROB_SKILLS,
 ];
@@ -126,7 +132,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...SEQ_QUESTIONS,
   ...TRIG_COURSE_QUESTIONS,
   ...PLAN_QUESTIONS,
-  ...GEO_QUESTIONS,
+  ...GEO_COURSE_QUESTIONS,
   ...DERIV_QUESTIONS,
   ...PROB_QUESTIONS,
 ];
@@ -150,6 +156,7 @@ export const MATH_CORPUS: Corpus = {
     ...SEQ_LESSONS,
     ...TRIG_LESSONS,
     ...PLAN_LESSONS,
+    ...GEO_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -163,6 +170,7 @@ export const MATH_CORPUS: Corpus = {
     ...SEQ_CARDS,
     ...TRIG_CARDS,
     ...PLAN_CARDS,
+    ...GEO_CARDS,
   ],
 };
 
