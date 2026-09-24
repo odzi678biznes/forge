@@ -247,7 +247,7 @@ export function TodayView(props: Props) {
             <span>
               {props.diagnostic.hasReport
                 ? 'Diagnoza czeka na przyjęcie planu.'
-                : 'Jedno zadanie z każdej umiejętności — pokaże, od czego zacząć.'}
+                : 'Po zadaniu z najważniejszych umiejętności każdego działu — pokaże, od czego zacząć.'}
             </span>
           </button>
         )}

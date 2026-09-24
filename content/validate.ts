@@ -207,8 +207,14 @@ export function validateCorpus(label: string, corpus: Corpus): void {
 
     // Wykładnik ($x^2$) to nie wartość, którą uczeń mógłby przepisać jako
     // wynik - pomijamy go, żeby reguła nie zgłaszała fałszywych przecieków.
+    // Skrót TeX-a \frac12 to jedna druga, a nie liczba 12.
     const numbersIn = (text: string): number[] =>
-      (text.replace(/\^\{[^}]*\}|\^\d/g, ' ').match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+      (
+        text
+          .replace(/\\[dt]?frac(\d)(\d)/g, ' $1 $2 ')
+          .replace(/\^\{[^}]*\}|\^\d/g, ' ')
+          .match(/-?\d+(?:\.\d+)?/g) ?? []
+      ).map(Number);
 
     it('poziomy sa rosnace, bez powtorzen i w zakresie drabiny', () => {
       for (const q of questions) {
