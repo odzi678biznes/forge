@@ -1,4 +1,5 @@
 import type {
+  CodeTest,
   CommonError,
   Figure,
   Flashcard,
@@ -47,6 +48,8 @@ interface BaseSpec {
   errors: ErrorSpec[];
   /** Wykres albo figura do zadania. */
   figure?: Figure;
+  /** Kod do analizy pokazywany pod treścią. */
+  listing?: string;
   source?: string;
 }
 
@@ -108,6 +111,7 @@ function base(spec: BaseSpec): Omit<Question, 'format' | 'answer' | 'acceptedVar
     source: spec.source ?? AUTHORED,
     verified: false,
     ...(spec.figure ? { figure: spec.figure } : {}),
+    ...(spec.listing ? { listing: dedent(spec.listing) } : {}),
   };
 }
 
@@ -149,6 +153,53 @@ export function choice(spec: ChoiceSpec): Question {
     answer: spec.answer,
     acceptedVariants: [],
     choices: spec.choices,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Zadania programistyczne w Pythonie
+// ---------------------------------------------------------------------------
+
+/** Usuwa wspólne wcięcie i puste linie z brzegów - kod w szablonach czyta się wygodniej. */
+export function dedent(code: string): string {
+  const lines = code.replace(/\t/g, '    ').split('\n');
+  while (lines.length > 0 && lines[0]!.trim() === '') lines.shift();
+  while (lines.length > 0 && lines[lines.length - 1]!.trim() === '') lines.pop();
+  const indent = Math.min(...lines.filter((l) => l.trim() !== '').map((l) => /^ */.exec(l)![0].length));
+  return `${lines.map((l) => l.slice(indent)).join('\n')}\n`;
+}
+
+export interface PyTaskSpec extends Omit<BaseSpec, 'errors'> {
+  functionName: string;
+  /** Nazwy parametrów - z nich powstaje sygnatura i kod startowy. */
+  params: string[];
+  /** Opis typów pokazywany uczniowi, np. "lista liczb całkowitych -> int". */
+  types: string;
+  tests: CodeTest[];
+  /** Wzorcowe rozwiązanie - pokazywane po próbie i sprawdzane w testach treści. */
+  model: string;
+  /** Własny kod startowy; domyślnie pusta funkcja z komentarzem. */
+  starter?: string;
+}
+
+/** Zadanie: napisz funkcję w Pythonie, ocenianą na testach jawnych i ukrytych. */
+export function pyTask(spec: PyTaskSpec): Question {
+  const signature = `def ${spec.functionName}(${spec.params.join(', ')})  # ${spec.types}`;
+  const starter =
+    spec.starter ?? `def ${spec.functionName}(${spec.params.join(', ')}):\n    # Twoje rozwiązanie\n    pass\n`;
+  return {
+    ...base({ ...spec, errors: [] }),
+    format: 'code',
+    answer: 'program',
+    acceptedVariants: [],
+    code: {
+      language: 'python',
+      functionName: spec.functionName,
+      signature,
+      starterCode: starter,
+      tests: spec.tests,
+      modelSolution: dedent(spec.model),
+    },
   };
 }
 

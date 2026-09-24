@@ -236,6 +236,7 @@ export function Arena({
           <Tex>{question.prompt}</Tex>
         </h1>
         {question.figure && <Figure figure={question.figure} />}
+        {question.listing && <pre className="arena__listing">{question.listing}</pre>}
         {/* Odczyt tylko na żądanie i tylko lokalnym głosem (sek. 2 i 11). */}
         <button
           type="button"

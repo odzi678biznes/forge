@@ -1,4 +1,4 @@
-import { gradeRun, type CodeRunner, type CodeTest, type RunResult } from '@/learning-engine/code-grading';
+import { describePython, gradeRun, type CodeRunner, type CodeTest, type RunResult } from '@/learning-engine/code-grading';
 
 /**
  * Piaskownica Pythona dla zadań programistycznych (matura z informatyki).
@@ -92,14 +92,18 @@ export class PythonCodeRunner implements CodeRunner {
         // Pętla bez końca: jedyny sposób przerwania to ubicie interpretera.
         this.reset();
         resolve(
-          gradeRun(tests, { status: 'timeout', values: [], message: `Przekroczono limit ${timeoutMs / 1000} s — sprawdź, czy pętla się kończy.` }),
+          gradeRun(
+            tests,
+            { status: 'timeout', values: [], message: `Przekroczono limit ${timeoutMs / 1000} s — sprawdź, czy pętla się kończy.` },
+            describePython,
+          ),
         );
       }, timeoutMs);
 
       this.pending.set(nonce, (raw) => {
         window.clearTimeout(timer);
         this.pending.delete(nonce);
-        resolve(gradeRun(tests, raw));
+        resolve(gradeRun(tests, raw, describePython));
       });
 
       worker.postMessage({ nonce, source, functionName, inputs: tests.map((t) => t.input) });

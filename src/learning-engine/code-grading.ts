@@ -175,6 +175,41 @@ export function describeValue(v: unknown): string {
   return out.length > MAX_DESCRIBE_LENGTH ? `${out.slice(0, MAX_DESCRIBE_LENGTH)}…` : out;
 }
 
+/**
+ * Wartość zapisana tak, jak wypisałby ją Python: `[1, 2]`, `True`, `None`,
+ * `'tekst'`. Uczeń piszący w Pythonie nie powinien tłumaczyć w głowie
+ * zapisu JavaScriptu, żeby zrozumieć, czym różni się jego wynik.
+ */
+export function describePython(v: unknown): string {
+  let out: string;
+  try {
+    out = pythonRepr(v, 0);
+  } catch {
+    return describeValue(v);
+  }
+  return out.length > MAX_DESCRIBE_LENGTH ? `${out.slice(0, MAX_DESCRIBE_LENGTH)}…` : out;
+}
+
+function pythonRepr(v: unknown, depth: number): string {
+  if (depth > 20) return '…';
+  if (v === null || v === undefined) return 'None';
+  if (v === true) return 'True';
+  if (v === false) return 'False';
+  if (typeof v === 'string') {
+    // Jak repr() w Pythonie: apostrofy, chyba że napis sam zawiera apostrof.
+    const body = v.replace(/\\/g, '\\\\').replace(/\n/g, '\\n');
+    if (v.includes("'") && !v.includes('"')) return `"${body}"`;
+    return `'${body.replace(/'/g, "\\'")}'`;
+  }
+  if (SAFE.isArray(v)) return `[${(v as unknown[]).map((x) => pythonRepr(x, depth + 1)).join(', ')}]`;
+  if (typeof v === 'object') {
+    return `{${Object.entries(v as Record<string, unknown>)
+      .map(([k, x]) => `${pythonRepr(k, depth + 1)}: ${pythonRepr(x, depth + 1)}`)
+      .join(', ')}}`;
+  }
+  return String(v);
+}
+
 // ---------------------------------------------------------------------------
 // Walidacja tego, co przyszło z piaskownicy
 // ---------------------------------------------------------------------------
@@ -196,7 +231,11 @@ function isRawValue(v: unknown): v is RawValue {
  * zniekształcony wpis to test niezaliczony, a nie wyjątek — zniekształcony
  * wynik nie może ani wywrócić aplikacji, ani zaliczyć zadania.
  */
-export function gradeRun(tests: CodeTest[], raw: unknown): RunResult {
+export function gradeRun(
+  tests: CodeTest[],
+  raw: unknown,
+  describe: (v: unknown) => string = describeValue,
+): RunResult {
   const outcomes: TestOutcome[] = [];
 
   if (typeof raw !== 'object' || raw === null) {
@@ -253,8 +292,8 @@ export function gradeRun(tests: CodeTest[], raw: unknown): RunResult {
             name: test.name,
             hidden,
             passed: false,
-            actual: describeValue(entry.value),
-            expected: describeValue(test.expected),
+            actual: describe(entry.value),
+            expected: describe(test.expected),
           };
     }
     put(outcomes, outcomes.length, outcome);

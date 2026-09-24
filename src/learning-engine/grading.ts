@@ -38,7 +38,7 @@ export function grade(question: Question, rawAnswer: string): Grade {
   }
 
   if (matches(question, answer)) {
-    return { correctness: 'correct', error: null, note: 'Zgadza sie.' };
+    return { correctness: 'correct', error: null, note: 'Zgadza się.' };
   }
 
   // Zanim powiemy "zle", sprawdzamy, czy to rozpoznany typowy blad.

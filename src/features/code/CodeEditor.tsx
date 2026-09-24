@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import type { CodeTask } from '@/data/types';
-import { describeValue, hiddenTestCount, visibleTests } from '@/learning-engine/code-grading';
+import { describePython, describeValue, hiddenTestCount, visibleTests } from '@/learning-engine/code-grading';
 import { count } from '@/learning-engine/polish';
 import './code.css';
 
@@ -23,28 +23,13 @@ interface Props {
   running: boolean;
 }
 
-/** Wartość testu zapisana tak, jak wyglądałaby w Pythonie. */
-export function pythonRepr(v: unknown): string {
-  if (v === null || v === undefined) return 'None';
-  if (v === true) return 'True';
-  if (v === false) return 'False';
-  if (typeof v === 'string') return `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`;
-  if (Array.isArray(v)) return `[${v.map(pythonRepr).join(', ')}]`;
-  if (typeof v === 'object') {
-    return `{${Object.entries(v as Record<string, unknown>)
-      .map(([k, x]) => `${pythonRepr(k)}: ${pythonRepr(x)}`)
-      .join(', ')}}`;
-  }
-  return String(v);
-}
-
 export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEditor(
   { task, value, onChange, onRun, disabled, running },
   ref,
 ) {
   const python = task.language === 'python';
   const indent = python ? '    ' : '  ';
-  const show = python ? pythonRepr : describeValue;
+  const show = python ? describePython : describeValue;
   const shown = visibleTests(task.tests);
   const hidden = hiddenTestCount(task.tests);
 

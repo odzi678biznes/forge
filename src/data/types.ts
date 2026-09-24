@@ -176,6 +176,8 @@ export interface Question {
   choices?: string[];
   /** Rysunek do zadania: wykres funkcji albo figura geometryczna. */
   figure?: Figure;
+  /** Fragment kodu do analizy (np. „co wypisze ten program”), pokazywany dosłownie. */
+  listing?: string;
   hints: Hint[];
   /** Typowe bledy - klucz do Laboratorium bledow (sek. 7.4). */
   commonErrors: CommonError[];

@@ -432,3 +432,16 @@
   line-height: 1.6;
   color: var(--text);
 }
+
+.arena__listing {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--bg-abyss);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  line-height: 1.65;
+  color: var(--text);
+}

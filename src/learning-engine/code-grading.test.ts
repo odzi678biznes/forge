@@ -9,7 +9,7 @@ import {
   type CodeTest,
 } from './code-grading';
 import { buildSolution, collectValues } from './run-tests';
-import { executeTests, gradeRun } from './code-grading';
+import { describePython, executeTests, gradeRun } from './code-grading';
 
 /**
  * Blueprint sek. 16 wymaga testów oceniania kodu „na poprawnych, błędnych
@@ -356,5 +356,32 @@ describe('walidacja podrobionego wyniku z piaskownicy', () => {
 
   it('pusta Map nie jest rowna pustemu obiektowi', () => {
     expect(deepEqual(new Map(), {})).toBe(false);
+  });
+});
+
+describe('wartosci w zapisie Pythona', () => {
+  it('listy, logika, None i napisy wygladaja jak w Pythonie', () => {
+    expect(describePython([1, 0, 0])).toBe('[1, 0, 0]');
+    expect(describePython(true)).toBe('True');
+    expect(describePython(null)).toBe('None');
+    expect(describePython('Ala')).toBe("'Ala'");
+    expect(describePython("it's")).toBe(`"it's"`);
+    expect(describePython(`a'b"c`)).toBe(`'a\\'b"c'`);
+    expect(describePython({ a: [1, 2] })).toBe("{'a': [1, 2]}");
+  });
+
+  it('wynik przegranego testu w Pythonie jest opisany po pythonowemu', () => {
+    const r = gradeRun(
+      [{ name: 't', input: [], expected: [1, 0, 0] }],
+      { status: 'ok', values: [{ ok: true, value: [1, 60, 0] }], message: null },
+      describePython,
+    );
+    expect(r.outcomes[0]).toMatchObject({ expected: '[1, 0, 0]', actual: '[1, 60, 0]' });
+  });
+
+  it('absurdalnie zagniezdzona wartosc nie wywraca opisu', () => {
+    let v: unknown = 1;
+    for (let i = 0; i < 5000; i += 1) v = [v];
+    expect(() => describePython(v)).not.toThrow();
   });
 });

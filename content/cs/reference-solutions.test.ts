@@ -85,7 +85,8 @@ const REFERENCE: Record<string, string> = {
     }`,
 };
 
-const codeQuestions = CS_QUESTIONS.filter((q) => q.format === 'code');
+// Zadania w Pythonie sprawdza python.test.ts - tu tylko JavaScript.
+const codeQuestions = CS_QUESTIONS.filter((q) => q.format === 'code' && q.code?.language !== 'python');
 
 describe('rozwiazania referencyjne', () => {
   it('kazde zadanie programistyczne ma rozwiazanie referencyjne', () => {

@@ -101,7 +101,7 @@ export class IndexedDbStorage implements StoragePort {
       };
 
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error ?? new Error('Nie udalo sie otworzyc bazy.'));
+      req.onerror = () => reject(req.error ?? new Error('Nie udało się otworzyć bazy.'));
     });
   }
 

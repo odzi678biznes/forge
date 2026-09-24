@@ -37,7 +37,7 @@ export async function importSnapshot(port: StoragePort, snapshot: SnapshotV1): P
 /** Przywrocenie tez jest zmiana - bez kopii nie daloby sie go cofnac. */
 export async function restoreBackup(port: StoragePort, id: string): Promise<BackupInfo> {
   const snapshot = await port.loadBackup(id);
-  if (!snapshot) throw new SnapshotValidationError('Ta kopia juz nie istnieje.');
+  if (!snapshot) throw new SnapshotValidationError('Ta kopia już nie istnieje.');
   const backup = await port.saveBackup('przed przywróceniem kopii');
   await port.importAll(snapshot);
   return backup;
