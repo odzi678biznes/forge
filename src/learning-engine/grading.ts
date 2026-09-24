@@ -27,7 +27,11 @@ export function grade(question: Question, rawAnswer: string): Grade {
     );
   }
 
-  const answer = normalise(rawAnswer);
+  // W zadaniu zamknietym "B", "b", "(B)" i "B)" to ta sama odpowiedz.
+  const answer =
+    question.format === 'choice'
+      ? normalise(rawAnswer).replace(/[().]/g, '')
+      : normalise(rawAnswer);
 
   if (answer === '') {
     return { correctness: 'incorrect', error: null, note: 'Brak odpowiedzi.' };

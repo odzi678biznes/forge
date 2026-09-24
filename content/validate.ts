@@ -1,9 +1,27 @@
 import { describe, expect, it } from 'vitest';
+import katex from 'katex';
 import { grade, normalise, parseNumber } from '@/learning-engine/grading';
 import { buildSolution } from '@/learning-engine/run-tests';
 import { executeTests, judge } from '@/learning-engine/code-grading';
 import { HINT_LADDER, type Question } from '@/data/types';
-import type { Corpus } from './math/index';
+import type { Corpus } from './corpus';
+import { VERIFIERS } from './authoring';
+
+const LETTERS = ['A', 'B', 'C', 'D'] as const;
+
+/** Wszystkie fragmenty $...$ z tekstu. */
+function mathSegments(text: string): string[] {
+  return [...text.matchAll(/\$([^$]*)\$/g)].map((m) => m[1] ?? '');
+}
+
+/** Liczba z prostego zapisu odpowiedzi zamknietej: 12, -0,5, \frac{3}{4}, -\dfrac{1}{2}. */
+function choiceValue(choiceText: string): number | null {
+  const tex = choiceText.replace(/\$/g, '').replace(/\s+/g, '').replace(/,/g, '.');
+  const frac = /^(-?)\\d?frac\{(\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}$/.exec(tex);
+  if (frac) return (frac[1] === '-' ? -1 : 1) * (Number(frac[2]) / Number(frac[3]));
+  const n = Number(tex);
+  return tex !== '' && Number.isFinite(n) ? n : null;
+}
 
 /**
  * Wspólna walidacja korpusu treści — uruchamiana dla każdego przedmiotu.
@@ -17,7 +35,7 @@ import type { Corpus } from './math/index';
  * zestaw reguł automatycznie, zamiast kopiowanego i rozjeżdżającego się pliku.
  */
 export function validateCorpus(label: string, corpus: Corpus): void {
-  const { topics, skills, questions } = corpus;
+  const { topics, skills, questions, lessons, flashcards } = corpus;
   const skillIds = new Set(skills.map((s) => s.id));
   const topicIds = new Set(topics.map((t) => t.id));
 
@@ -25,6 +43,44 @@ export function validateCorpus(label: string, corpus: Corpus): void {
   const numericQuestions = questions.filter((q) => q.format === 'numeric');
   const codeQuestions = questions.filter((q) => q.format === 'code');
   const gradableQuestions = questions.filter((q) => q.format !== 'code');
+  const choiceQuestions = questions.filter((q) => q.format === 'choice');
+  /** Umiejetnosci kursu - te z poziomem PP/PR - musza miec lekcje i fiszki. */
+  const courseSkills = skills.filter((s) => s.level !== undefined);
+
+  /** Kazdy tekst korpusu, ktory trafia na ekran, z etykieta do komunikatu. */
+  const allTexts: Array<[string, string]> = [
+    ...questions.flatMap((q): Array<[string, string]> => [
+      [q.id, q.prompt],
+      [q.id, q.solution],
+      ...(q.steps ?? []).map((t): [string, string] => [`${q.id}/krok`, t]),
+      ...(q.choices ?? []).map((t): [string, string] => [`${q.id}/odp`, t]),
+      ...q.hints.map((h): [string, string] => [`${q.id}/podp${h.level}`, h.text]),
+      ...q.commonErrors.flatMap((e): Array<[string, string]> => [
+        [e.id, e.cause],
+        [e.id, e.rule],
+      ]),
+    ]),
+    ...lessons.flatMap((l): Array<[string, string]> => [
+      [`lekcja ${l.skillId}`, l.intro],
+      ...l.blocks.map((b): [string, string] => [
+        `lekcja ${l.skillId}`,
+        b.kind === 'formula' ? `$${b.tex}$ ${b.caption ?? ''}` : b.body,
+      ]),
+      ...l.examples.flatMap((e): Array<[string, string]> => [
+        [`przyklad ${l.skillId}`, e.prompt],
+        [`przyklad ${l.skillId}`, e.answer],
+        ...e.steps.flatMap((st): Array<[string, string]> => [
+          [`przyklad ${l.skillId}`, st.text],
+          [`przyklad ${l.skillId}`, st.why ?? ''],
+        ]),
+      ]),
+      ...l.pitfalls.map((t): [string, string] => [`pulapka ${l.skillId}`, t]),
+    ]),
+    ...flashcards.flatMap((c): Array<[string, string]> => [
+      [c.id, c.front],
+      [c.id, c.back],
+    ]),
+  ];
 
   describe(`${label}: struktura`, () => {
     it('identyfikatory dzialow, kompetencji i pytan sa unikalne', () => {
@@ -249,6 +305,124 @@ export function validateCorpus(label: string, corpus: Corpus): void {
 
     it('cala tresc jest jawnie oznaczona statusem weryfikacji', () => {
       for (const q of questions) expect(typeof q.verified, q.id).toBe('boolean');
+    });
+  });
+
+  describe(`${label}: zapis matematyczny`, () => {
+    it('kazdy tekst ma sparowane znaki $', () => {
+      for (const [where, t] of allTexts) {
+        expect((t.match(/\$/g) ?? []).length % 2, `${where}: "${t}"`).toBe(0);
+      }
+    });
+
+    it('kazdy wzor da sie wyrenderowac bez bledu skladni', () => {
+      for (const [where, t] of allTexts) {
+        for (const tex of mathSegments(t)) {
+          expect(
+            () => katex.renderToString(tex, { throwOnError: true }),
+            `${where}: $${tex}$`,
+          ).not.toThrow();
+        }
+      }
+    });
+  });
+
+  describe(`${label}: wyniki liczone niezaleznie`, () => {
+    it('odpowiedz autora zgadza sie z niezaleznym wyliczeniem', () => {
+      for (const q of questions) {
+        const verify = VERIFIERS.get(q.id);
+        if (!verify) continue;
+        const computed = verify();
+
+        if (q.format === 'numeric') {
+          const given = parseNumber(normalise(q.answer));
+          expect(given, q.id).not.toBeNull();
+          const tolerance = Math.max(q.tolerance ?? 0, 1e-9 * Math.max(1, Math.abs(Number(computed))));
+          expect(
+            Math.abs((given ?? NaN) - Number(computed)),
+            `${q.id}: odpowiedz ${q.answer}, wyliczone ${computed}`,
+          ).toBeLessThanOrEqual(tolerance);
+        } else if (q.format === 'choice') {
+          const idx = LETTERS.indexOf(q.answer as (typeof LETTERS)[number]);
+          const value = choiceValue(q.choices?.[idx] ?? '');
+          expect(value, `${q.id}: odpowiedzi ${q.answer} nie da sie odczytac jako liczby`).not.toBeNull();
+          expect(
+            Math.abs((value ?? NaN) - Number(computed)),
+            `${q.id}: ${q.choices?.[idx]}, wyliczone ${computed}`,
+          ).toBeLessThan(1e-9);
+        } else {
+          expect(normalise(q.answer), q.id).toBe(normalise(String(computed)));
+        }
+      }
+    });
+  });
+
+  if (choiceQuestions.length > 0) {
+    describe(`${label}: zadania zamkniete`, () => {
+      it('maja cztery rozne odpowiedzi i poprawna litere A-D', () => {
+        for (const q of choiceQuestions) {
+          expect(q.choices?.length, q.id).toBe(4);
+          expect(new Set(q.choices).size, `${q.id}: powtorzona odpowiedz`).toBe(4);
+          expect(LETTERS as readonly string[], q.id).toContain(q.answer);
+        }
+      });
+
+      it('kazda bledna litera ma nazwana przyczyne - zly wybor mowi, co poszlo zle', () => {
+        for (const q of choiceQuestions) {
+          for (const letter of LETTERS.filter((l) => l !== q.answer)) {
+            expect(grade(q, letter).error, `${q.id}: litera ${letter} bez przyczyny`).not.toBeNull();
+          }
+        }
+      });
+    });
+  }
+
+  describe(`${label}: lekcje i fiszki`, () => {
+    it('lekcja wskazuje istniejaca umiejetnosc, najwyzej jedna na umiejetnosc', () => {
+      for (const l of lessons) expect(skillIds.has(l.skillId), l.skillId).toBe(true);
+      const ids = lessons.map((l) => l.skillId);
+      expect(new Set(ids).size, 'dwie lekcje do jednej umiejetnosci').toBe(ids.length);
+    });
+
+    it('kazda umiejetnosc kursu ma lekcje', () => {
+      const withLesson = new Set(lessons.map((l) => l.skillId));
+      for (const s of courseSkills) expect(withLesson.has(s.id), `${s.id}: brak lekcji`).toBe(true);
+    });
+
+    it('lekcja ma wstep, tresc, rozwiazany przyklad i pulapki', () => {
+      for (const l of lessons) {
+        expect(l.intro.trim(), l.skillId).not.toBe('');
+        expect(l.blocks.length, l.skillId).toBeGreaterThanOrEqual(2);
+        expect(l.examples.length, l.skillId).toBeGreaterThanOrEqual(1);
+        for (const e of l.examples) expect(e.steps.length, l.skillId).toBeGreaterThanOrEqual(2);
+        expect(l.pitfalls.length, l.skillId).toBeGreaterThanOrEqual(1);
+        expect(l.minutes, l.skillId).toBeGreaterThanOrEqual(3);
+        expect(l.minutes, l.skillId).toBeLessThanOrEqual(30);
+      }
+    });
+
+    it('fiszki maja unikalne id, istniejaca umiejetnosc i obie strony', () => {
+      expect(new Set(flashcards.map((c) => c.id)).size).toBe(flashcards.length);
+      for (const c of flashcards) {
+        expect(skillIds.has(c.skillId), c.id).toBe(true);
+        expect(c.front.trim(), c.id).not.toBe('');
+        expect(c.back.trim(), c.id).not.toBe('');
+      }
+    });
+
+    it('kazda umiejetnosc kursu ma co najmniej dwie fiszki', () => {
+      for (const s of courseSkills) {
+        expect(flashcards.filter((c) => c.skillId === s.id).length, s.id).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    it('umiejetnosc kursu ma zadania od latwych do maturalnych - bez skoku na gleboka wode', () => {
+      for (const s of courseSkills) {
+        const d = questionsOfSkill(s.id).map((q) => q.difficulty);
+        expect(d.length, `${s.id}: za malo zadan`).toBeGreaterThanOrEqual(6);
+        expect(Math.min(...d), `${s.id}: brak latwego wejscia`).toBeLessThanOrEqual(2);
+        expect(Math.max(...d), `${s.id}: brak zadania na poziomie matury`).toBeGreaterThanOrEqual(4);
+      }
     });
   });
 

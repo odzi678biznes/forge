@@ -410,3 +410,86 @@ describe('walidacja kopii - rekordy niepelne', () => {
     );
   });
 });
+
+describe('kurs: lekcje i fiszki', () => {
+  const card = (cardId: string, skillId: string) => ({
+    cardId,
+    skillId,
+    box: 1,
+    dueAt: 500,
+    introducedAt: 50,
+    lastReviewedAt: 100,
+    reviews: 2,
+    lapses: 0,
+  });
+
+  it('ukonczenie lekcji i stan fiszek przezywaja restart', async () => {
+    const name = freshName();
+    const first = new IndexedDbStorage(name);
+    await first.init();
+    await first.saveLessonProgress({ skillId: 's-1', completedAt: 10 });
+    await first.saveCardState(card('c-1', 's-1'));
+    first.close();
+
+    const second = new IndexedDbStorage(name);
+    await second.init();
+    expect(await second.loadLessonProgress()).toEqual([{ skillId: 's-1', completedAt: 10 }]);
+    expect(await second.loadCardStates()).toEqual([card('c-1', 's-1')]);
+  });
+
+  it('pierwsze ukonczenie lekcji zostaje - powrot do lekcji go nie przesuwa', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveLessonProgress({ skillId: 's-1', completedAt: 10 });
+    await store.saveLessonProgress({ skillId: 's-1', completedAt: 99 });
+    expect(await store.loadLessonProgress()).toEqual([{ skillId: 's-1', completedAt: 10 }]);
+  });
+
+  it('usuniecie umiejetnosci zabiera jej lekcje i fiszki, a cudze zostawia', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveLessonProgress({ skillId: 's-1', completedAt: 10 });
+    await store.saveLessonProgress({ skillId: 's-2', completedAt: 11 });
+    await store.saveCardState(card('c-1', 's-1'));
+    await store.saveCardState(card('c-2', 's-2'));
+
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: ['s-1'], dropPlan: false });
+
+    expect((await store.loadLessonProgress()).map((l) => l.skillId)).toEqual(['s-2']);
+    expect((await store.loadCardStates()).map((c) => c.cardId)).toEqual(['c-2']);
+  });
+
+  it('eksport i import obejmuja postep kursu', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveLessonProgress({ skillId: 's-1', completedAt: 10 });
+    await store.saveCardState(card('c-1', 's-1'));
+
+    const copy: unknown = JSON.parse(JSON.stringify(await store.exportAll()));
+    await store.clear();
+    expect(await store.loadCardStates()).toEqual([]);
+
+    await store.importAll(copy);
+    expect(await store.loadLessonProgress()).toHaveLength(1);
+    expect(await store.loadCardStates()).toEqual([card('c-1', 's-1')]);
+  });
+
+  it('kopia sprzed kursu (bez tych pol) nadal sie wczytuje', () => {
+    const old = { version: 1, exportedAt: 0, skillStates: [], attempts: [], missions: [] };
+    const v = validateSnapshot(old);
+    expect(v.lessonProgress).toEqual([]);
+    expect(v.cardStates).toEqual([]);
+  });
+
+  it('niepelny stan fiszki w kopii jest odrzucony', () => {
+    const bad = {
+      version: 1,
+      exportedAt: 0,
+      skillStates: [],
+      attempts: [],
+      missions: [],
+      cardStates: [{ cardId: 'c-1' }],
+    };
+    expect(() => validateSnapshot(bad)).toThrow(SnapshotValidationError);
+  });
+});

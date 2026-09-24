@@ -234,7 +234,15 @@ describe('cykl zycia', () => {
 
     // Proby odwoluja sie do kompetencji, wiec ida pierwsze.
     expect(order[0]).toContain('DELETE FROM attempts');
-    for (const tabela of ['attempts', 'missions', 'skill_states', 'plans', 'preferences']) {
+    for (const tabela of [
+      'attempts',
+      'missions',
+      'skill_states',
+      'plans',
+      'preferences',
+      'lesson_progress',
+      'card_states',
+    ]) {
       expect(order.some((s) => s.includes(`DELETE FROM ${tabela}`)), tabela).toBe(true);
     }
   });
@@ -261,6 +269,11 @@ describe('usuwanie i kopie (sek. 12)', () => {
     expect(attempts?.sql).toContain('json_each($1)');
     expect(attempts?.sql).not.toContain(hostile);
     expect(attempts?.params).toEqual([JSON.stringify([hostile, 'a-2'])]);
+    // Umiejetnosc zabiera ze soba lekcje i fiszki.
+    for (const tabela of ['skill_states', 'lesson_progress', 'card_states']) {
+      const call = calls.find((c) => c.sql.includes(`DELETE FROM ${tabela}`));
+      expect(call?.params, tabela).toEqual([JSON.stringify(['s-1'])]);
+    }
     // Pusta lista nie generuje zapytania; plan zostaje.
     expect(calls.some((c) => c.sql.includes('DELETE FROM missions'))).toBe(false);
     expect(calls.some((c) => c.sql.includes('DELETE FROM plans'))).toBe(false);

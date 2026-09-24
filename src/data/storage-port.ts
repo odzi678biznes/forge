@@ -1,4 +1,12 @@
-import type { Attempt, Mission, Preference, SavedPlan, SkillState } from './types';
+import type {
+  Attempt,
+  CardState,
+  LessonProgress,
+  Mission,
+  Preference,
+  SavedPlan,
+  SkillState,
+} from './types';
 
 /**
  * Port trwalosci.
@@ -28,6 +36,14 @@ export interface StoragePort {
   loadPreferences(): Promise<Preference[]>;
   setPreference(key: string, value: string): Promise<void>;
 
+  /** Ukonczone lekcje kursu. */
+  loadLessonProgress(): Promise<LessonProgress[]>;
+  saveLessonProgress(progress: LessonProgress): Promise<void>;
+
+  /** Stan fiszek w systemie pudelek. */
+  loadCardStates(): Promise<CardState[]>;
+  saveCardState(state: CardState): Promise<void>;
+
   /** Eksport do jawnego JSON (sek. 12). */
   exportAll(): Promise<SnapshotV1>;
   /** Import z walidacja schematu (sek. 12). */
@@ -36,7 +52,11 @@ export interface StoragePort {
   /** Usuniecie wszystkich danych uzytkownika. Kopii bezpieczenstwa nie rusza. */
   clear(): Promise<void>;
 
-  /** Usuniecie wskazanych rekordow - jednej sesji albo przedmiotu (sek. 12). */
+  /**
+   * Usuniecie wskazanych rekordow - jednej sesji albo przedmiotu (sek. 12).
+   * `skillIds` usuwa wszystko, co nalezy do umiejetnosci: jej stan, lekcje
+   * i fiszki.
+   */
   deleteRecords(selection: RecordSelection): Promise<void>;
 
   /**
@@ -102,6 +122,8 @@ export interface SnapshotV1 {
   /** Pola dopisane w wersji 1 po pierwszym wydaniu - kopie bez nich sa wazne. */
   plan?: SavedPlan | null;
   preferences?: Preference[];
+  lessonProgress?: LessonProgress[];
+  cardStates?: CardState[];
 }
 
 export class SnapshotValidationError extends Error {
@@ -175,6 +197,28 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     }
   }
 
+  const lessonProgress = snap.lessonProgress ?? [];
+  const cardStates = snap.cardStates ?? [];
+  if (!Array.isArray(lessonProgress) || !Array.isArray(cardStates)) {
+    throw new SnapshotValidationError('Postep kursu nie jest lista.');
+  }
+  for (const l of lessonProgress) {
+    if (typeof l?.skillId !== 'string' || typeof l.completedAt !== 'number') {
+      throw new SnapshotValidationError('Niepelny zapis ukonczonej lekcji.');
+    }
+  }
+  for (const c of cardStates) {
+    if (
+      typeof c?.cardId !== 'string' ||
+      typeof c.skillId !== 'string' ||
+      typeof c.box !== 'number' ||
+      typeof c.dueAt !== 'number' ||
+      typeof c.introducedAt !== 'number'
+    ) {
+      throw new SnapshotValidationError('Niepelny stan fiszki.');
+    }
+  }
+
   return {
     version: SNAPSHOT_VERSION,
     exportedAt: typeof snap.exportedAt === 'number' ? snap.exportedAt : Date.now(),
@@ -184,5 +228,7 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     // Starsze kopie nie maja tych pol - to nie jest powod do odrzucenia.
     plan: snap.plan ?? null,
     preferences: Array.isArray(snap.preferences) ? snap.preferences : [],
+    lessonProgress,
+    cardStates,
   };
 }

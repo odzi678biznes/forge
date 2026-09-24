@@ -1,5 +1,5 @@
 import type { Question, Skill, Topic } from '@/data/types';
-import type { Corpus } from '../math/index';
+import type { Corpus } from '../corpus';
 import { ALGO_QUESTIONS, ALGO_SKILLS, ALGO_TOPIC, CS } from './algorytmika';
 
 /**
@@ -21,4 +21,6 @@ export const CS_CORPUS: Corpus = {
   topics: CS_TOPICS,
   skills: CS_SKILLS,
   questions: CS_QUESTIONS,
+  lessons: [],
+  flashcards: [],
 };

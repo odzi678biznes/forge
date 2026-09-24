@@ -37,10 +37,18 @@ export const MASTERY_LABELS: Record<MasteryLevel, string> = {
   5: 'Utrwalone',
 };
 
+/**
+ * Poziom egzaminu, na którym umiejętność jest wymagana. Rozszerzenie zawiera
+ * podstawę, więc umiejętność PP jest potrzebna także do matury rozszerzonej.
+ */
+export type ExamLevel = 'PP' | 'PR';
+
 export interface Skill {
   id: string;
   topicId: string;
   name: string;
+  /** Brak pola = rozszerzenie (tak powstały pierwsze wycinki treści). */
+  level?: ExamLevel;
   /** Wymaganie z podstawy / informatora CKE. */
   ckeRequirement: string;
   /** Kompetencje, ktore trzeba miec wczesniej. */
@@ -53,6 +61,8 @@ export interface Topic {
   id: string;
   subjectId: string;
   name: string;
+  /** Jedno zdanie o tym, czego dział uczy - pokazywane na mapie kursu. */
+  summary?: string;
 }
 
 export interface Subject {
@@ -85,7 +95,11 @@ export type QuestionKind =
   /** Fundament - sprawdza warunek wstepny. */
   | 'foundation';
 
-export type AnswerFormat = 'numeric' | 'exact-text' | 'multi-step' | 'code';
+/**
+ * 'choice' to zadanie zamknięte jak na maturze podstawowej: odpowiedzią jest
+ * litera A-D, a treści odpowiedzi są w `choices`.
+ */
+export type AnswerFormat = 'numeric' | 'exact-text' | 'multi-step' | 'code' | 'choice';
 
 /**
  * Pojedynczy test zadania programistycznego (sek. 15, Etap 4).
@@ -136,6 +150,13 @@ export interface Question {
   /** Tolerancja dla odpowiedzi liczbowych. */
   tolerance?: number;
   solution: string;
+  /**
+   * Rozwiązanie rozpisane na kroki - pokazywane po kolei, jak przy tablicy.
+   * Gdy brak, pokazywane jest samo `solution`.
+   */
+  steps?: string[];
+  /** Odpowiedzi A-D dla `format === 'choice'` (w tej kolejności). */
+  choices?: string[];
   hints: Hint[];
   /** Typowe bledy - klucz do Laboratorium bledow (sek. 7.4). */
   commonErrors: CommonError[];
@@ -276,4 +297,82 @@ export interface SavedPlan {
 export interface Preference {
   key: string;
   value: string;
+}
+
+// ---------------------------------------------------------------------------
+// Kurs: lekcje i fiszki
+// ---------------------------------------------------------------------------
+
+/** Fragment lekcji. Tekst może zawierać wzory w $...$. */
+export type LessonBlock =
+  | { kind: 'text'; body: string }
+  /** Wzór wyróżniony, wyśrodkowany - bez znaków $. */
+  | { kind: 'formula'; tex: string; caption?: string }
+  /** "Zapamiętaj" - reguła do wyniesienia z lekcji. */
+  | { kind: 'tip'; body: string }
+  /** "Uwaga" - miejsce, w którym najczęściej traci się punkty. */
+  | { kind: 'warning'; body: string };
+
+export interface WorkedStep {
+  text: string;
+  /** Dlaczego ten krok - krótkie uzasadnienie pod krokiem. */
+  why?: string;
+}
+
+/** Przykład rozwiązany krok po kroku; uczeń odsłania kolejne kroki sam. */
+export interface WorkedExample {
+  prompt: string;
+  steps: WorkedStep[];
+  answer: string;
+}
+
+/**
+ * Lekcja do jednej umiejętności - nauczyciel przed ćwiczeniami.
+ *
+ * Kolejność jest dydaktyczna: najpierw po co, potem jak, potem przykład
+ * rozwiązany na oczach ucznia, na końcu pułapki. Ćwiczenia zaczynają się
+ * dopiero po lekcji.
+ */
+export interface Lesson {
+  skillId: string;
+  /** Po co to jest i gdzie się przyda - jedno, dwa zdania. */
+  intro: string;
+  blocks: LessonBlock[];
+  examples: WorkedExample[];
+  pitfalls: string[];
+  /** Szacowany czas samej lekcji w minutach. */
+  minutes: number;
+}
+
+export type FlashcardKind = 'wzor' | 'definicja' | 'metoda' | 'pulapka';
+
+export interface Flashcard {
+  id: string;
+  skillId: string;
+  kind: FlashcardKind;
+  /** Pytanie na awersie. */
+  front: string;
+  /** Odpowiedź na rewersie. */
+  back: string;
+}
+
+/** Stan fiszki w systemie pudełek (Leitnera). */
+export interface CardState {
+  cardId: string;
+  /** Umiejętność fiszki - usunięcie przedmiotu usuwa też jego fiszki. */
+  skillId: string;
+  /** Numer pudełka 0..n; wyższe pudełko = dłuższy odstęp. */
+  box: number;
+  dueAt: number;
+  /** Kiedy karta weszła do nauki - do dziennego limitu nowych kart. */
+  introducedAt: number;
+  lastReviewedAt: number | null;
+  reviews: number;
+  lapses: number;
+}
+
+/** Ukończona lekcja - uczeń doszedł do końca i przeszedł do ćwiczeń. */
+export interface LessonProgress {
+  skillId: string;
+  completedAt: number;
 }

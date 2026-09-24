@@ -1,4 +1,5 @@
-import type { Question, Skill, Subject, Topic } from '@/data/types';
+import type { Question, Skill, Topic } from '@/data/types';
+import type { Corpus } from '../corpus';
 import {
   MATH,
   QUADRATIC_QUESTIONS,
@@ -57,18 +58,15 @@ export const MATH_QUESTIONS: Question[] = [
   ...PROB_QUESTIONS,
 ];
 
-export interface Corpus {
-  subject: Subject;
-  topics: Topic[];
-  skills: Skill[];
-  questions: Question[];
-}
+export type { Corpus };
 
 export const MATH_CORPUS: Corpus = {
   subject: MATH,
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
+  lessons: [],
+  flashcards: [],
 };
 
 /** Kompetencje nalezace do danego dzialu. */

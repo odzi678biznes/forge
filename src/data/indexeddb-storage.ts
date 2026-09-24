@@ -1,4 +1,12 @@
-import type { Attempt, Mission, Preference, SavedPlan, SkillState } from './types';
+import type {
+  Attempt,
+  CardState,
+  LessonProgress,
+  Mission,
+  Preference,
+  SavedPlan,
+  SkillState,
+} from './types';
 import {
   MAX_BACKUPS,
   SNAPSHOT_VERSION,
@@ -19,7 +27,7 @@ import {
  */
 
 const DB_NAME = 'forge';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const STORES = {
   skillStates: 'skillStates',
@@ -27,6 +35,8 @@ const STORES = {
   missions: 'missions',
   plan: 'plan',
   preferences: 'preferences',
+  lessonProgress: 'lessonProgress',
+  cardStates: 'cardStates',
 } as const;
 
 /**
@@ -70,6 +80,13 @@ export class IndexedDbStorage implements StoragePort {
         }
         if (!db.objectStoreNames.contains(STORES.preferences)) {
           db.createObjectStore(STORES.preferences, { keyPath: 'key' });
+        }
+        // Migracja v4: kurs - ukonczone lekcje i fiszki.
+        if (!db.objectStoreNames.contains(STORES.lessonProgress)) {
+          db.createObjectStore(STORES.lessonProgress, { keyPath: 'skillId' });
+        }
+        if (!db.objectStoreNames.contains(STORES.cardStates)) {
+          db.createObjectStore(STORES.cardStates, { keyPath: 'cardId' });
         }
         // Migracja v3: kopie bezpieczenstwa (sek. 12).
         if (!db.objectStoreNames.contains(BACKUPS)) {
@@ -133,14 +150,36 @@ export class IndexedDbStorage implements StoragePort {
     return this.write(STORES.preferences, { key, value });
   }
 
+  async loadLessonProgress(): Promise<LessonProgress[]> {
+    return this.readAll<LessonProgress>(STORES.lessonProgress);
+  }
+
+  /** Pierwsze ukonczenie zostaje - ponowne przeczytanie lekcji go nie przesuwa. */
+  async saveLessonProgress(progress: LessonProgress): Promise<void> {
+    const existing = (await this.loadLessonProgress()).some((l) => l.skillId === progress.skillId);
+    if (existing) return;
+    return this.write(STORES.lessonProgress, progress);
+  }
+
+  async loadCardStates(): Promise<CardState[]> {
+    return this.readAll<CardState>(STORES.cardStates);
+  }
+
+  async saveCardState(state: CardState): Promise<void> {
+    return this.write(STORES.cardStates, state);
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences] = await Promise.all([
-      this.loadSkillStates(),
-      this.loadAttempts(),
-      this.loadMissions(),
-      this.loadPlan(),
-      this.loadPreferences(),
-    ]);
+    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates] =
+      await Promise.all([
+        this.loadSkillStates(),
+        this.loadAttempts(),
+        this.loadMissions(),
+        this.loadPlan(),
+        this.loadPreferences(),
+        this.loadLessonProgress(),
+        this.loadCardStates(),
+      ]);
     return {
       version: SNAPSHOT_VERSION,
       exportedAt: Date.now(),
@@ -149,6 +188,8 @@ export class IndexedDbStorage implements StoragePort {
       missions,
       plan,
       preferences,
+      lessonProgress,
+      cardStates,
     };
   }
 
@@ -165,6 +206,8 @@ export class IndexedDbStorage implements StoragePort {
       ...snapshot.missions.map((m) => this.saveMission(m)),
       ...(snapshot.preferences ?? []).map((p) => this.setPreference(p.key, p.value)),
       ...(snapshot.plan ? [this.savePlan(snapshot.plan)] : []),
+      ...(snapshot.lessonProgress ?? []).map((l) => this.write(STORES.lessonProgress, l)),
+      ...(snapshot.cardStates ?? []).map((c) => this.saveCardState(c)),
     ]);
   }
 
@@ -185,12 +228,33 @@ export class IndexedDbStorage implements StoragePort {
   /** Jedna transakcja: sesja albo przedmiot znika w calosci albo wcale. */
   async deleteRecords(selection: RecordSelection): Promise<void> {
     const db = this.require();
-    const names = [STORES.attempts, STORES.missions, STORES.skillStates, STORES.plan];
+    const names = [
+      STORES.attempts,
+      STORES.missions,
+      STORES.skillStates,
+      STORES.plan,
+      STORES.lessonProgress,
+      STORES.cardStates,
+    ];
     return new Promise((resolve, reject) => {
       const tx = db.transaction(names, 'readwrite');
       for (const id of selection.attemptIds) tx.objectStore(STORES.attempts).delete(id);
       for (const id of selection.missionIds) tx.objectStore(STORES.missions).delete(id);
-      for (const id of selection.skillIds) tx.objectStore(STORES.skillStates).delete(id);
+      for (const id of selection.skillIds) {
+        tx.objectStore(STORES.skillStates).delete(id);
+        tx.objectStore(STORES.lessonProgress).delete(id);
+      }
+      // Fiszki sa kluczowane po karcie, wiec szukamy ich po umiejetnosci.
+      if (selection.skillIds.length > 0) {
+        const skills = new Set(selection.skillIds);
+        const cards = tx.objectStore(STORES.cardStates);
+        const all = cards.getAll();
+        all.onsuccess = () => {
+          for (const c of all.result as CardState[]) {
+            if (skills.has(c.skillId)) cards.delete(c.cardId);
+          }
+        };
+      }
       if (selection.dropPlan) tx.objectStore(STORES.plan).delete(ACTIVE_PLAN_KEY);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);

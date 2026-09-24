@@ -2,9 +2,11 @@ import Database from '@tauri-apps/plugin-sql';
 import {
   MasteryLevel,
   type Attempt,
+  type CardState,
   type Confidence,
   type Correctness,
   type HintLevel,
+  type LessonProgress,
   type Mission,
   type MissionKind,
   type Preference,
@@ -79,6 +81,17 @@ interface PlanRow {
 interface PreferenceRow {
   key: string;
   value: string;
+}
+
+interface CardStateRow {
+  card_id: string;
+  skill_id: string;
+  box: number;
+  due_at: number;
+  introduced_at: number;
+  last_reviewed_at: number | null;
+  reviews: number;
+  lapses: number;
 }
 
 interface BackupRow {
@@ -252,14 +265,64 @@ export class SqliteStorage implements StoragePort {
     );
   }
 
+  async loadLessonProgress(): Promise<LessonProgress[]> {
+    const rows = await this.require().select<Array<{ skill_id: string; completed_at: number }>>(
+      'SELECT skill_id, completed_at FROM lesson_progress',
+    );
+    return rows.map((r) => ({ skillId: r.skill_id, completedAt: r.completed_at }));
+  }
+
+  /** Pierwsze ukonczenie zostaje - ponowne przeczytanie lekcji go nie przesuwa. */
+  async saveLessonProgress(progress: LessonProgress): Promise<void> {
+    await this.require().execute(
+      `INSERT INTO lesson_progress (skill_id, completed_at) VALUES ($1, $2)
+       ON CONFLICT (skill_id) DO NOTHING`,
+      [progress.skillId, progress.completedAt],
+    );
+  }
+
+  async loadCardStates(): Promise<CardState[]> {
+    const rows = await this.require().select<CardStateRow[]>('SELECT * FROM card_states');
+    return rows.map((r) => ({
+      cardId: r.card_id,
+      skillId: r.skill_id,
+      box: r.box,
+      dueAt: r.due_at,
+      introducedAt: r.introduced_at,
+      lastReviewedAt: r.last_reviewed_at,
+      reviews: r.reviews,
+      lapses: r.lapses,
+    }));
+  }
+
+  async saveCardState(c: CardState): Promise<void> {
+    await this.require().execute(
+      `INSERT INTO card_states
+         (card_id, skill_id, box, due_at, introduced_at, last_reviewed_at, reviews, lapses)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (card_id) DO UPDATE SET
+         skill_id = excluded.skill_id,
+         box = excluded.box,
+         due_at = excluded.due_at,
+         introduced_at = excluded.introduced_at,
+         last_reviewed_at = excluded.last_reviewed_at,
+         reviews = excluded.reviews,
+         lapses = excluded.lapses`,
+      [c.cardId, c.skillId, c.box, c.dueAt, c.introducedAt, c.lastReviewedAt, c.reviews, c.lapses],
+    );
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences] = await Promise.all([
-      this.loadSkillStates(),
-      this.loadAttempts(),
-      this.loadMissions(),
-      this.loadPlan(),
-      this.loadPreferences(),
-    ]);
+    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates] =
+      await Promise.all([
+        this.loadSkillStates(),
+        this.loadAttempts(),
+        this.loadMissions(),
+        this.loadPlan(),
+        this.loadPreferences(),
+        this.loadLessonProgress(),
+        this.loadCardStates(),
+      ]);
     return {
       version: SNAPSHOT_VERSION,
       exportedAt: Date.now(),
@@ -268,6 +331,8 @@ export class SqliteStorage implements StoragePort {
       missions,
       plan,
       preferences,
+      lessonProgress,
+      cardStates,
     };
   }
 
@@ -280,6 +345,8 @@ export class SqliteStorage implements StoragePort {
     for (const m of snapshot.missions) await this.saveMission(m);
     for (const pref of snapshot.preferences ?? []) await this.setPreference(pref.key, pref.value);
     if (snapshot.plan) await this.savePlan(snapshot.plan);
+    for (const l of snapshot.lessonProgress ?? []) await this.saveLessonProgress(l);
+    for (const c of snapshot.cardStates ?? []) await this.saveCardState(c);
   }
 
   async clear(): Promise<void> {
@@ -289,6 +356,8 @@ export class SqliteStorage implements StoragePort {
     await db.execute('DELETE FROM skill_states');
     await db.execute('DELETE FROM plans');
     await db.execute('DELETE FROM preferences');
+    await db.execute('DELETE FROM lesson_progress');
+    await db.execute('DELETE FROM card_states');
   }
 
   /**
@@ -308,6 +377,8 @@ export class SqliteStorage implements StoragePort {
     await byIds('attempts', 'id', selection.attemptIds);
     await byIds('missions', 'id', selection.missionIds);
     await byIds('skill_states', 'skill_id', selection.skillIds);
+    await byIds('lesson_progress', 'skill_id', selection.skillIds);
+    await byIds('card_states', 'skill_id', selection.skillIds);
     if (selection.dropPlan) await db.execute('DELETE FROM plans');
   }
 
