@@ -15,32 +15,6 @@ import { CS_QUESTIONS } from './index';
  * ucznia w aplikacji (`run-tests.ts` + `judge`).
  */
 const REFERENCE: Record<string, string> = {
-  sumaDodatnich: `
-    function sumaDodatnich(t) {
-      let s = 0;
-      for (const x of t) if (x > 0) s += x;
-      return s;
-    }`,
-  maksimum: `
-    function maksimum(t) {
-      if (t.length === 0) return null;
-      let m = t[0];
-      for (let i = 1; i < t.length; i++) if (t[i] > m) m = t[i];
-      return m;
-    }`,
-  drugieNajwieksze: `
-    function drugieNajwieksze(t) {
-      let pierwsze = null, drugie = null;
-      for (const x of t) {
-        if (pierwsze === null || x > pierwsze) {
-          if (pierwsze !== null) drugie = pierwsze;
-          pierwsze = x;
-        } else if (x !== pierwsze && (drugie === null || x > drugie)) {
-          drugie = x;
-        }
-      }
-      return drugie;
-    }`,
   wyszukajBinarnie: `
     function wyszukajBinarnie(t, x) {
       let l = 0, p = t.length - 1;
