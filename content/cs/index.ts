@@ -9,6 +9,7 @@ import { STRUCT_CARDS, STRUCT_LESSONS, STRUCT_QUESTIONS, STRUCT_SKILLS, STRUCT_T
 import { REPR_CARDS, REPR_LESSONS, REPR_QUESTIONS, REPR_SKILLS, REPR_TOPIC } from './kurs/reprezentacja';
 import { DB_CARDS, DB_LESSONS, DB_QUESTIONS, DB_SKILLS, DB_TOPIC } from './kurs/bazy-danych';
 import { SHEET_CARDS, SHEET_LESSONS, SHEET_QUESTIONS, SHEET_SKILLS, SHEET_TOPIC } from './kurs/arkusz';
+import { NET_CARDS, NET_LESSONS, NET_QUESTIONS, NET_SKILLS, NET_TOPIC } from './kurs/sieci';
 
 /**
  * Korpus informatyki (matura rozszerzona, podstawa programowa 2024 —
@@ -34,6 +35,7 @@ const CHAPTERS = [
   { topic: REPR_TOPIC, skills: REPR_SKILLS, questions: REPR_QUESTIONS, lessons: REPR_LESSONS, cards: REPR_CARDS },
   { topic: DB_TOPIC, skills: DB_SKILLS, questions: DB_QUESTIONS, lessons: DB_LESSONS, cards: DB_CARDS },
   { topic: SHEET_TOPIC, skills: SHEET_SKILLS, questions: SHEET_QUESTIONS, lessons: SHEET_LESSONS, cards: SHEET_CARDS },
+  { topic: NET_TOPIC, skills: NET_SKILLS, questions: NET_QUESTIONS, lessons: NET_LESSONS, cards: NET_CARDS },
 ];
 
 export const CS_TOPICS: Topic[] = CHAPTERS.map((c) => c.topic);

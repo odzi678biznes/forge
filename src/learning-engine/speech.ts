@@ -30,6 +30,9 @@ const WORDS: Array<[RegExp, string]> = [
   [/\\rfloor/g, ' '],
   [/\\bmod/g, ' modulo '],
   [/\\varepsilon/g, ' epsilon '],
+  [/\\varphi/g, ' fi '],
+  [/\\equiv/g, ' przystaje do '],
+  [/\\pmod/g, ' modulo '],
   // Tylko samo \le / \leq — nie początek \left czy \leftarrow.
   [/\\leq?(?![a-zA-Z])/g, ' mniejsze lub równe '],
   [/\\geq?(?![a-zA-Z])/g, ' większe lub równe '],
