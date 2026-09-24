@@ -9,6 +9,12 @@
  */
 
 const WORDS: Array<[RegExp, string]> = [
+  [/\\%/g, ' procent '],
+  [/\\iff/g, ' wtedy i tylko wtedy, gdy '],
+  [/\\cup/g, ' suma '],
+  [/\\in\b/g, ' należy do '],
+  [/\\ne\b/g, ' różne od '],
+  [/\\ldots/g, ' i tak dalej '],
   [/\\cdot/g, ' razy '],
   [/\\times/g, ' razy '],
   [/\\leq?/g, ' mniejsze lub równe '],
@@ -40,7 +46,21 @@ function powerWord(exp: string): string {
 export function latexToSpeech(tex: string): string {
   // Stopnie zapisuje się jako potęgę, ale czyta jako jednostkę.
   let s = tex
-    .replace(/\^\s*\\circ/g, ' stopni ')
+    .replace(/\^\s*\{?\\circ\}?/g, ' stopni ')
+    // Przecinek dziesiętny w klamrach i odstęp tysięcy.
+    .replace(/\{,\}/g, ',')
+    .replace(/(\d)\\,(\d)/g, '$1$2')
+    // Tekst we wzorze czytamy jak tekst.
+    .replace(/\\(?:mathrm|text)\{([^{}]*)\}/g, ' $1 ')
+    // Moduł.
+    .replace(/\\left\|/g, '|')
+    .replace(/\\right\|/g, '|')
+    .replace(/\|([^|]+)\|/g, ' wartość bezwzględna z $1 ')
+    // Pierwiastek wyższego stopnia.
+    .replace(
+      /\\sqrt\[(\d+)\]\{([^{}]*)\}/g,
+      (_m, n: string, x: string) => ` pierwiastek ${n === '3' ? 'sześcienny' : `stopnia ${n}`} z ${x} `,
+    )
     // Wartość funkcji czyta się „f od x". Tylko typowe nazwy funkcji —
     // `x(10-x)` to mnożenie i ma zostać odczytane jako iloczyn.
     .replace(

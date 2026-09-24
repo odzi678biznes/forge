@@ -1,21 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
-import { SUBJECT_LABELS, useForge } from './useForge';
-import { CommandCenter } from '@/features/missions/CommandCenter';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { SUBJECT_LABELS, useForge, type Screen } from './useForge';
+import { useCourse } from './useCourse';
+import { Shell } from './Shell';
 import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
 import { MasteryMap } from '@/features/mastery-map/MasteryMap';
 import { ErrorLab } from '@/features/error-lab/ErrorLab';
-import { repairFor, timeTrial, trainingFor } from '@/learning-engine/mission';
+import { practiceFor, repairFor, timeTrial, trainingFor } from '@/learning-engine/mission';
+import { openErrorCount } from '@/learning-engine/error-lab';
 import { DiagnosticIntro } from '@/features/diagnostics/DiagnosticIntro';
 import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportView';
 import { WeeklyReportView } from '@/features/weekly-review/WeeklyReportView';
 import { AiSettings } from '@/features/ai/AiSettings';
 import { createTutor } from '@/features/ai/tutor';
 import { DataScreen, type SubjectInfo } from '@/features/data/DataScreen';
+import { TodayView } from '@/features/course/TodayView';
+import { CourseView } from '@/features/course/CourseView';
+import { LessonView } from '@/features/course/LessonView';
+import { CalendarView } from '@/features/course/CalendarView';
+import { ProgressView } from '@/features/course/ProgressView';
+import { FlashcardsView } from '@/features/flashcards/FlashcardsView';
+import type { Skill } from '@/data/types';
 import { MATH_CORPUS } from '@content/math/index';
 import { CS_CORPUS } from '@content/cs/index';
 
-/** Ekran danych dziala na obu przedmiotach naraz, niezaleznie od wybranego. */
+/** Ekran danych działa na obu przedmiotach naraz, niezależnie od wybranego. */
 const DATA_SUBJECTS: SubjectInfo[] = [
   { id: 'math', label: SUBJECT_LABELS.math, skillIds: MATH_CORPUS.skills.map((s) => s.id) },
   { id: 'cs', label: SUBJECT_LABELS.cs, skillIds: CS_CORPUS.skills.map((s) => s.id) },
@@ -24,28 +33,11 @@ const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
 const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions];
 
 export function App() {
-  const {
-    state,
-    skills,
-    questions,
-    beginMission,
-    submitAnswer,
-    advance,
-    toCommandCenter,
-    goTo,
-    startDiagnostic,
-    previewPlan,
-    choosePlan,
-    diagnosticSize,
-    setDayMode,
-    setSubject,
-    finishMissionNow,
-    storage,
-    reloadProfile,
-  } = useForge();
+  const forge = useForge();
+  const { state, skills, questions, topics, corpus, beginMission, goTo, toCommandCenter } = forge;
 
-  // AI jest opcjonalne i domyslnie wylaczone: wlacza je dopiero klucz
-  // podany w tej sesji (sek. 11). Tutor tworzymy raz na cale zycie aplikacji.
+  // AI jest opcjonalne i domyślnie wyłączone: włącza je dopiero klucz
+  // podany w tej sesji (sek. 11). Tutor tworzymy raz na całe życie aplikacji.
   const tutor = useMemo(() => createTutor(), []);
   const [aiEnabled, setAiEnabled] = useState(false);
   useEffect(() => {
@@ -54,9 +46,23 @@ export function App() {
   }, [tutor]);
   const catalogue = useMemo(() => questions.flatMap((q) => q.commonErrors), [questions]);
 
+  const course = useCourse({
+    corpus,
+    states: state.skillStates,
+    attempts: forge.attempts,
+    lessonProgress: forge.lessonProgress,
+    cardStates: forge.cardStates,
+    dayMode: state.dayMode,
+    deadline: forge.courseDeadline,
+  });
+
+  const practice = (skill: Skill) => beginMission(practiceFor(skill));
+
   if (state.screen === 'loading') {
-    return <p className="boot">Wczytywanie profilu...</p>;
+    return <p className="boot">Wczytywanie profilu…</p>;
   }
+
+  // --- Ekrany skupienia: bez nawigacji wokół (sek. 7.2) -----------------------
 
   if (state.screen === 'arena' && state.current && state.plan) {
     return (
@@ -66,14 +72,14 @@ export function App() {
         total={state.plan.questionCount}
         feedback={state.feedback}
         onSubmit={(answer, hintLevel, confidence) => {
-          void submitAnswer(answer, hintLevel, confidence);
+          void forge.submitAnswer(answer, hintLevel, confidence);
         }}
         onAdvance={() => {
-          void advance();
+          void forge.advance();
         }}
         deadlineAt={state.missionDeadline}
         onTimeUp={() => {
-          void finishMissionNow();
+          void forge.finishMissionNow();
         }}
         running={state.running}
         ai={{
@@ -93,7 +99,7 @@ export function App() {
         skills={skills}
         states={state.skillStates}
         missionsToday={state.missionsToday}
-        // "Jeszcze jedna" wraca do centrum dowodzenia, a nie startuje misji
+        // "Jeszcze jedna" wraca do planu dnia, a nie startuje misji
         // automatycznie - Blueprint sek. 3 i 14.
         onAgain={toCommandCenter}
         onFinish={toCommandCenter}
@@ -101,107 +107,217 @@ export function App() {
     );
   }
 
-  if (state.screen === 'mastery-map') {
-    return (
-      <MasteryMap
-        skills={skills}
-        states={state.skillStates}
-        // Klikniecie w wezel uruchamia trening, nie otwiera statystyk (sek. 7.3).
-        onSelect={(skill) =>
-          beginMission(trainingFor(skill, state.skillStates.get(skill.id)?.level ?? 0))
-        }
-        onBack={toCommandCenter}
-      />
-    );
+  // --- Ekrany w powłoce ------------------------------------------------------
+
+  const extras = [...state.options, timeTrial()].filter(
+    (o, i, all) => all.findIndex((x) => x.title === o.title) === i,
+  );
+
+  let page: ReactNode;
+  switch (state.screen) {
+    case 'course':
+      page = (
+        <CourseView
+          course={course}
+          subjectName={corpus.subject.name}
+          topics={topics}
+          skills={skills}
+          states={state.skillStates}
+          onOpenLesson={forge.openLesson}
+          onPractice={practice}
+        />
+      );
+      break;
+
+    case 'lesson': {
+      const lesson = corpus.lessons.find((l) => l.skillId === forge.lessonSkillId);
+      const skill = skills.find((s) => s.id === forge.lessonSkillId);
+      page =
+        lesson && skill ? (
+          <LessonView
+            lesson={lesson}
+            skill={skill}
+            topic={topics.find((t) => t.id === skill.topicId)}
+            onPractice={() => {
+              void forge.finishLesson(skill.id);
+            }}
+            onBack={() => goTo('course')}
+          />
+        ) : (
+          <p className="page">Tej lekcji nie ma w wybranym przedmiocie.</p>
+        );
+      break;
+    }
+
+    case 'calendar':
+      page = (
+        <CalendarView
+          course={course}
+          skills={skills}
+          deadline={forge.courseDeadline}
+          examDate={forge.examDate}
+          dayMode={state.dayMode}
+          onDeadline={(k) => {
+            void forge.setCourseDeadline(k);
+          }}
+          onExamDate={(k) => {
+            void forge.setExamDate(k);
+          }}
+          onOpenLesson={forge.openLesson}
+        />
+      );
+      break;
+
+    case 'progress':
+      page = (
+        <ProgressView
+          course={course}
+          skills={skills}
+          states={state.skillStates}
+          attempts={forge.attempts}
+          onPractice={practice}
+        />
+      );
+      break;
+
+    case 'flashcards':
+      page = (
+        <FlashcardsView
+          queue={course.cardSession.queue}
+          dueCount={course.cardSession.dueCount}
+          newCount={course.cardSession.newCount}
+          cards={course.cards}
+          states={forge.cardStates}
+          skills={skills}
+          unlockedSkillIds={course.unlocked}
+          onRate={(card, rating) => {
+            void forge.rateCard(card, rating);
+          }}
+          onDone={toCommandCenter}
+        />
+      );
+      break;
+
+    case 'mastery-map':
+      page = (
+        <MasteryMap
+          skills={skills}
+          states={state.skillStates}
+          // Kliknięcie w węzeł uruchamia trening, nie otwiera statystyk (sek. 7.3).
+          onSelect={(skill) =>
+            beginMission(trainingFor(skill, state.skillStates.get(skill.id)?.level ?? 0))
+          }
+          onBack={toCommandCenter}
+        />
+      );
+      break;
+
+    case 'diagnostic-intro':
+      page = (
+        <DiagnosticIntro
+          probeCount={forge.diagnosticSize}
+          hasPreviousPlan={state.savedPlan !== null}
+          onStart={forge.startDiagnostic}
+          onBack={toCommandCenter}
+        />
+      );
+      break;
+
+    case 'diagnostic-report':
+      page = state.report ? (
+        <DiagnosticReportView
+          report={state.report}
+          preview={forge.previewPlan}
+          onChoose={(variant, deadline) => {
+            void forge.choosePlan(variant, deadline);
+          }}
+          onBack={toCommandCenter}
+        />
+      ) : null;
+      break;
+
+    case 'ai-settings':
+      page = <AiSettings tutor={tutor} onChange={setAiEnabled} onBack={toCommandCenter} />;
+      break;
+
+    case 'data':
+      page = (
+        <DataScreen
+          storage={forge.storage}
+          subjects={DATA_SUBJECTS}
+          skills={ALL_SKILLS}
+          questions={ALL_QUESTIONS}
+          onChanged={forge.reloadProfile}
+          onBack={toCommandCenter}
+        />
+      );
+      break;
+
+    case 'weekly-report':
+      page = <WeeklyReportView report={state.weekly} rhythm={state.rhythm} onBack={toCommandCenter} />;
+      break;
+
+    case 'error-lab':
+      page = (
+        <ErrorLab
+          groups={state.errorGroups}
+          skills={skills}
+          onRepair={(skill, cause) => beginMission(repairFor(skill, cause))}
+          onBack={toCommandCenter}
+        />
+      );
+      break;
+
+    default:
+      page = (
+        <TodayView
+          course={course}
+          topics={topics}
+          recommended={state.recommended}
+          options={extras}
+          rhythm={state.rhythm}
+          dayMode={state.dayMode}
+          deadline={forge.courseDeadline}
+          examDate={forge.examDate}
+          comeback={state.daily.comeback}
+          onDayMode={(mode) => {
+            void forge.setDayMode(mode);
+          }}
+          onStartMission={beginMission}
+          onOpenLesson={forge.openLesson}
+          onPractice={practice}
+          onOpenFlashcards={() => goTo('flashcards')}
+          onOpenCalendar={() => goTo('calendar')}
+          onOpenCourse={() => goTo('course')}
+          diagnostic={
+            state.subject === 'math'
+              ? {
+                  hasReport: state.report !== null && state.savedPlan === null,
+                  onOpen: () =>
+                    goTo(state.report !== null && state.savedPlan === null ? 'diagnostic-report' : 'diagnostic-intro'),
+                }
+              : null
+          }
+        />
+      );
   }
 
-  if (state.screen === 'diagnostic-intro') {
-    return (
-      <DiagnosticIntro
-        probeCount={diagnosticSize}
-        hasPreviousPlan={state.savedPlan !== null}
-        onStart={startDiagnostic}
-        onBack={toCommandCenter}
-      />
-    );
-  }
-
-  if (state.screen === 'diagnostic-report' && state.report) {
-    return (
-      <DiagnosticReportView
-        report={state.report}
-        preview={previewPlan}
-        onChoose={(variant, deadline) => {
-          void choosePlan(variant, deadline);
-        }}
-        onBack={toCommandCenter}
-      />
-    );
-  }
-
-  if (state.screen === 'ai-settings') {
-    return <AiSettings tutor={tutor} onChange={setAiEnabled} onBack={toCommandCenter} />;
-  }
-
-  if (state.screen === 'data') {
-    return (
-      <DataScreen
-        storage={storage}
-        subjects={DATA_SUBJECTS}
-        skills={ALL_SKILLS}
-        questions={ALL_QUESTIONS}
-        onChanged={reloadProfile}
-        onBack={toCommandCenter}
-      />
-    );
-  }
-
-  if (state.screen === 'weekly-report') {
-    return (
-      <WeeklyReportView
-        report={state.weekly}
-        rhythm={state.rhythm}
-        onBack={toCommandCenter}
-      />
-    );
-  }
-
-  if (state.screen === 'error-lab') {
-    return (
-      <ErrorLab
-        groups={state.errorGroups}
-        skills={skills}
-        onRepair={(skill, cause) => beginMission(repairFor(skill, cause))}
-        onBack={toCommandCenter}
-      />
-    );
-  }
+  const badges: Partial<Record<Screen, number>> = {
+    flashcards: course.cardSession.queue.length,
+    'error-lab': openErrorCount(state.errorGroups),
+  };
 
   return (
-    <CommandCenter
-      recommended={state.recommended}
-      options={state.options}
-      skills={skills}
-      states={state.skillStates}
-      missionsToday={state.missionsToday}
-      errorGroups={state.errorGroups}
-      onStart={beginMission}
-      onOpenMap={() => goTo('mastery-map')}
-      onOpenErrorLab={() => goTo('error-lab')}
-      onOpenDiagnostic={() => goTo('diagnostic-intro')}
-      onOpenReport={state.report ? () => goTo('diagnostic-report') : null}
-      hasPlan={state.savedPlan !== null}
+    <Shell
+      screen={state.screen}
       subject={state.subject}
-      onSubject={(next) => { void setSubject(next); }}
-      daily={state.daily}
-      rhythm={state.rhythm}
-      dayMode={state.dayMode}
-      onDayMode={(mode) => { void setDayMode(mode); }}
-      onOpenWeekly={() => goTo('weekly-report')}
-      onTimeTrial={() => beginMission(timeTrial())}
-      onOpenAi={() => goTo('ai-settings')}
-      aiEnabled={aiEnabled}
-      onOpenData={() => goTo('data')}
-    />
+      onSubject={(next) => {
+        void forge.setSubject(next);
+      }}
+      onNavigate={goTo}
+      badges={badges}
+    >
+      {page}
+    </Shell>
   );
 }

@@ -16,7 +16,7 @@ import type { Question, Skill, Subject, Topic } from '@/data/types';
  * tok rozumowania.
  */
 
-export const MATH: Subject = { id: 'math', name: 'Matematyka (rozszerzona)' };
+export const MATH: Subject = { id: 'math', name: 'Matematyka — podstawa i rozszerzenie' };
 
 export const QUADRATIC_TOPIC: Topic = {
   id: 'math-quadratic',

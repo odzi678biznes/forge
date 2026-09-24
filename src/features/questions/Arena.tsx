@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { HINT_LADDER, type CommonError, type Confidence, type HintLevel } from '@/data/types';
+import {
+  HINT_LADDER,
+  MASTERY_LABELS,
+  type CommonError,
+  type Confidence,
+  type HintLevel,
+  type Question,
+} from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
@@ -94,10 +101,12 @@ function formatClock(ms: number): string {
 }
 
 const CONFIDENCE_OPTIONS: Array<{ value: Confidence; label: string }> = [
-  { value: 'guess', label: 'Zgaduje' },
-  { value: 'partial', label: 'Czesciowo wiem' },
+  { value: 'guess', label: 'Zgaduję' },
+  { value: 'partial', label: 'Częściowo wiem' },
   { value: 'sure', label: 'Jestem pewny' },
 ];
+
+const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
 export function Arena({
   selection,
@@ -122,6 +131,7 @@ export function Arena({
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isCode = question.format === 'code' && question.code !== undefined;
+  const isChoice = question.format === 'choice' && question.choices !== undefined;
   const continueRef = useRef<HTMLButtonElement>(null);
 
   // Nowe pytanie zaczyna sie czysto i z kursorem w polu odpowiedzi.
@@ -136,6 +146,20 @@ export function Arena({
     if (question.format === 'code') editorRef.current?.focus();
     else inputRef.current?.focus();
   }, [question.id]);
+
+  // Zadanie zamknięte: litera albo cyfra wybiera odpowiedź bez myszy.
+  useEffect(() => {
+    if (!isChoice || feedback) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+      const k = e.key.toUpperCase();
+      const byDigit = ['1', '2', '3', '4'].indexOf(k);
+      const letter = byDigit >= 0 ? LETTERS[byDigit] : LETTERS.find((l) => l === k);
+      if (letter) setAnswer(letter);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isChoice, feedback]);
 
   // Po ocenie fokus idzie na "Dalej", zeby klawiatura wystarczyla (sek. 18).
   useEffect(() => {
@@ -237,10 +261,35 @@ export function Arena({
             disabled={locked}
             running={running}
           />
+        ) : isChoice && question.choices ? (
+          <fieldset className="choices" disabled={locked}>
+            <legend className="arena__label">Wybierz odpowiedź (A–D albo 1–4)</legend>
+            {question.choices.map((c, i) => {
+              const letter = LETTERS[i] ?? 'A';
+              const classes = ['choice'];
+              if (answer === letter) classes.push('choice--picked');
+              if (locked && letter === question.answer) classes.push('choice--correct');
+              if (locked && answer === letter && letter !== question.answer) classes.push('choice--wrong');
+              return (
+                <button
+                  key={letter}
+                  type="button"
+                  className={classes.join(' ')}
+                  aria-pressed={answer === letter}
+                  onClick={() => setAnswer(letter)}
+                >
+                  <span className="choice__letter">{letter}</span>
+                  <span className="choice__text">
+                    <Tex>{c}</Tex>
+                  </span>
+                </button>
+              );
+            })}
+          </fieldset>
         ) : (
           <>
             <label className="arena__label" htmlFor="answer">
-              Twoja odpowiedz
+              Twoja odpowiedź
             </label>
             <input
               id="answer"
@@ -256,7 +305,7 @@ export function Arena({
         )}
 
         <fieldset className="arena__confidence" disabled={locked}>
-          <legend>Na ile jestes pewny?</legend>
+          <legend>Na ile jesteś pewny?</legend>
           {CONFIDENCE_OPTIONS.map((opt) => (
             <label key={opt.value} className="arena__chip">
               <input
@@ -278,7 +327,7 @@ export function Arena({
             onClick={submit}
             disabled={answer.trim() === ''}
           >
-            Sprawdz
+            Sprawdź
             <kbd>Enter</kbd>
           </button>
         )}
@@ -302,10 +351,10 @@ export function Arena({
             className="arena__hint-more"
             onClick={() => setHintLevel(nextHint.level)}
           >
-            {hintLevel === 0 ? 'Potrzebuje podpowiedzi' : 'Kolejna podpowiedz'}
+            {hintLevel === 0 ? 'Potrzebuję podpowiedzi' : 'Kolejna podpowiedź'}
             <span className="arena__hint-cost">
               {hintLevel === 0
-                ? 'Odpowiedz przestanie liczyc sie jako samodzielna'
+                ? 'Odpowiedź przestanie liczyć się jako samodzielna'
                 : `Szczebel ${nextHint.level} z ${HINT_LADDER.length}`}
             </span>
           </button>
@@ -330,7 +379,9 @@ export function Arena({
         />
       )}
 
-      {feedback && <Feedback step={feedback} onAdvance={onAdvance} buttonRef={continueRef} />}
+      {feedback && (
+        <Feedback step={feedback} question={question} onAdvance={onAdvance} buttonRef={continueRef} />
+      )}
 
       {ai?.enabled && feedback && !isCode && (
         <section className="ai">
@@ -370,10 +421,12 @@ export function Arena({
  */
 function Feedback({
   step,
+  question,
   onAdvance,
   buttonRef,
 }: {
   step: AnsweredStep;
+  question: Question;
   onAdvance: () => void;
   buttonRef: React.RefObject<HTMLButtonElement>;
 }) {
@@ -408,22 +461,66 @@ function Feedback({
 
       {correct && step.hintLevel > 0 && (
         <p className="fb__meta">
-          Rozwiazane po podpowiedzi ({step.hintLevel}) - to nie liczy sie jeszcze jako
-          samodzielne.
+          Rozwiązane po podpowiedzi (szczebel {step.hintLevel}) — to jeszcze nie liczy się jako
+          samodzielne. Następnym razem spróbuj bez niej.
         </p>
       )}
 
       {step.transition && (
         <p className="fb__transition">
-          {step.selection.skill.name}: poziom {step.transition.from} &rarr;{' '}
-          {step.transition.to}. {step.transition.reason}
+          {step.selection.skill.name}: {MASTERY_LABELS[step.transition.from]} &rarr;{' '}
+          {MASTERY_LABELS[step.transition.to]}. {step.transition.reason}
         </p>
       )}
+
+      {!step.code && <Solution question={question} correct={correct} />}
 
       <button type="button" className="fb__next" onClick={onAdvance} ref={buttonRef}>
         Dalej
         <kbd>Enter</kbd>
       </button>
     </section>
+  );
+}
+
+/**
+ * Rozwiązanie krok po kroku - na żądanie, nie od razu (sek. 5: najpierw
+ * pierwsze miejsce rozbieżności, całość dopiero, gdy uczeń jej chce).
+ * Kroki odsłaniają się po kolei, jak przy tablicy.
+ */
+function Solution({ question, correct }: { question: Question; correct: boolean }) {
+  const steps = question.steps ?? [question.solution];
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => setShown(0), [question.id]);
+
+  if (shown === 0) {
+    return (
+      <button type="button" className="fb__solution-open" onClick={() => setShown(1)}>
+        {correct ? 'Zobacz wzorcowe rozwiązanie' : 'Pokaż rozwiązanie krok po kroku'}
+      </button>
+    );
+  }
+
+  return (
+    <div className="fb__solution">
+      <ol>
+        {steps.slice(0, shown).map((t, i) => (
+          <li key={i}>
+            <Tex>{t}</Tex>
+          </li>
+        ))}
+      </ol>
+      {shown < steps.length && (
+        <div className="fb__solution-controls">
+          <button type="button" className="fb__solution-open" onClick={() => setShown((n) => n + 1)}>
+            Następny krok
+          </button>
+          <button type="button" className="fb__solution-all" onClick={() => setShown(steps.length)}>
+            Pokaż wszystko
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

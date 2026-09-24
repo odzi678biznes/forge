@@ -12,6 +12,13 @@ import { TRIG_QUESTIONS, TRIG_SKILLS, TRIG_TOPIC } from './trygonometria';
 import { GEO_QUESTIONS, GEO_SKILLS, GEO_TOPIC } from './geometria-analityczna';
 import { DERIV_QUESTIONS, DERIV_SKILLS, DERIV_TOPIC } from './pochodne';
 import { PROB_QUESTIONS, PROB_SKILLS, PROB_TOPIC } from './prawdopodobienstwo';
+import {
+  NUMBERS_CARDS,
+  NUMBERS_LESSONS,
+  NUMBERS_QUESTIONS,
+  NUMBERS_SKILLS,
+  NUMBERS_TOPIC,
+} from './kurs/liczby';
 
 /**
  * Korpus tresci matematycznej.
@@ -28,7 +35,9 @@ import { PROB_QUESTIONS, PROB_SKILLS, PROB_TOPIC } from './prawdopodobienstwo';
 
 export { MATH };
 
+/** Kolejność działów = kolejność kursu (kalendarz i mapa kursu idą po niej). */
 export const MATH_TOPICS: Topic[] = [
+  NUMBERS_TOPIC,
   QUADRATIC_TOPIC,
   SEQUENCE_TOPIC,
   LOG_TOPIC,
@@ -39,6 +48,7 @@ export const MATH_TOPICS: Topic[] = [
 ];
 
 export const MATH_SKILLS: Skill[] = [
+  ...NUMBERS_SKILLS,
   ...QUADRATIC_SKILLS,
   ...SEQUENCE_SKILLS,
   ...LOG_SKILLS,
@@ -49,6 +59,7 @@ export const MATH_SKILLS: Skill[] = [
 ];
 
 export const MATH_QUESTIONS: Question[] = [
+  ...NUMBERS_QUESTIONS,
   ...QUADRATIC_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
   ...LOG_QUESTIONS,
@@ -65,8 +76,8 @@ export const MATH_CORPUS: Corpus = {
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
-  lessons: [],
-  flashcards: [],
+  lessons: [...NUMBERS_LESSONS],
+  flashcards: [...NUMBERS_CARDS],
 };
 
 /** Kompetencje nalezace do danego dzialu. */

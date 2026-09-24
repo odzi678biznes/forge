@@ -47,7 +47,7 @@
  * agresywnych czerwonych komunikatow - to material do przecwiczenia,
  * nie alarm.
  */
-.card {
+.err-card {
   background: var(--bg-deep);
   border: 1px solid var(--line);
   border-left: 3px solid var(--challenge);
@@ -58,19 +58,19 @@
   gap: var(--space-4);
 }
 
-.card--done {
+.err-card--done {
   border-left-color: var(--correct);
   opacity: 0.72;
 }
 
-.card__head {
+.err-card__head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-4);
 }
 
-.card__skill {
+.err-card__skill {
   margin: 0;
   font-size: var(--t-micro);
   text-transform: uppercase;
@@ -78,20 +78,20 @@
   color: var(--progress);
 }
 
-.card__count {
+.err-card__count {
   margin: 0;
   font-size: var(--t-micro);
   color: var(--text-faint);
 }
 
-.card__cause {
+.err-card__cause {
   margin: 0;
   font-size: var(--t-body);
   font-weight: 600;
   line-height: 1.45;
 }
 
-.card__label {
+.err-card__label {
   margin: 0 0 var(--space-2);
   font-size: var(--t-micro);
   text-transform: uppercase;
@@ -99,40 +99,40 @@
   color: var(--text-faint);
 }
 
-.card__example,
-.card__rule {
+.err-card__example,
+.err-card__rule {
   background: var(--bg-abyss);
   border-radius: var(--radius);
   padding: var(--space-4);
 }
 
-.card__example p,
-.card__rule p {
+.err-card__example p,
+.err-card__rule p {
   margin: 0;
 }
 
-.card__prompt {
+.err-card__prompt {
   margin-bottom: var(--space-3) !important;
 }
 
-.card__answers {
+.err-card__answers {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-6);
   font-size: var(--t-small);
 }
 
-.card__given {
+.err-card__given {
   color: var(--incorrect);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
-.card__correct {
+.err-card__correct {
   color: var(--correct);
 }
 
-.card__foot {
+.err-card__foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -140,38 +140,38 @@
   flex-wrap: wrap;
 }
 
-.card__progress {
+.err-card__progress {
   margin: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.card__pip {
+.err-card__pip {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
 }
 
-.card__pip--on {
+.err-card__pip--on {
   background: var(--correct);
   border-color: var(--correct);
 }
 
-.card__progress-text {
+.err-card__progress-text {
   font-size: var(--t-small);
   color: var(--text-muted);
   margin-left: var(--space-2);
 }
 
-.card__done {
+.err-card__done {
   margin: 0;
   font-size: var(--t-small);
   color: var(--correct);
 }
 
-.card__fix {
+.err-card__fix {
   padding: var(--space-2) var(--space-6);
   font-weight: 600;
   color: var(--bg-abyss);
@@ -180,6 +180,6 @@
   border-radius: var(--radius);
 }
 
-.card__fix:hover {
+.err-card__fix:hover {
   box-shadow: 0 6px 20px var(--challenge-glow);
 }

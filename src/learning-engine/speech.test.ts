@@ -34,6 +34,15 @@ describe('wzory na tekst mowiony', () => {
     expect(latexToSpeech('P(A)')).toBe('P od A');
   });
 
+  it('procent, przecinek dziesietny, modul i pierwiastek szescienny', () => {
+    expect(latexToSpeech('15\\%')).toBe('15 procent');
+    expect(latexToSpeech('7{,}846')).toBe('7,846');
+    expect(latexToSpeech('36\\,000\\,000')).toBe('36000000');
+    expect(latexToSpeech('|x - 2| < 5')).toContain('wartość bezwzględna z x minus 2');
+    expect(latexToSpeech('\\sqrt[3]{8}')).toBe('pierwiastek sześcienny z 8');
+    expect(latexToSpeech('0{,}5^{\\circ}\\mathrm{C}')).toBe('0,5 stopni C');
+  });
+
   it('nawias po zmiennej to mnozenie, a nie funkcja', () => {
     expect(latexToSpeech('x(10-x)')).not.toContain(' od ');
   });

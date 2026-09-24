@@ -3,7 +3,10 @@ import {
   MasteryLevel,
   emptySkillState,
   type Attempt,
+  type CardState,
+  type Flashcard,
   type HintLevel,
+  type LessonProgress,
   type Confidence,
   type DayMode,
   type Mission,
@@ -21,10 +24,12 @@ import { scheduleReview } from '@/learning-engine/review';
 import { GRADING_VERSION, grade, type Grade } from '@/learning-engine/grading';
 import {
   alternatives,
+  practiceFor,
   recommendMission,
   startMission,
   type MissionPlan,
 } from '@/learning-engine/mission';
+import { newCardState, reviewCard, type CardRating } from '@/learning-engine/flashcards';
 import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
 import {
   analyseDiagnostic,
@@ -63,7 +68,12 @@ export type Screen =
   | 'diagnostic-report'
   | 'weekly-report'
   | 'ai-settings'
-  | 'data';
+  | 'data'
+  | 'course'
+  | 'lesson'
+  | 'calendar'
+  | 'progress'
+  | 'flashcards';
 
 export type SubjectId = 'math' | 'cs';
 
@@ -136,6 +146,12 @@ export interface ForgeState {
 
 const DAY_MODE_KEY = 'dayMode';
 const SUBJECT_KEY = 'subject';
+const DEADLINE_KEY = 'course.deadline';
+const EXAM_DATE_KEY = 'course.examDate';
+
+/** Termin przerobienia całego materiału - potem tylko szlifowanie. */
+export const DEFAULT_COURSE_DEADLINE = '2027-01-31';
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface ForgeDeps {
   storage?: StoragePort;
@@ -182,6 +198,11 @@ export function useForge(deps: ForgeDeps = {}) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [dayMode, setDayModeState] = useState<DayMode>('standard');
   const [missionDeadline, setMissionDeadline] = useState<number | null>(null);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
+  const [cardStates, setCardStates] = useState<Map<string, CardState>>(new Map());
+  const [lessonSkillId, setLessonSkillId] = useState<string | null>(null);
+  const [courseDeadline, setCourseDeadlineState] = useState(DEFAULT_COURSE_DEADLINE);
+  const [examDate, setExamDateState] = useState<string | null>(null);
   // Kolejka sond diagnostycznych. Gdy niepusta, 'advance' bierze pytanie
   // stad zamiast pytac selektor - diagnoza ma staly przekroj, nie adaptacje.
   const [diagnosticQueue, setDiagnosticQueue] = useState<Question[]>([]);
@@ -226,6 +247,14 @@ export function useForge(deps: ForgeDeps = {}) {
     );
     const savedSubject = prefs.find((x) => x.key === SUBJECT_KEY)?.value;
     setSubjectState(savedSubject === 'math' || savedSubject === 'cs' ? savedSubject : 'math');
+
+    const deadline = prefs.find((x) => x.key === DEADLINE_KEY)?.value;
+    setCourseDeadlineState(deadline && DATE_KEY.test(deadline) ? deadline : DEFAULT_COURSE_DEADLINE);
+    const exam = prefs.find((x) => x.key === EXAM_DATE_KEY)?.value;
+    setExamDateState(exam && DATE_KEY.test(exam) ? exam : null);
+
+    setLessonProgress(await s.loadLessonProgress());
+    setCardStates(new Map((await s.loadCardStates()).map((c) => [c.cardId, c])));
   }, []);
 
   // Wczytanie profilu. Brak danych to poprawny stan, nie blad (sek. 16).
@@ -621,6 +650,57 @@ export function useForge(deps: ForgeDeps = {}) {
 
   const goTo = useCallback((next: Screen) => setScreen(next), []);
 
+  // -------------------------------------------------------------------------
+  // Kurs: lekcje, fiszki, termin
+  // -------------------------------------------------------------------------
+
+  const openLesson = useCallback((skillId: string) => {
+    setLessonSkillId(skillId);
+    setScreen('lesson');
+  }, []);
+
+  /**
+   * Koniec lekcji = przejście do ćwiczeń. Lekcja jest zaliczona w chwili,
+   * gdy uczeń ją przeszedł i zaczyna ćwiczyć - ale "przerobione" w kursie
+   * daje dopiero poziom Samodzielne, nie samo przeczytanie.
+   */
+  const finishLesson = useCallback(
+    async (skillId: string) => {
+      const skill = ALL_SKILLS.find((s) => s.id === skillId);
+      if (!skill) return;
+      if (!lessonProgress.some((l) => l.skillId === skillId)) {
+        const entry: LessonProgress = { skillId, completedAt: Date.now() };
+        setLessonProgress((prev) => [...prev, entry]);
+        await port().saveLessonProgress(entry);
+      }
+      beginMission(practiceFor(skill));
+    },
+    [lessonProgress, beginMission],
+  );
+
+  const rateCard = useCallback(
+    async (flashcard: Flashcard, rating: CardRating) => {
+      const now = Date.now();
+      const before = cardStates.get(flashcard.id) ?? newCardState(flashcard, now);
+      const after = reviewCard(before, rating, now);
+      setCardStates((prev) => new Map(prev).set(flashcard.id, after));
+      await port().saveCardState(after);
+    },
+    [cardStates],
+  );
+
+  const setCourseDeadline = useCallback(async (key: string) => {
+    if (!DATE_KEY.test(key)) return;
+    setCourseDeadlineState(key);
+    await port().setPreference(DEADLINE_KEY, key);
+  }, []);
+
+  const setExamDate = useCallback(async (key: string) => {
+    if (!DATE_KEY.test(key)) return;
+    setExamDateState(key);
+    await port().setPreference(EXAM_DATE_KEY, key);
+  }, []);
+
   const errorGroups = useMemo(
     () => buildErrorLab({ attempts, questions, skills }),
     [attempts, questions, skills],
@@ -709,6 +789,18 @@ export function useForge(deps: ForgeDeps = {}) {
     diagnosticSize: diagnosticSet.length,
     storage: port,
     reloadProfile,
+    corpus,
+    attempts,
+    lessonProgress,
+    cardStates,
+    lessonSkillId,
+    courseDeadline,
+    examDate,
+    openLesson,
+    finishLesson,
+    rateCard,
+    setCourseDeadline,
+    setExamDate,
   };
 }
 

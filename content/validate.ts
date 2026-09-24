@@ -16,7 +16,13 @@ function mathSegments(text: string): string[] {
 
 /** Liczba z prostego zapisu odpowiedzi zamknietej: 12, -0,5, \frac{3}{4}, -\dfrac{1}{2}. */
 function choiceValue(choiceText: string): number | null {
-  const tex = choiceText.replace(/\$/g, '').replace(/\s+/g, '').replace(/,/g, '.');
+  const tex = choiceText
+    .replace(/\$/g, '')
+    .replace(/\s+/g, '')
+    .replace(/\{,\}/g, '.')
+    .replace(/,/g, '.')
+    // Jednostka poza wzorem: "$1020$ zł".
+    .replace(/(zł|%|cm|m|kg|°)$/, '');
   const frac = /^(-?)\\d?frac\{(\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}$/.exec(tex);
   if (frac) return (frac[1] === '-' ? -1 : 1) * (Number(frac[2]) / Number(frac[3]));
   const n = Number(tex);
@@ -309,6 +315,22 @@ export function validateCorpus(label: string, corpus: Corpus): void {
   });
 
   describe(`${label}: zapis matematyczny`, () => {
+    it('zaden tekst nie zawiera znakow sterujacych - slad zjedzonego ukosnika', () => {
+      // '\times' w zwyklym cudzyslowie to tabulator + "imes", '\frac' to
+      // znak nowej strony + "rac". KaTeX tego nie zglosi - trzeba szukac tu.
+      for (const [where, t] of allTexts) {
+        expect(/[\u0000-\u001f]/.test(t), `${where}: "${t}"`).toBe(false);
+      }
+    });
+
+    it('procent we wzorze jest zapisany jako \\% - goly % to w TeX-u komentarz', () => {
+      for (const [where, t] of allTexts) {
+        for (const tex of mathSegments(t)) {
+          expect(/(^|[^\\])%/.test(tex), `${where}: $${tex}$`).toBe(false);
+        }
+      }
+    });
+
     it('kazdy tekst ma sparowane znaki $', () => {
       for (const [where, t] of allTexts) {
         expect((t.match(/\$/g) ?? []).length % 2, `${where}: "${t}"`).toBe(0);

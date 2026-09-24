@@ -81,41 +81,41 @@ function ErrorCard({
   const skill = skills.find((s) => s.id === group.skillId);
 
   return (
-    <article className={`card ${group.repaired ? 'card--done' : ''}`}>
-      <header className="card__head">
-        <p className="card__skill">{group.skillName}</p>
-        <p className="card__count">
+    <article className={`err-card ${group.repaired ? 'err-card--done' : ''}`}>
+      <header className="err-card__head">
+        <p className="err-card__skill">{group.skillName}</p>
+        <p className="err-card__count">
           {group.occurrences === 1 ? '1 raz' : `${group.occurrences} razy`}
         </p>
       </header>
 
-      <h3 className="card__cause">
+      <h3 className="err-card__cause">
         <Tex>{group.error.cause}</Tex>
       </h3>
 
-      <div className="card__example">
-        <p className="card__label">Przyklad</p>
-        <p className="card__prompt">
+      <div className="err-card__example">
+        <p className="err-card__label">Przyklad</p>
+        <p className="err-card__prompt">
           <Tex>{group.exampleQuestion.prompt}</Tex>
         </p>
-        <p className="card__answers">
-          <span className="card__given">Twoja odpowiedz: {group.exampleAnswer}</span>
-          <span className="card__correct">
+        <p className="err-card__answers">
+          <span className="err-card__given">Twoja odpowiedz: {group.exampleAnswer}</span>
+          <span className="err-card__correct">
             Poprawna: <Tex>{group.exampleQuestion.answer}</Tex>
           </span>
         </p>
       </div>
 
-      <div className="card__rule">
-        <p className="card__label">Zlamana zasada</p>
+      <div className="err-card__rule">
+        <p className="err-card__label">Zlamana zasada</p>
         <p>
           <Tex>{group.error.rule}</Tex>
         </p>
       </div>
 
-      <footer className="card__foot">
+      <footer className="err-card__foot">
         {group.repaired ? (
-          <p className="card__done">
+          <p className="err-card__done">
             Naprawione - {REPAIR_STREAK_REQUIRED} poprawne proby z rzedu po tym bledzie.
           </p>
         ) : (
@@ -124,7 +124,7 @@ function ErrorCard({
             {skill && (
               <button
                 type="button"
-                className="card__fix"
+                className="err-card__fix"
                 onClick={() => onRepair(skill, group.error.cause)}
               >
                 Napraw teraz
@@ -140,15 +140,15 @@ function ErrorCard({
 /** Postep naprawy jest jawny: widac, ile jeszcze trzeba, zeby zamknac wpis. */
 function RepairProgress({ streak }: { streak: number }) {
   return (
-    <p className="card__progress">
+    <p className="err-card__progress">
       {Array.from({ length: REPAIR_STREAK_REQUIRED }, (_, i) => (
         <span
           key={i}
-          className={`card__pip ${i < streak ? 'card__pip--on' : ''}`}
+          className={`err-card__pip ${i < streak ? 'err-card__pip--on' : ''}`}
           aria-hidden
         />
       ))}
-      <span className="card__progress-text">
+      <span className="err-card__progress-text">
         {streak} z {REPAIR_STREAK_REQUIRED} poprawnych z rzedu
       </span>
     </p>

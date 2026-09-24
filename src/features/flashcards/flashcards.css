@@ -1,0 +1,204 @@
+.tabs {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding: var(--space-1);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+}
+
+.tabs__item--on {
+  background: var(--bg-overlay);
+  color: var(--text);
+}
+
+.flash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 44rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.flash__progress {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.flash__card {
+  min-height: 18rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  text-align: center;
+  background: linear-gradient(160deg, var(--bg-raised), var(--bg-deep));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: flash-in var(--dur) var(--ease);
+}
+
+@keyframes flash-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+
+.flash__meta {
+  margin: 0;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--t-small);
+  color: var(--text-faint);
+}
+
+.flash__front {
+  margin: 0;
+  font-size: var(--t-title);
+  font-weight: 600;
+}
+
+.flash__back {
+  margin: 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+  width: 100%;
+  font-size: var(--t-body);
+  color: var(--text);
+  animation: flash-in var(--dur) var(--ease);
+}
+
+.flash__rate {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.flash__btn kbd,
+.flash__reveal kbd {
+  margin-left: var(--space-2);
+  font-size: var(--t-micro);
+  opacity: 0.7;
+}
+
+.flash__btn--again:hover {
+  border-color: var(--incorrect);
+}
+
+.flash__btn--hard:hover {
+  border-color: var(--challenge);
+}
+
+.flash__btn--good {
+  border-color: var(--progress-dim);
+}
+
+.flash__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.flash__empty svg {
+  color: var(--correct);
+}
+
+.flash__empty h2 {
+  margin: 0;
+  color: var(--text);
+}
+
+.all-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.all-cards__group summary {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+
+.all-cards__group ul {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.all-cards__group li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.all-cards__front {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.all-cards__back {
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .all-cards__group li {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .flash__card {
+    padding: var(--space-6) var(--space-4);
+    min-height: 14rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .flash__rate {
+    gap: var(--space-2);
+  }
+
+  .flash__btn {
+    min-width: 0;
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--t-small);
+    white-space: normal;
+  }
+
+  /* Na telefonie nie ma klawiatury - skróty tylko zajmują miejsce. */
+  .flash__btn kbd,
+  .flash__reveal kbd {
+    display: none;
+  }
+}

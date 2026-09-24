@@ -92,3 +92,24 @@ describe('zadania programistyczne', () => {
     expect(() => grade(q, 'function f(){}')).toThrow(/CodeRunner/);
   });
 });
+
+describe('jednostki i zadania zamkniete', () => {
+  it('jednostka na koncu nie psuje odpowiedzi liczbowej', () => {
+    const q = makeQuestion({ format: 'numeric', answer: '1020' });
+    for (const a of ['1020 zł', '1020zl', '1020 PLN']) expect(grade(q, a).correctness, a).toBe('correct');
+    const pct = makeQuestion({ format: 'numeric', answer: '25' });
+    expect(grade(pct, '25%').correctness).toBe('correct');
+    expect(grade(pct, '25 %').correctness).toBe('correct');
+  });
+
+  it('jednostka nie ratuje zlej liczby', () => {
+    const q = makeQuestion({ format: 'numeric', answer: '25' });
+    expect(grade(q, '24%').correctness).toBe('incorrect');
+  });
+
+  it('litera w zadaniu zamknietym moze byc zapisana na rozne sposoby', () => {
+    const q = makeQuestion({ format: 'choice', answer: 'B', choices: ['1', '2', '3', '4'] });
+    for (const a of ['B', 'b', '(B)', 'B)', ' b ']) expect(grade(q, a).correctness, a).toBe('correct');
+    expect(grade(q, 'A').correctness).toBe('incorrect');
+  });
+});

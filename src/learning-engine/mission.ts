@@ -65,6 +65,25 @@ export function timeTrial(): MissionPlan {
   };
 }
 
+/** Ile zadań po lekcji - od fundamentu do zadania maturalnego. */
+export const PRACTICE_LENGTH = 6;
+
+/**
+ * Ćwiczenia po lekcji. Selektor zaczyna od łatwych zadań i podnosi trudność
+ * po sukcesach, a po błędzie wraca do fundamentu - to jest "nie na głęboką
+ * wodę, ale też nie same banały".
+ */
+export function practiceFor(skill: Skill): MissionPlan {
+  return {
+    kind: 'training',
+    title: `Ćwiczenia: ${skill.name}`,
+    rationale:
+      'Po lekcji: zadania od łatwych do maturalnych. Trudność rośnie, gdy idzie Ci dobrze, i spada po błędzie.',
+    questionCount: PRACTICE_LENGTH,
+    focusSkillId: skill.id,
+  };
+}
+
 /** Misja z klikniecia w wezel mapy kompetencji (sek. 7.3). */
 export function trainingFor(skill: Skill, level: number): MissionPlan {
   return {

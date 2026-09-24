@@ -300,3 +300,122 @@
 .arena__clock--low {
   color: var(--challenge);
 }
+
+/* --- Zadanie zamknięte A-D ----------------------------------------------------- */
+
+.choices {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.choices legend {
+  grid-column: 1 / -1;
+  margin-bottom: var(--space-2);
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--progress);
+}
+
+.choice__text {
+  font-size: 1.2em;
+}
+
+.choice__letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--bg-overlay);
+  font-weight: 700;
+}
+
+.choice--picked {
+  border-color: var(--progress);
+  background: var(--bg-overlay);
+}
+
+.choice--picked .choice__letter {
+  background: var(--progress);
+  color: var(--bg-abyss);
+}
+
+.choice--correct {
+  border-color: var(--correct);
+}
+
+.choice--correct .choice__letter {
+  background: var(--correct);
+  color: var(--bg-abyss);
+}
+
+.choice--wrong {
+  opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+  .choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Rozwiązanie krok po kroku ------------------------------------------------ */
+
+.fb__solution-open,
+.fb__solution-all {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-small);
+}
+
+.fb__solution-all {
+  border: none;
+  color: var(--progress);
+}
+
+.fb__solution {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--bg-abyss);
+  border: 1px solid var(--line);
+}
+
+.fb__solution ol {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  line-height: 1.7;
+}
+
+.fb__solution-controls {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}

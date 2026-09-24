@@ -15,9 +15,11 @@ import 'katex/dist/katex.min.css';
 interface Props {
   children: string;
   className?: string;
+  /** Wzór wyświetlany (wyśrodkowany, pełnowymiarowe ułamki) - dla bloków wzorów w lekcji. */
+  display?: boolean;
 }
 
-export function Math({ children, className }: Props) {
+export function Math({ children, className, display = false }: Props) {
   const segments = useMemo(() => splitMath(children), [children]);
 
   return (
@@ -27,7 +29,7 @@ export function Math({ children, className }: Props) {
           <span
             key={i}
             // KaTeX zwraca wlasny, zaufany HTML; wejsciem jest tylko tresc zadania.
-            dangerouslySetInnerHTML={{ __html: render(seg.text) }}
+            dangerouslySetInnerHTML={{ __html: render(seg.text, display) }}
           />
         ) : (
           <span key={i}>{seg.text}</span>
@@ -66,9 +68,9 @@ export function splitMath(input: string): Segment[] {
   return out;
 }
 
-function render(tex: string): string {
+function render(tex: string, display: boolean): string {
   try {
-    return katex.renderToString(tex, { throwOnError: false, displayMode: false });
+    return katex.renderToString(tex, { throwOnError: false, displayMode: display });
   } catch {
     // Blad skladni nie moze wywrocic areny - pokazujemy zrodlo.
     return escapeHtml(tex);

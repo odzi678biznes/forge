@@ -66,11 +66,11 @@ function matches(question: Question, answer: string): boolean {
   const candidates = [question.answer, ...question.acceptedVariants].map(normalise);
 
   if (question.format === 'numeric') {
-    const given = parseNumber(stripAssignment(answer));
+    const given = parseNumber(stripUnit(stripAssignment(answer)));
     if (given === null) return false;
     const tolerance = question.tolerance ?? 0;
     return candidates.some((c) => {
-      const expected = parseNumber(stripAssignment(c));
+      const expected = parseNumber(stripUnit(stripAssignment(c)));
       return expected !== null && Math.abs(expected - given) <= tolerance;
     });
   }
@@ -100,6 +100,15 @@ export function normalise(input: string): string {
  */
 export function stripAssignment(input: string): string {
   return input.replace(/^[a-z](?:_?\d+)?=/, '');
+}
+
+/**
+ * Usuwa jednostke na koncu odpowiedzi liczbowej: "25%", "1020zl" i "37,3°c"
+ * to te same liczby co "25", "1020" i "37,3". Jednostka nie jest bledem - bledem
+ * bylaby zla liczba.
+ */
+export function stripUnit(input: string): string {
+  return input.replace(/(%|zł|zl|pln|cm²|cm2|cm³|cm3|cm|mm|km|kg|°c|°|min|h|s|p\.?p\.?|m²|m2|m)$/, '');
 }
 
 /** Parsuje liczbe, akceptujac takze prosty ulamek postaci a/b. */
