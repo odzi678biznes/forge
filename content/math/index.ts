@@ -40,6 +40,13 @@ import {
   FUNCTIONS_SKILLS,
   FUNCTIONS_TOPIC,
 } from './kurs/funkcje';
+import {
+  LINEAR_CARDS,
+  LINEAR_LESSONS,
+  LINEAR_QUESTIONS,
+  LINEAR_SKILLS,
+  LINEAR_TOPIC,
+} from './kurs/liniowa';
 
 /**
  * Korpus tresci matematycznej.
@@ -62,6 +69,7 @@ export const MATH_TOPICS: Topic[] = [
   ALGEBRA_TOPIC,
   EQUATIONS_TOPIC,
   FUNCTIONS_TOPIC,
+  LINEAR_TOPIC,
   QUADRATIC_TOPIC,
   SEQUENCE_TOPIC,
   LOG_TOPIC,
@@ -76,6 +84,7 @@ export const MATH_SKILLS: Skill[] = [
   ...ALGEBRA_SKILLS,
   ...EQUATIONS_SKILLS,
   ...FUNCTIONS_SKILLS,
+  ...LINEAR_SKILLS,
   ...QUADRATIC_SKILLS,
   ...SEQUENCE_SKILLS,
   ...LOG_SKILLS,
@@ -90,6 +99,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...ALGEBRA_QUESTIONS,
   ...EQUATIONS_QUESTIONS,
   ...FUNCTIONS_QUESTIONS,
+  ...LINEAR_QUESTIONS,
   ...QUADRATIC_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
   ...LOG_QUESTIONS,
@@ -106,8 +116,20 @@ export const MATH_CORPUS: Corpus = {
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
-  lessons: [...NUMBERS_LESSONS, ...ALGEBRA_LESSONS, ...EQUATIONS_LESSONS, ...FUNCTIONS_LESSONS],
-  flashcards: [...NUMBERS_CARDS, ...ALGEBRA_CARDS, ...EQUATIONS_CARDS, ...FUNCTIONS_CARDS],
+  lessons: [
+    ...NUMBERS_LESSONS,
+    ...ALGEBRA_LESSONS,
+    ...EQUATIONS_LESSONS,
+    ...FUNCTIONS_LESSONS,
+    ...LINEAR_LESSONS,
+  ],
+  flashcards: [
+    ...NUMBERS_CARDS,
+    ...ALGEBRA_CARDS,
+    ...EQUATIONS_CARDS,
+    ...FUNCTIONS_CARDS,
+    ...LINEAR_CARDS,
+  ],
 };
 
 /** Kompetencje nalezace do danego dzialu. */
