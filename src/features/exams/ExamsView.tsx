@@ -94,8 +94,12 @@ function ExamList({
   onShow,
   onDelete,
 }: Props & { onEnter: (exam: ExamSheet) => void; onShow: (exam: ExamSheet, result: ExamResult) => void }) {
-  const [level, setLevel] = useState<ExamLevel>('PR');
+  const levels = (['PR', 'PP'] as const).filter((l) => exams.some((e) => e.level === l));
+  const [chosen, setLevel] = useState<ExamLevel>(levels[0] ?? 'PR');
+  // Po zmianie przedmiotu wybrany poziom może nie istnieć (informatyka ma tylko PR).
+  const level: ExamLevel = levels.includes(chosen) ? chosen : (levels[0] ?? 'PR');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const cs = exams.some((e) => e.subjectId === 'cs');
   const visible = exams.filter((e) => e.level === level).sort((a, b) => b.date.localeCompare(a.date));
   const byId = new Map(exams.map((e) => [e.id, e]));
   const history = results
@@ -127,14 +131,17 @@ function ExamList({
         <p className="page__eyebrow">Arkusze CKE</p>
         <h1 className="page__title">Prawdziwe arkusze maturalne</h1>
         <p className="page__lead">
-          Rozwiąż arkusz na papierze w 180 minut, tak jak na maturze. Potem sprawdź się z oficjalnymi zasadami
-          oceniania CKE i wpisz punkty — zobaczysz, na których umiejętnościach uciekły punkty, a one trafią do
-          powtórek.
+          {cs
+            ? 'Rozwiąż arkusz przy komputerze w 210 minut, tak jak na maturze — pliki z danymi do zadań praktycznych pobierzesz przyciskiem „Dane”. '
+            : 'Rozwiąż arkusz na papierze w 180 minut, tak jak na maturze. '}
+          Potem sprawdź się z oficjalnymi zasadami oceniania CKE i wpisz punkty — zobaczysz, na których
+          umiejętnościach uciekły punkty, a one trafią do powtórek.
         </p>
       </header>
 
+      {levels.length > 1 && (
       <div className="exams__levels" role="radiogroup" aria-label="Poziom arkuszy">
-        {(['PR', 'PP'] as const).map((l) => (
+        {levels.map((l) => (
           <button
             key={l}
             type="button"
@@ -148,6 +155,7 @@ function ExamList({
           </button>
         ))}
       </div>
+      )}
 
       {history.length > 0 && (
         <section className="card" aria-labelledby="exams-history">
@@ -200,7 +208,7 @@ function ExamList({
                   <h2 className="exams__item-title">{examTitle(exam)}</h2>
                   <p className="exams__item-meta">
                     <span className={exam.level === 'PP' ? 'chip chip--pp' : 'chip chip--pr'}>{KIND_CHIP[exam.kind]}</span>
-                    <span>{exam.tasks.length} zadań · {exam.maxPoints} pkt · 180 min</span>
+                    <span>{exam.tasks.length} zadań · {exam.maxPoints} pkt · {exam.minutes} min</span>
                     {exam.era === 2018 && (
                       <span className="chip" title="Arkusz ułożony według podstawy obowiązującej do maja 2024 r. Większość zadań pasuje do obecnych wymagań.">
                         starsza podstawa
@@ -222,6 +230,11 @@ function ExamList({
                 <button type="button" className="btn btn--small" onClick={() => void openExternal(exam.keyUrl)}>
                   <Icon name="external" size={15} /> Zasady oceniania
                 </button>
+                {exam.dataUrl && (
+                  <button type="button" className="btn btn--small" onClick={() => void openExternal(exam.dataUrl!)}>
+                    <Icon name="external" size={15} /> Dane (ZIP)
+                  </button>
+                )}
                 <button type="button" className="btn btn--small btn--primary" onClick={() => onEnter(exam)}>
                   <Icon name="exam" size={15} /> Wpisz wynik
                 </button>
@@ -334,6 +347,11 @@ function ScoreEntry({
           <button type="button" className="btn btn--small" onClick={() => void openExternal(exam.keyUrl)}>
             <Icon name="external" size={15} /> Zasady oceniania
           </button>
+          {exam.dataUrl && (
+            <button type="button" className="btn btn--small" onClick={() => void openExternal(exam.dataUrl!)}>
+              <Icon name="external" size={15} /> Dane (ZIP)
+            </button>
+          )}
         </div>
         <div className="exams__fields">
           <label>

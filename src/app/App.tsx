@@ -23,6 +23,7 @@ import { ProgressView } from '@/features/course/ProgressView';
 import { FlashcardsView } from '@/features/flashcards/FlashcardsView';
 import { ExamsView } from '@/features/exams/ExamsView';
 import { MATH_EXAMS } from '@content/exams/math-exams';
+import { CS_EXAMS } from '@content/exams/cs-exams';
 import type { ExamSheet } from '@content/exams/types';
 import type { Skill } from '@/data/types';
 import { MATH_CORPUS } from '@content/math/index';
@@ -34,7 +35,7 @@ const DATA_SUBJECTS: SubjectInfo[] = [
   { id: 'cs', label: SUBJECT_LABELS.cs, skillIds: CS_CORPUS.skills.map((s) => s.id) },
 ];
 /** Katalog oficjalnych arkuszy CKE według przedmiotu. */
-const EXAMS: Record<'math' | 'cs', ExamSheet[]> = { math: MATH_EXAMS, cs: [] };
+const EXAMS: Record<'math' | 'cs', ExamSheet[]> = { math: MATH_EXAMS, cs: CS_EXAMS };
 
 const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
 const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions];

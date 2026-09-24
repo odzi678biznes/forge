@@ -3,12 +3,16 @@ import type { ExamSheet } from '@content/exams/types';
 import { REQUIREMENTS_2024, skillsForCode } from '@content/math/requirements';
 import { analyzeExam, type ExamAnalysis, type TaskInput } from '@/learning-engine/exam-analysis';
 
-/** Zadania arkusza z umiejętnościami kursu, które do nich przygotowują. */
+/**
+ * Zadania arkusza z umiejętnościami kursu, które do nich przygotowują.
+ * Informatyka ma umiejętności wpisane wprost (z generatora katalogu),
+ * matematyka — wyznaczane z kodów wymagań podstawy programowej.
+ */
 export function tasksWithSkills(exam: ExamSheet): TaskInput[] {
   return exam.tasks.map((t) => ({
     no: t.no,
     points: t.points,
-    skills: [...new Set(t.codes.flatMap((c) => skillsForCode(c, exam.era)))],
+    skills: t.skills ?? [...new Set(t.codes.flatMap((c) => skillsForCode(c, exam.era)))],
   }));
 }
 
@@ -24,6 +28,8 @@ const REQ_TEXT = new Map(REQUIREMENTS_2024.map((r) => [r.code, r.text]));
  * lepiej brak opisu niż opis nie tego wymagania.
  */
 export function requirementText(code: string, exam: ExamSheet): string | null {
+  // Opisy wymagań mamy tylko dla matematyki.
+  if ((exam.subjectId ?? 'math') !== 'math') return null;
   return exam.era === 2024 ? (REQ_TEXT.get(code) ?? null) : null;
 }
 

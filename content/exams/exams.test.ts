@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { MATH_CORPUS } from '../math';
 import { REQUIREMENTS_2024, skillsForCode } from '../math/requirements';
 import { MATH_EXAMS } from './math-exams';
+import { CS_EXAMS } from './cs-exams';
+import { CS_CORPUS } from '../cs';
 
 const skillIds = new Set(MATH_CORPUS.skills.map((s) => s.id));
 
@@ -57,6 +59,40 @@ describe('katalog arkuszy CKE', () => {
         const skills = task.codes.flatMap((c) => skillsForCode(c, e.era));
         expect(skills.length, `${e.id} zad. ${task.no}: ${task.codes.join(', ')}`).toBeGreaterThan(0);
         for (const s of skills) expect(skillIds.has(s), `${e.id} zad. ${task.no} -> ${s}`).toBe(true);
+      }
+    }
+  });
+});
+
+describe('katalog arkuszy CKE z informatyki', () => {
+  const csSkills = new Set(CS_CORPUS.skills.map((s) => s.id));
+
+  it('linki do arkusza, zasad i danych prowadza do cke.gov.pl', () => {
+    const ids = CS_EXAMS.map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const e of CS_EXAMS) {
+      expect(e.subjectId, e.id).toBe('cs');
+      expect(e.sheetUrl, e.id).toMatch(/^https:\/\/cke\.gov\.pl\/.+\.pdf$/);
+      expect(e.keyUrl, e.id).toMatch(/^https:\/\/cke\.gov\.pl\/.+\.pdf$/);
+      expect(e.dataUrl, e.id).toMatch(/^https:\/\/cke\.gov\.pl\/.+\.zip$/);
+    }
+  });
+
+  it('arkusz ma 50 punktow i 210 minut, jak matura z informatyki', () => {
+    for (const e of CS_EXAMS) {
+      expect(e.maxPoints, e.id).toBe(50);
+      expect(e.minutes, e.id).toBe(210);
+      expect(e.level, e.id).toBe('PR');
+    }
+  });
+
+  it('kazde zadanie prowadzi do istniejacych umiejetnosci kursu informatyki', () => {
+    for (const e of CS_EXAMS) {
+      const nos = e.tasks.map((x) => x.no);
+      expect(new Set(nos).size, e.id).toBe(nos.length);
+      for (const task of e.tasks) {
+        expect(task.skills?.length ?? 0, `${e.id} zad. ${task.no}`).toBeGreaterThan(0);
+        for (const s of task.skills ?? []) expect(csSkills.has(s), `${e.id} zad. ${task.no} -> ${s}`).toBe(true);
       }
     }
   });

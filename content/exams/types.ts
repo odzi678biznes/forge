@@ -23,10 +23,17 @@ export interface ExamTask {
   points: number;
   /** Kody wymagań szczegółowych z zasad oceniania, np. "V.14", "IX.R3". */
   codes: string[];
+  /**
+   * Umiejętności kursu wprost (informatyka: z reguł słów kluczowych
+   * generatora). Brak pola = wyznaczane z kodów wymagań (matematyka).
+   */
+  skills?: string[];
 }
 
 export interface ExamSheet {
   id: string;
+  /** Brak pola = matematyka (tak powstał pierwszy katalog). */
+  subjectId?: 'math' | 'cs';
   level: ExamLevel;
   kind: ExamKind;
   /** Rok i miesiąc: "2025-05". */
@@ -35,18 +42,21 @@ export interface ExamSheet {
   era: CurriculumEra;
   sheetUrl: string;
   keyUrl: string;
-  /** Czas pracy w minutach (formuła 2023: PP i PR po 180 min). */
+  /** Pliki z danymi do zadań praktycznych (informatyka). */
+  dataUrl?: string;
+  /** Czas pracy w minutach (formuła 2023: matematyka 180, informatyka 210). */
   minutes: number;
   maxPoints: number;
   tasks: ExamTask[];
 }
 
-export const t = (no: string, points: number, codes: string[]): ExamTask => ({ no, points, codes });
+export const t = (no: string, points: number, codes: string[], skills?: string[]): ExamTask =>
+  skills ? { no, points, codes, skills } : { no, points, codes };
 
-export function exam(spec: Omit<ExamSheet, 'minutes' | 'maxPoints'>): ExamSheet {
+export function exam(spec: Omit<ExamSheet, 'minutes' | 'maxPoints'> & { minutes?: number }): ExamSheet {
   return {
     ...spec,
-    minutes: 180,
+    minutes: spec.minutes ?? 180,
     maxPoints: spec.tasks.reduce((a, task) => a + task.points, 0),
   };
 }
