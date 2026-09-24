@@ -58,6 +58,19 @@ function errorText(err: unknown): string {
 }
 
 /**
+ * `None` zagnieżdżone w liście albo słowniku Pyodide zamienia na `undefined`,
+ * a oczekiwane wyniki testów zapisują brak wartości jako `null`.
+ */
+export function undefinedToNull(v: unknown): unknown {
+  if (v === undefined) return null;
+  if (Array.isArray(v)) return v.map(undefinedToNull);
+  if (typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype) {
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, undefinedToNull(x)]));
+  }
+  return v;
+}
+
+/**
  * Wartość z Pythona na czyste dane JS (bez proxy), gotowe do przesłania.
  * Krotki i listy stają się tablicami, słowniki - obiektami, None - null.
  */
@@ -68,8 +81,8 @@ function toPlain(value: unknown): RawValue {
       const proxy = value as { toJs: (o: object) => unknown; destroy?: () => void; type?: string };
       const js = proxy.toJs({ dict_converter: Object.fromEntries, create_pyproxies: false });
       proxy.destroy?.();
-      if (js instanceof Set) return { ok: true, value: [...js] };
-      return { ok: true, value: structuredClone(js) };
+      if (js instanceof Set) return { ok: true, value: undefinedToNull([...js]) };
+      return { ok: true, value: undefinedToNull(structuredClone(js)) };
     }
     if (typeof value === 'bigint') {
       // Duża liczba całkowita z Pythona: porównujemy ją jako liczbę, jeśli się mieści.

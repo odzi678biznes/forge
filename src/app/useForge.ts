@@ -175,6 +175,7 @@ export function useForge(deps: ForgeDeps = {}) {
   const store = useRef<StoragePort | null>(deps.storage ?? null);
   const runnerRef = useRef<CodeRunner | null>(deps.runner ?? null);
   const pyRunnerRef = useRef<CodeRunner | null>(deps.pythonRunner ?? deps.runner ?? null);
+  const sqlRunnerRef = useRef<CodeRunner | null>(null);
 
   const port = (): StoragePort => {
     const s = store.current;
@@ -187,6 +188,14 @@ export function useForge(deps: ForgeDeps = {}) {
    * nigdy nie uruchamia workera kodu.
    */
   const runner = async (language: CodeLanguage = 'javascript'): Promise<CodeRunner> => {
+    if (language === 'sql') {
+      // SQLite jest w Pyodide — zapytania idą do tego samego interpretera co Python.
+      if (sqlRunnerRef.current) return sqlRunnerRef.current;
+      const python = await runner('python');
+      const { PythonCodeRunner, SqlCodeRunner } = await import('@/features/code/python-runner');
+      sqlRunnerRef.current = python instanceof PythonCodeRunner ? new SqlCodeRunner(python) : python;
+      return sqlRunnerRef.current;
+    }
     if (language === 'python') {
       if (pyRunnerRef.current) return pyRunnerRef.current;
       const { PythonCodeRunner } = await import('@/features/code/python-runner');
@@ -403,7 +412,7 @@ export function useForge(deps: ForgeDeps = {}) {
             userAnswer,
             task.functionName,
             task.tests,
-            language === 'python' ? PYTHON_RUN_TIMEOUT_MS : DEFAULT_RUN_TIMEOUT_MS,
+            language === 'javascript' ? DEFAULT_RUN_TIMEOUT_MS : PYTHON_RUN_TIMEOUT_MS,
           );
           const verdict = judge(run);
           result = verdictToGrade(verdict, run.status);

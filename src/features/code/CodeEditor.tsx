@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import type { CodeTask } from '@/data/types';
 import { describePython, describeValue, hiddenTestCount, visibleTests } from '@/learning-engine/code-grading';
 import { count } from '@/learning-engine/polish';
+import { SqlRowsView, SqlTableView } from './SqlTables';
 import './code.css';
 
 /**
@@ -28,8 +29,10 @@ export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEd
   ref,
 ) {
   const python = task.language === 'python';
+  const sql = task.language === 'sql';
   const indent = python ? '    ' : '  ';
-  const show = python ? describePython : describeValue;
+  const show = python || sql ? describePython : describeValue;
+  const languageName = sql ? 'SQL' : python ? 'Python' : 'JavaScript';
   const shown = visibleTests(task.tests);
   const hidden = hiddenTestCount(task.tests);
 
@@ -44,13 +47,24 @@ export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEd
 
   return (
     <section className="code">
-      <p className="code__signature">
-        <span className="code__label">Sygnatura</span>
-        <code>{task.signature}</code>
-      </p>
+      {sql && task.sql ? (
+        <div className="code__db">
+          <p className="code__label">Struktura bazy</p>
+          <pre className="code__schema">{task.sql.schema}</pre>
+          <p className="code__label">Przykładowe dane</p>
+          {task.sql.tables.map((t) => (
+            <SqlTableView key={t.name} table={t} />
+          ))}
+        </div>
+      ) : (
+        <p className="code__signature">
+          <span className="code__label">Sygnatura</span>
+          <code>{task.signature}</code>
+        </p>
+      )}
 
       <label className="code__label" htmlFor="code-editor">
-        Twój kod ({python ? 'Python' : 'JavaScript'})
+        {sql ? 'Twoje zapytanie' : 'Twój kod'} ({languageName})
       </label>
       <textarea
         id="code-editor"
@@ -91,6 +105,10 @@ export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEd
       />
 
       <div className="code__tests">
+        {sql ? (
+          shown.map((t) => <SqlRowsView key={t.name} rows={t.expected} caption="Oczekiwany wynik dla przykładowych danych" />)
+        ) : (
+        <>
         <p className="code__label">Testy widoczne</p>
         <ul>
           {shown.map((t) => (
@@ -102,7 +120,15 @@ export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEd
             </li>
           ))}
         </ul>
-        {hidden > 0 && (
+        </>
+        )}
+        {hidden > 0 && sql && (
+          <p className="code__hidden">
+            + {count(hidden, ['ukryta baza', 'ukryte bazy', 'ukrytych baz'])} z innymi danymi — zapytanie ma działać
+            dla każdych danych, nie tylko dla przykładu.
+          </p>
+        )}
+        {hidden > 0 && !sql && (
           <p className="code__hidden">
             + {count(hidden, ['test ukryty', 'testy ukryte', 'testów ukrytych'])} — sprawdzają przypadki brzegowe,
             więc samo dopasowanie do przykładów nie wystarczy.
@@ -117,7 +143,7 @@ export const CodeEditor = forwardRef<HTMLTextAreaElement, Props>(function CodeEd
           onClick={onRun}
           disabled={running || value.trim() === ''}
         >
-          {running ? (python ? 'Uruchamiam Pythona…' : 'Uruchamiam testy…') : 'Uruchom testy'}
+          {running ? (sql ? 'Wykonuję zapytanie…' : python ? 'Uruchamiam Pythona…' : 'Uruchamiam testy…') : sql ? 'Wykonaj zapytanie' : 'Uruchom testy'}
           <kbd>Ctrl+Enter</kbd>
         </button>
       )}

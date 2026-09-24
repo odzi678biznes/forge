@@ -127,8 +127,21 @@ export interface CodeTest {
   hidden?: boolean;
 }
 
-/** Język zadania programistycznego. Na maturze uczeń pisze w Pythonie. */
-export type CodeLanguage = 'python' | 'javascript';
+/**
+ * Język zadania programistycznego. Na maturze uczeń pisze w Pythonie,
+ * a zapytania do bazy danych — w SQL.
+ */
+export type CodeLanguage = 'python' | 'javascript' | 'sql';
+
+/** Wartość w wierszu tabeli bazy danych. */
+export type SqlValue = string | number | null;
+
+/** Tabela pokazywana uczniowi w zadaniu SQL (przykładowe dane). */
+export interface SqlTable {
+  name: string;
+  columns: string[];
+  rows: SqlValue[][];
+}
 
 /** Zadanie programistyczne oceniane na kontrolowanych testach. */
 export interface CodeTask {
@@ -146,6 +159,13 @@ export interface CodeTask {
    * wersję) i używane w testach treści jako dowód, że zadanie da się zaliczyć.
    */
   modelSolution?: string;
+  /**
+   * Zadanie SQL: struktura bazy i przykładowe dane, na których działa test
+   * widoczny. Każdy test to osobny zestaw danych: wejście
+   * `[skrypt tworzący bazę, zapytanie sprawdzające | null, czy kolejność wierszy ma znaczenie]`,
+   * oczekiwany wynik — lista wierszy.
+   */
+  sql?: { schema: string; tables: SqlTable[] };
 }
 
 export interface Hint {

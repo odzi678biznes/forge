@@ -1,4 +1,5 @@
 import { describePython, gradeRun, type CodeRunner, type CodeTest, type RunResult } from '@/learning-engine/code-grading';
+import { gradeSqlRun } from '@/learning-engine/sql-grading';
 
 /**
  * Piaskownica Pythona dla zadań programistycznych (matura z informatyki).
@@ -69,7 +70,23 @@ export class PythonCodeRunner implements CodeRunner {
     this.pending.clear();
   }
 
-  async run(source: string, functionName: string, tests: CodeTest[], timeoutMs = PYTHON_RUN_TIMEOUT_MS): Promise<RunResult> {
+  run(source: string, functionName: string, tests: CodeTest[], timeoutMs = PYTHON_RUN_TIMEOUT_MS): Promise<RunResult> {
+    return this.exec('python', source, functionName, tests, timeoutMs, (raw) => gradeRun(tests, raw, describePython));
+  }
+
+  /** Zapytanie SQL ucznia na bazach z testów — ten sam, już załadowany interpreter. */
+  runSql(source: string, tests: CodeTest[], timeoutMs = PYTHON_RUN_TIMEOUT_MS): Promise<RunResult> {
+    return this.exec('sql', source, 'zapytanie', tests, timeoutMs, (raw) => gradeSqlRun(tests, raw));
+  }
+
+  private async exec(
+    language: 'python' | 'sql',
+    source: string,
+    functionName: string,
+    tests: CodeTest[],
+    timeoutMs: number,
+    grade: (raw: unknown) => RunResult,
+  ): Promise<RunResult> {
     if (tests.length === 0) return { status: 'ok', outcomes: [], message: null };
 
     try {
@@ -91,22 +108,25 @@ export class PythonCodeRunner implements CodeRunner {
         this.pending.delete(nonce);
         // Pętla bez końca: jedyny sposób przerwania to ubicie interpretera.
         this.reset();
-        resolve(
-          gradeRun(
-            tests,
-            { status: 'timeout', values: [], message: `Przekroczono limit ${timeoutMs / 1000} s — sprawdź, czy pętla się kończy.` },
-            describePython,
-          ),
-        );
+        resolve(grade({ status: 'timeout', values: [], message: `Przekroczono limit ${timeoutMs / 1000} s — sprawdź, czy pętla się kończy.` }));
       }, timeoutMs);
 
       this.pending.set(nonce, (raw) => {
         window.clearTimeout(timer);
         this.pending.delete(nonce);
-        resolve(gradeRun(tests, raw, describePython));
+        resolve(grade(raw));
       });
 
-      worker.postMessage({ nonce, source, functionName, inputs: tests.map((t) => t.input) });
+      worker.postMessage({ nonce, language, source, functionName, inputs: tests.map((t) => t.input) });
     });
+  }
+}
+
+/** Zapytania SQL idą do tego samego, ciepłego interpretera co Python. */
+export class SqlCodeRunner implements CodeRunner {
+  constructor(private readonly python: PythonCodeRunner) {}
+
+  run(source: string, _functionName: string, tests: CodeTest[], timeoutMs = PYTHON_RUN_TIMEOUT_MS): Promise<RunResult> {
+    return this.python.runSql(source, tests, timeoutMs);
   }
 }

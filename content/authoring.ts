@@ -9,6 +9,8 @@ import type {
   LessonBlock,
   Question,
   QuestionKind,
+  SqlTable,
+  SqlValue,
   WorkedExample,
 } from '@/data/types';
 
@@ -199,6 +201,108 @@ export function pyTask(spec: PyTaskSpec): Question {
       starterCode: starter,
       tests: spec.tests,
       modelSolution: dedent(spec.model),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Zadania SQL
+// ---------------------------------------------------------------------------
+
+export type SqlRow = SqlValue[];
+
+export interface SqlFixture {
+  name: string;
+  /** Dane: tabela → wiersze (wartości w kolejności kolumn z CREATE TABLE). */
+  data: Record<string, SqlRow[]>;
+}
+
+export interface SqlTaskSpec extends Omit<BaseSpec, 'errors'> {
+  /** Instrukcje CREATE TABLE — pokazywane uczniowi i wykonywane przed każdym testem. */
+  schema: string;
+  /** Pierwszy zestaw danych jest przykładem widocznym dla ucznia, pozostałe są ukryte. */
+  fixtures: SqlFixture[];
+  /** Wzorcowe zapytanie. */
+  model: string;
+  /** Zapytanie sprawdzające stan bazy — dla zadań zmieniających dane. */
+  check?: string;
+  /** Czy kolejność wierszy jest częścią zadania (ORDER BY). */
+  ordered?: boolean;
+  starter?: string;
+  /**
+   * Oczekiwane wyniki (zestaw danych → wiersze). Generuje je skrypt
+   * `scripts/sql-expected.ts` ze wzorcowego zapytania; test treści pilnuje,
+   * żeby były aktualne.
+   */
+  expected?: Record<string, SqlRow[]>;
+}
+
+function sqlLiteral(v: SqlValue): string {
+  if (v === null) return 'NULL';
+  if (typeof v === 'number') return String(v);
+  return `'${v.replace(/'/g, "''")}'`;
+}
+
+/** Skrypt tworzący bazę: struktura + dane zestawu. */
+export function sqlSetup(schema: string, data: Record<string, SqlRow[]>): string {
+  const inserts = Object.entries(data)
+    .filter(([, rows]) => rows.length > 0)
+    .map(([table, rows]) => `INSERT INTO ${table} VALUES\n${rows.map((r) => `(${r.map(sqlLiteral).join(', ')})`).join(',\n')};`);
+  return [dedent(schema), ...inserts].join('\n');
+}
+
+/** Nazwy kolumn każdej tabeli z instrukcji CREATE TABLE. */
+export function schemaColumns(schema: string): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const m of schema.matchAll(/CREATE TABLE\s+(\w+)\s*\(([\s\S]*?)\);/gi)) {
+    const parts: string[] = [];
+    let depth = 0;
+    let current = '';
+    for (const c of m[2] ?? '') {
+      if (c === '(') depth += 1;
+      if (c === ')') depth -= 1;
+      if (c === ',' && depth === 0) {
+        parts.push(current);
+        current = '';
+      } else current += c;
+    }
+    parts.push(current);
+    out[m[1]!] = parts
+      .map((p) => p.trim())
+      .filter((p) => p !== '' && !/^(PRIMARY|FOREIGN|UNIQUE|CHECK|CONSTRAINT)\b/i.test(p))
+      .map((p) => p.split(/\s+/)[0]!);
+  }
+  return out;
+}
+
+/** Zadanie: napisz zapytanie SQL, sprawdzane na kilku bazach (jawnej i ukrytych). */
+export function sqlTask(spec: SqlTaskSpec): Question {
+  const columns = schemaColumns(spec.schema);
+  const sample = spec.fixtures[0];
+  if (!sample) throw new Error(`${spec.id}: zadanie SQL potrzebuje co najmniej jednego zestawu danych.`);
+  const tables: SqlTable[] = Object.entries(sample.data).map(([name, rows]) => ({
+    name,
+    columns: columns[name] ?? [],
+    rows,
+  }));
+  return {
+    ...base({ ...spec, errors: [] }),
+    format: 'code',
+    answer: 'program',
+    acceptedVariants: [],
+    code: {
+      language: 'sql',
+      functionName: 'zapytanie',
+      signature: dedent(spec.schema).trimEnd(),
+      starterCode: spec.starter ?? '-- Twoje zapytanie\n',
+      tests: spec.fixtures.map((fx, i) => ({
+        name: fx.name,
+        input: [sqlSetup(spec.schema, fx.data), spec.check ?? null, spec.ordered ?? false],
+        expected: spec.expected?.[fx.name] ?? null,
+        ...(i > 0 ? { hidden: true } : {}),
+      })),
+      modelSolution: dedent(spec.model),
+      sql: { schema: dedent(spec.schema).trimEnd(), tables },
     },
   };
 }

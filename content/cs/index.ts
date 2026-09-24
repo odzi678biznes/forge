@@ -7,13 +7,14 @@ import { SORT_CARDS, SORT_LESSONS, SORT_QUESTIONS, SORT_SKILLS, SORT_TOPIC } fro
 import { TECH_CARDS, TECH_LESSONS, TECH_QUESTIONS, TECH_SKILLS, TECH_TOPIC } from './kurs/techniki';
 import { STRUCT_CARDS, STRUCT_LESSONS, STRUCT_QUESTIONS, STRUCT_SKILLS, STRUCT_TOPIC } from './kurs/struktury';
 import { REPR_CARDS, REPR_LESSONS, REPR_QUESTIONS, REPR_SKILLS, REPR_TOPIC } from './kurs/reprezentacja';
+import { DB_CARDS, DB_LESSONS, DB_QUESTIONS, DB_SKILLS, DB_TOPIC } from './kurs/bazy-danych';
 
 /**
  * Korpus informatyki (matura rozszerzona, podstawa programowa 2024 —
  * Dz.U. 2024 poz. 1019).
  *
- * Zadania programistyczne są w Pythonie i uruchamiają się offline
- * (Pyodide w workerze). Każde ma wzorcowe rozwiązanie sprawdzane w testach
+ * Zadania programistyczne są w Pythonie, a zapytania do baz danych w SQL —
+ * jedne i drugie uruchamiają się offline (Pyodide z SQLite w workerze). Każde ma wzorcowe rozwiązanie sprawdzane w testach
  * treści tym samym graderem, który ocenia ucznia.
  *
  * Materiał autorski, niezweryfikowany wobec informatora CKE.
@@ -30,6 +31,7 @@ const CHAPTERS = [
   { topic: TECH_TOPIC, skills: TECH_SKILLS, questions: TECH_QUESTIONS, lessons: TECH_LESSONS, cards: TECH_CARDS },
   { topic: STRUCT_TOPIC, skills: STRUCT_SKILLS, questions: STRUCT_QUESTIONS, lessons: STRUCT_LESSONS, cards: STRUCT_CARDS },
   { topic: REPR_TOPIC, skills: REPR_SKILLS, questions: REPR_QUESTIONS, lessons: REPR_LESSONS, cards: REPR_CARDS },
+  { topic: DB_TOPIC, skills: DB_SKILLS, questions: DB_QUESTIONS, lessons: DB_LESSONS, cards: DB_CARDS },
 ];
 
 export const CS_TOPICS: Topic[] = CHAPTERS.map((c) => c.topic);

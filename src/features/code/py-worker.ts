@@ -1,6 +1,7 @@
 import { loadPyodide } from 'pyodide';
 import { lockDown } from './lockdown';
 import { runPythonTests, type PythonRun } from './python-harness';
+import { runSqlTests } from './sql-harness';
 
 /**
  * Worker uruchamiający Pythona (Pyodide) - offline, z plików aplikacji.
@@ -23,6 +24,8 @@ type Message =
 
 interface RunMessage {
   nonce: string;
+  /** 'sql' = zapytanie do bazy SQLite zamiast funkcji w Pythonie. */
+  language?: 'python' | 'sql';
   source: string;
   functionName: string;
   /** Wyłącznie argumenty. Oczekiwane wyniki nigdy tu nie trafiają. */
@@ -48,7 +51,7 @@ ready.then(
 );
 
 self.onmessage = async (e: MessageEvent<RunMessage>) => {
-  const { nonce, source, functionName, inputs } = e.data;
+  const { nonce, source, functionName, inputs, language } = e.data;
   let py;
   try {
     py = await ready;
@@ -60,5 +63,6 @@ self.onmessage = async (e: MessageEvent<RunMessage>) => {
     });
     return;
   }
-  post({ type: 'result', nonce, raw: runPythonTests(py, source, functionName, inputs) });
+  const raw = language === 'sql' ? runSqlTests(py, source, inputs) : runPythonTests(py, source, functionName, inputs);
+  post({ type: 'result', nonce, raw });
 };

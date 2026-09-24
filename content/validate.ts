@@ -542,8 +542,8 @@ export function validateCorpus(label: string, corpus: Corpus): void {
         // Inaczej uczen zaliczylby zadanie, nie pisząc ani linijki.
         for (const q of codeQuestions) {
           const code = q.code;
-          // Kod startowy w Pythonie sprawdza content/cs/python.test.ts (Pyodide).
-          if (!code || code.language === 'python') continue;
+          // Python i SQL sprawdzają content/cs/python.test.ts i sql.test.ts (Pyodide).
+          if (!code || (code.language ?? 'javascript') !== 'javascript') continue;
           const { solve } = buildSolution(code.starterCode, code.functionName);
           if (!solve) continue;
           const verdict = judge(executeTests(solve, code.tests));
