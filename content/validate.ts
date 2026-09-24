@@ -79,7 +79,9 @@ export function validateCorpus(label: string, corpus: Corpus): void {
           ? `$${b.tex}$ ${b.caption ?? ''}`
           : b.kind === 'figure'
             ? `${b.figure.alt} ${b.caption ?? ''}`
-            : b.body,
+            : b.kind === 'code'
+              ? (b.caption ?? '')
+              : b.body,
       ]),
       ...l.examples.flatMap((e): Array<[string, string]> => [
         [`przyklad ${l.skillId}`, e.prompt],

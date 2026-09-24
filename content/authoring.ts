@@ -161,6 +161,9 @@ export const f = (tex: string, caption?: string): LessonBlock =>
   caption === undefined ? { kind: 'formula', tex } : { kind: 'formula', tex, caption };
 export const tip = (body: string): LessonBlock => ({ kind: 'tip', body });
 export const warn = (body: string): LessonBlock => ({ kind: 'warning', body });
+/** Listing kodu w lekcji. Kod jest pokazywany dosłownie. */
+export const listing = (code: string, caption?: string): LessonBlock =>
+  caption === undefined ? { kind: 'code', code } : { kind: 'code', code, caption };
 
 /**
  * Przykład rozwiązany. Krok to albo sam tekst, albo [tekst, dlaczego].

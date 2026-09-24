@@ -453,7 +453,7 @@ function Feedback({
         {step.code ? step.grade.note : <Tex>{step.grade.note}</Tex>}
       </p>
 
-      {step.code && <CodeResults outcomes={step.code.outcomes} />}
+      {step.code && <CodeResults outcomes={step.code.outcomes} output={step.code.output} />}
 
       {step.grade.error && (
         <p className="fb__rule">
@@ -475,13 +475,45 @@ function Feedback({
         </p>
       )}
 
-      {!step.code && <Solution question={question} correct={correct} />}
+      {step.code ? (
+        question.code?.modelSolution && <CodeSolution question={question} correct={correct} />
+      ) : (
+        <Solution question={question} correct={correct} />
+      )}
 
       <button type="button" className="fb__next" onClick={onAdvance} ref={buttonRef}>
         Dalej
         <kbd>Enter</kbd>
       </button>
     </section>
+  );
+}
+
+/**
+ * Wzorcowy kod po próbie zadania programistycznego: najpierw wyjaśnienie
+ * krok po kroku, potem sam kod - uczeń ma zrozumieć pomysł, a nie przepisać.
+ */
+function CodeSolution({ question, correct }: { question: Question; correct: boolean }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [question.id]);
+  if (!open) {
+    return (
+      <button type="button" className="fb__solution-open" onClick={() => setOpen(true)}>
+        {correct ? 'Porównaj z wzorcowym kodem' : 'Pokaż wzorcowe rozwiązanie'}
+      </button>
+    );
+  }
+  return (
+    <div className="fb__solution">
+      <ol>
+        {(question.steps ?? [question.solution]).map((t, i) => (
+          <li key={i}>
+            <Tex>{t}</Tex>
+          </li>
+        ))}
+      </ol>
+      <pre className="fb__code">{question.code?.modelSolution}</pre>
+    </div>
   );
 }
 

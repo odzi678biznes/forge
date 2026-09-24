@@ -1024,3 +1024,27 @@
     grid-row: 2;
   }
 }
+
+.lesson__code {
+  margin: 0;
+}
+
+.lesson__code pre {
+  margin: 0;
+  padding: var(--space-4) var(--space-5, 1.25rem);
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--bg-abyss);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  line-height: 1.65;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.lesson__code figcaption {
+  margin-top: var(--space-2);
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}

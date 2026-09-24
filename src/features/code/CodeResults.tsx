@@ -8,10 +8,17 @@ import './code.css';
  * odsłonięcie oczekiwanego wyniku zamieniłoby test ukryty w kolejny przykład
  * do dopasowania.
  */
-export function CodeResults({ outcomes }: { outcomes: TestOutcome[] }) {
-  if (outcomes.length === 0) return null;
+export function CodeResults({ outcomes, output }: { outcomes: TestOutcome[]; output?: string | undefined }) {
+  if (outcomes.length === 0 && !output) return null;
 
   return (
+    <>
+    {output && (
+      <details className="results__output">
+        <summary>Wypisane przez print()</summary>
+        <pre>{output}</pre>
+      </details>
+    )}
     <ul className="results">
       {outcomes.map((o) => (
         <li key={o.name} className={o.passed ? 'result result--ok' : 'result result--miss'}>
@@ -34,5 +41,6 @@ export function CodeResults({ outcomes }: { outcomes: TestOutcome[] }) {
         </li>
       ))}
     </ul>
+    </>
   );
 }

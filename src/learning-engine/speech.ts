@@ -118,6 +118,8 @@ export function latexToSpeech(tex: string): string {
 /** Zamienia całą treść zadania: tekst zostaje, wzory w $…$ są „czytane". */
 export function promptToSpeech(prompt: string): string {
   return prompt
+    // Kod w tekście czytamy jak słowa: `suma_dodatnich(t)` -> "suma dodatnich t".
+    .replace(/`([^`]*)`/g, (_m, code: string) => ` ${code.replace(/[_{}()[\]\\$^'"=:,.<>]+/g, ' ')} `)
     .replace(/\$([^$]*)\$/g, (_m, tex: string) => ` ${latexToSpeech(tex)} `)
     .replace(/\s+/g, ' ')
     .replace(/\s+([.,;:?!])/g, '$1')

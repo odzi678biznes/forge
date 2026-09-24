@@ -25,7 +25,11 @@ export function Math({ children, className, display = false }: Props) {
   return (
     <span className={className}>
       {segments.map((seg, i) =>
-        seg.math ? (
+        seg.code ? (
+          <code key={i} className="inline-code">
+            {seg.text}
+          </code>
+        ) : seg.math ? (
           <span
             key={i}
             // KaTeX zwraca wlasny, zaufany HTML; wejsciem jest tylko tresc zadania.
@@ -42,6 +46,8 @@ export function Math({ children, className, display = false }: Props) {
 interface Segment {
   text: string;
   math: boolean;
+  /** Kod w tekście: `nazwa_funkcji(t)` - pokazywany dosłownie. */
+  code?: boolean;
 }
 
 export function splitMath(input: string): Segment[] {
@@ -49,6 +55,18 @@ export function splitMath(input: string): Segment[] {
   let rest = input;
 
   while (rest.length > 0) {
+    // Kod w odwrotnych apostrofach ma pierwszeństwo, jeśli zaczyna się przed wzorem.
+    const tick = rest.indexOf('`');
+    const dollar = rest.indexOf('$');
+    if (tick !== -1 && (dollar === -1 || tick < dollar)) {
+      const end = rest.indexOf('`', tick + 1);
+      if (end !== -1) {
+        if (tick > 0) out.push({ text: rest.slice(0, tick), math: false });
+        out.push({ text: rest.slice(tick + 1, end), math: false, code: true });
+        rest = rest.slice(end + 1);
+        continue;
+      }
+    }
     const open = rest.indexOf('$');
     if (open === -1) {
       out.push({ text: rest, math: false });

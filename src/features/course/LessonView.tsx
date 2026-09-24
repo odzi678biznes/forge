@@ -36,7 +36,13 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
     const text = [
       lesson.intro,
       ...lesson.blocks.map((b) =>
-        b.kind === 'formula' ? `$${b.tex}$` : b.kind === 'figure' ? b.figure.alt : b.body,
+        b.kind === 'formula'
+          ? `$${b.tex}$`
+          : b.kind === 'figure'
+            ? b.figure.alt
+            : b.kind === 'code'
+              ? `Przykład kodu${b.caption ? `: ${b.caption}` : ''}.`
+              : b.body,
       ),
     ].join(' ');
     return speech.speaking ? speech.stop() : speech.speak(text);
@@ -147,6 +153,15 @@ function Block({ block }: { block: LessonBlock }) {
       );
     case 'figure':
       return <Figure figure={block.figure} {...(block.caption ? { caption: block.caption } : {})} />;
+    case 'code':
+      return (
+        <figure className="lesson__code">
+          <pre>
+            <code>{block.code}</code>
+          </pre>
+          {block.caption && <figcaption>{block.caption}</figcaption>}
+        </figure>
+      );
   }
 }
 

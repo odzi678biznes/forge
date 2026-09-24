@@ -153,3 +153,21 @@
   color: var(--text-muted);
   overflow-wrap: anywhere;
 }
+
+.results__output {
+  margin: var(--space-3) 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.results__output pre {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--bg-abyss);
+  color: var(--text);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+}

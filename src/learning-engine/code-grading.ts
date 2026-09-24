@@ -41,6 +41,8 @@ export interface RunResult {
   outcomes: TestOutcome[];
   /** Komunikat błędu kompilacji/składni, jeśli kod w ogóle się nie wykonał. */
   message: string | null;
+  /** Tekst wypisany przez kod ucznia (print) - tylko do podglądu, nie do oceny. */
+  output?: string;
 }
 
 export interface CodeVerdict {
@@ -205,11 +207,14 @@ export function gradeRun(tests: CodeTest[], raw: unknown): RunResult {
     return malformed(tests, 'Piaskownica zwróciła nieznany status.');
   }
 
+  const output = printedOutput(raw);
+
   if (r.status === 'compile-error') {
     return {
       status: 'compile-error',
       outcomes,
       message: typeof r.message === 'string' ? r.message : 'błąd składni',
+      ...output,
     };
   }
 
@@ -259,7 +264,15 @@ export function gradeRun(tests: CodeTest[], raw: unknown): RunResult {
     status: r.status === 'timeout' ? 'timeout' : 'ok',
     outcomes,
     message: typeof r.message === 'string' ? r.message : null,
+    ...output,
   };
+}
+
+/** Wypisany tekst z piaskownicy - przycięty, tylko gdy niepusty. */
+function printedOutput(raw: object): { output?: string } {
+  const out = (raw as { output?: unknown }).output;
+  if (typeof out !== 'string' || out.trim() === '') return {};
+  return { output: out.length > 4000 ? `${out.slice(0, 4000)}…` : out };
 }
 
 function malformed(tests: CodeTest[], message: string): RunResult {

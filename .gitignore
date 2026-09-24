@@ -8,3 +8,6 @@ src-tauri/gen/
 
 # Artefakty kompilacji TypeScriptu
 *.tsbuildinfo
+
+# Interpreter Pythona kopiowany z node_modules przy starcie Vite
+public/pyodide/

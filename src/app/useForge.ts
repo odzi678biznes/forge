@@ -4,6 +4,7 @@ import {
   emptySkillState,
   type Attempt,
   type CardState,
+  type CodeLanguage,
   type ExamResult,
   type Flashcard,
   type HintLevel,
@@ -33,6 +34,7 @@ import {
 import { newCardState, reviewCard, type CardRating } from '@/learning-engine/flashcards';
 import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
 import { scheduleExamReviews } from '@/learning-engine/exam-analysis';
+import { PYTHON_RUN_TIMEOUT_MS } from '@/features/code/python-limits';
 import {
   analyseDiagnostic,
   buildDiagnosticSet,
@@ -99,6 +101,8 @@ const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
 export interface CodeFeedback {
   verdict: CodeVerdict;
   outcomes: TestOutcome[];
+  /** Tekst wypisany przez print() - do szukania błędu. */
+  output?: string;
 }
 
 export interface AnsweredStep {
@@ -161,6 +165,8 @@ export interface ForgeDeps {
   storage?: StoragePort;
   /** Piaskownica kodu. Domyslnie Web Worker, ladowany leniwie. */
   runner?: CodeRunner;
+  /** Piaskownica Pythona (Pyodide). Testy moga wstrzyknac wlasna. */
+  pythonRunner?: CodeRunner;
 }
 
 export function useForge(deps: ForgeDeps = {}) {
@@ -168,6 +174,7 @@ export function useForge(deps: ForgeDeps = {}) {
   // IndexedDB w przegladarce. Testy wstrzykuja wlasna implementacje.
   const store = useRef<StoragePort | null>(deps.storage ?? null);
   const runnerRef = useRef<CodeRunner | null>(deps.runner ?? null);
+  const pyRunnerRef = useRef<CodeRunner | null>(deps.pythonRunner ?? deps.runner ?? null);
 
   const port = (): StoragePort => {
     const s = store.current;
@@ -179,7 +186,13 @@ export function useForge(deps: ForgeDeps = {}) {
    * Piaskownica jest ladowana leniwie: uczen, ktory robi tylko matematyke,
    * nigdy nie uruchamia workera kodu.
    */
-  const runner = async (): Promise<CodeRunner> => {
+  const runner = async (language: CodeLanguage = 'javascript'): Promise<CodeRunner> => {
+    if (language === 'python') {
+      if (pyRunnerRef.current) return pyRunnerRef.current;
+      const { PythonCodeRunner } = await import('@/features/code/python-runner');
+      pyRunnerRef.current = new PythonCodeRunner();
+      return pyRunnerRef.current;
+    }
     if (runnerRef.current) return runnerRef.current;
     const { WorkerCodeRunner } = await import('@/features/code/worker-runner');
     runnerRef.current = new WorkerCodeRunner();
@@ -385,15 +398,16 @@ export function useForge(deps: ForgeDeps = {}) {
         const task = current.question.code;
         setRunning(true);
         try {
-          const run = await (await runner()).run(
+          const language = task.language ?? 'javascript';
+          const run = await (await runner(language)).run(
             userAnswer,
             task.functionName,
             task.tests,
-            DEFAULT_RUN_TIMEOUT_MS,
+            language === 'python' ? PYTHON_RUN_TIMEOUT_MS : DEFAULT_RUN_TIMEOUT_MS,
           );
           const verdict = judge(run);
           result = verdictToGrade(verdict, run.status);
-          code = { verdict, outcomes: run.outcomes };
+          code = { verdict, outcomes: run.outcomes, ...(run.output ? { output: run.output } : {}) };
         } finally {
           setRunning(false);
         }

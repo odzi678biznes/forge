@@ -127,8 +127,13 @@ export interface CodeTest {
   hidden?: boolean;
 }
 
+/** Język zadania programistycznego. Na maturze uczeń pisze w Pythonie. */
+export type CodeLanguage = 'python' | 'javascript';
+
 /** Zadanie programistyczne oceniane na kontrolowanych testach. */
 export interface CodeTask {
+  /** Brak pola = JavaScript (tak powstały pierwsze zadania). */
+  language?: CodeLanguage;
   /** Nazwa funkcji, ktora uczen ma napisac. */
   functionName: string;
   /** Sygnatura pokazywana uczniowi. */
@@ -136,6 +141,11 @@ export interface CodeTask {
   /** Kod startowy w edytorze. */
   starterCode: string;
   tests: CodeTest[];
+  /**
+   * Wzorcowe rozwiązanie - pokazywane po próbie (nauczyciel pokazuje czystą
+   * wersję) i używane w testach treści jako dowód, że zadanie da się zaliczyć.
+   */
+  modelSolution?: string;
 }
 
 export interface Hint {
@@ -366,7 +376,9 @@ export type LessonBlock =
   /** "Uwaga" - miejsce, w którym najczęściej traci się punkty. */
   | { kind: 'warning'; body: string }
   /** Rysunek z podpisem. */
-  | { kind: 'figure'; figure: Figure; caption?: string };
+  | { kind: 'figure'; figure: Figure; caption?: string }
+  /** Listing kodu (Python, SQL) - pokazywany dosłownie, bez renderera wzorów. */
+  | { kind: 'code'; code: string; caption?: string };
 
 export interface WorkedStep {
   text: string;
