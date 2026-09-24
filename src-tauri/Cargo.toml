@@ -24,6 +24,8 @@ tauri-plugin-log = "2"
 # Tylko SQLite. Blueprint sek. 12 wymaga bazy lokalnej i braku chmury,
 # wiec nie wlaczamy sterownikow sieciowych (postgres/mysql).
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+# Otwieranie linkow do arkuszy CKE w przegladarce systemowej (zakres: capability).
+tauri-plugin-opener = "2"
 # Klient HTTP dla opcjonalnej warstwy AI (sek. 11). TLS przez rustls z wbudowanymi
 # certyfikatami - bez zaleznosci od OpenSSL i bez domyslnych funkcji reqwest.
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

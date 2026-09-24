@@ -19,3 +19,4 @@ export function count(n: number, forms: Forms): string {
 export const MISSIONS: Forms = ['misja', 'misje', 'misji'];
 export const ATTEMPTS: Forms = ['próba', 'próby', 'prób'];
 export const SKILLS: Forms = ['kompetencja', 'kompetencje', 'kompetencji'];
+export const EXAM_RESULTS: Forms = ['wynik arkusza', 'wyniki arkuszy', 'wyników arkuszy'];

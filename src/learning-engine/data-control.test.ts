@@ -196,3 +196,27 @@ describe('nazwa pliku eksportu', () => {
     expect(name.endsWith('.json')).toBe(true);
   });
 });
+
+describe('plan usuwania - wyniki arkuszy', () => {
+  const withExams = {
+    ...data,
+    examResults: [
+      { id: 'e-math', subjectId: 'math' },
+      { id: 'e-cs', subjectId: 'cs' },
+    ],
+  };
+
+  it('usuniecie przedmiotu zabiera jego arkusze, a cudze zostawia', () => {
+    const p = planDeletion({ kind: 'subject', skillIds: ['math-1'], label: 'Matematyka', subjectId: 'math' }, withExams);
+    expect(p.examResultIds).toEqual(['e-math']);
+    expect(p.summary).toMatch(/1 wynik arkusza/);
+  });
+
+  it('usuniecie wszystkiego obejmuje kazdy arkusz', () => {
+    expect(planDeletion({ kind: 'all' }, withExams).examResultIds).toEqual(['e-math', 'e-cs']);
+  });
+
+  it('usuniecie jednej sesji nie dotyka arkuszy', () => {
+    expect(planDeletion({ kind: 'mission', missionId: 'm-math' }, withExams).examResultIds).toEqual([]);
+  });
+});

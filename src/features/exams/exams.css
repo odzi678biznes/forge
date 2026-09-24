@@ -1,0 +1,474 @@
+/* Arkusze CKE */
+
+.exams__levels {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
+.exams__level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.exams__level span {
+  font-size: var(--t-micro);
+  font-weight: 400;
+}
+
+.exams__level--on {
+  background: var(--bg-overlay);
+  color: var(--text);
+}
+
+.exams__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.exams__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.exams__item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.exams__item-title {
+  margin: 0;
+  font-size: var(--t-body);
+}
+
+.exams__item-meta {
+  margin: var(--space-2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+.exams__score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border: none;
+  background: none;
+  color: var(--progress);
+  font-size: var(--t-title);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.exams__score span {
+  margin-top: var(--space-1);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.exams__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.exams__source {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--t-small);
+  max-width: 70ch;
+}
+
+/* Historia wyników */
+
+.exams__chart {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+}
+
+.exams__chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.exams__chart-goal {
+  stroke: var(--challenge-dim);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.exams__chart-label {
+  fill: var(--text-faint);
+  font-size: 11px;
+}
+
+.exams__chart-line {
+  fill: none;
+  stroke: var(--progress);
+  stroke-width: 2.5;
+}
+
+.exams__chart-dot {
+  fill: var(--bg-deep);
+  stroke: var(--progress);
+  stroke-width: 2.5;
+}
+
+.exams__history {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.exams__history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.exams__history-open {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+
+.exams__history-open strong {
+  min-width: 3.2rem;
+  color: var(--progress);
+}
+
+.exams__history-open span {
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+.exams__icon-btn {
+  display: inline-flex;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-faint);
+}
+
+.exams__icon-btn:hover {
+  color: var(--text);
+  background: var(--bg-overlay);
+}
+
+.exams__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+/* Wpisywanie punktów */
+
+.exams__entry-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.exams__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.exams__fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.exams__fields input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-abyss);
+  color: var(--text);
+  font: inherit;
+  color-scheme: dark;
+}
+
+.exams__fields input[type='number'] {
+  width: 8rem;
+}
+
+.exams__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--t-small);
+  min-height: 2.25rem;
+}
+
+.exams__timer span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.exams__timer-over {
+  color: var(--challenge);
+}
+
+.exams__tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-3);
+}
+
+.exams__task {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+}
+
+.exams__task-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.exams__task-max {
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+.exams__codes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.exams__points {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.exams__point {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.exams__point:hover {
+  border-color: var(--progress);
+  color: var(--text);
+}
+
+.exams__point--on {
+  border-color: transparent;
+  background: var(--progress);
+  color: var(--bg-abyss);
+}
+
+.exams__sum {
+  position: sticky;
+  bottom: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  background: var(--bg-raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.exams__sum strong {
+  font-size: var(--t-title);
+}
+
+.exams__sum-note {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+/* Wynik */
+
+.exams__result-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.exams__result-top > div {
+  flex: 1 1 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.exams__verdict {
+  margin: 0;
+  font-size: var(--t-body);
+}
+
+.exams__reviews {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--progress);
+}
+
+.exams__weak {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.exams__weak li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.exams__weak li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.exams__weak-head > span:not(.exams__codes) {
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+@media (max-width: 640px) {
+  .exams__item-head {
+    flex-direction: column;
+  }
+
+  .exams__score {
+    align-items: flex-start;
+  }
+
+  .exams__tasks {
+    grid-template-columns: 1fr;
+  }
+
+  .exams__point {
+    min-width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .exams__sum {
+    bottom: calc(var(--space-2) + 64px);
+  }
+}
+
+.exams__weak li {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.exams__weak-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.exams__skills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.exams__skills > span:first-child {
+  color: var(--text-muted);
+  font-size: var(--t-small);
+}
+
+.exams__skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+@media (max-width: 640px) {
+  .exams__sum {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .exams__sum strong {
+    font-size: var(--t-body);
+  }
+
+  .exams__sum-note {
+    font-size: var(--t-micro);
+  }
+
+  .exams__sum .exams__actions {
+    flex-wrap: nowrap;
+  }
+
+  .exams__sum .btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--t-small);
+  }
+}

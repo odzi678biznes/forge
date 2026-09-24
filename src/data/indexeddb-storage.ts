@@ -1,6 +1,7 @@
 import type {
   Attempt,
   CardState,
+  ExamResult,
   LessonProgress,
   Mission,
   Preference,
@@ -27,7 +28,7 @@ import {
  */
 
 const DB_NAME = 'forge';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const STORES = {
   skillStates: 'skillStates',
@@ -37,6 +38,7 @@ const STORES = {
   preferences: 'preferences',
   lessonProgress: 'lessonProgress',
   cardStates: 'cardStates',
+  examResults: 'examResults',
 } as const;
 
 /**
@@ -87,6 +89,10 @@ export class IndexedDbStorage implements StoragePort {
         }
         if (!db.objectStoreNames.contains(STORES.cardStates)) {
           db.createObjectStore(STORES.cardStates, { keyPath: 'cardId' });
+        }
+        // Migracja v5: wyniki arkuszy CKE.
+        if (!db.objectStoreNames.contains(STORES.examResults)) {
+          db.createObjectStore(STORES.examResults, { keyPath: 'id' });
         }
         // Migracja v3: kopie bezpieczenstwa (sek. 12).
         if (!db.objectStoreNames.contains(BACKUPS)) {
@@ -169,8 +175,17 @@ export class IndexedDbStorage implements StoragePort {
     return this.write(STORES.cardStates, state);
   }
 
+  async loadExamResults(): Promise<ExamResult[]> {
+    const all = await this.readAll<ExamResult>(STORES.examResults);
+    return all.sort((a, b) => a.takenAt - b.takenAt);
+  }
+
+  async saveExamResult(result: ExamResult): Promise<void> {
+    return this.write(STORES.examResults, result);
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates] =
+    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates, examResults] =
       await Promise.all([
         this.loadSkillStates(),
         this.loadAttempts(),
@@ -179,6 +194,7 @@ export class IndexedDbStorage implements StoragePort {
         this.loadPreferences(),
         this.loadLessonProgress(),
         this.loadCardStates(),
+        this.loadExamResults(),
       ]);
     return {
       version: SNAPSHOT_VERSION,
@@ -190,6 +206,7 @@ export class IndexedDbStorage implements StoragePort {
       preferences,
       lessonProgress,
       cardStates,
+      examResults,
     };
   }
 
@@ -208,6 +225,7 @@ export class IndexedDbStorage implements StoragePort {
       ...(snapshot.plan ? [this.savePlan(snapshot.plan)] : []),
       ...(snapshot.lessonProgress ?? []).map((l) => this.write(STORES.lessonProgress, l)),
       ...(snapshot.cardStates ?? []).map((c) => this.saveCardState(c)),
+      ...(snapshot.examResults ?? []).map((e) => this.saveExamResult(e)),
     ]);
   }
 
@@ -235,6 +253,7 @@ export class IndexedDbStorage implements StoragePort {
       STORES.plan,
       STORES.lessonProgress,
       STORES.cardStates,
+      STORES.examResults,
     ];
     return new Promise((resolve, reject) => {
       const tx = db.transaction(names, 'readwrite');
@@ -255,6 +274,7 @@ export class IndexedDbStorage implements StoragePort {
           }
         };
       }
+      for (const id of selection.examResultIds ?? []) tx.objectStore(STORES.examResults).delete(id);
       if (selection.dropPlan) tx.objectStore(STORES.plan).delete(ACTIVE_PLAN_KEY);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);

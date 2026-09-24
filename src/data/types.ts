@@ -431,3 +431,24 @@ export interface LessonProgress {
   skillId: string;
   completedAt: number;
 }
+
+/**
+ * Wynik oficjalnego arkusza CKE rozwiązanego na papierze.
+ *
+ * Uczeń sprawdza się z zasadami oceniania CKE i wpisuje punkty za każde
+ * zadanie. Aplikacja nie ocenia sama - zna tylko strukturę arkusza, a nie
+ * treść zadań - ale z punktów wie, które wymagania i umiejętności zawiodły.
+ */
+export interface ExamResult {
+  id: string;
+  /** Identyfikator arkusza z katalogu, np. "mat-2505-pr". */
+  examId: string;
+  /** Przedmiot - usunięcie przedmiotu usuwa też jego arkusze. */
+  subjectId: string;
+  /** Kiedy arkusz został rozwiązany (ms). */
+  takenAt: number;
+  /** Punkty za zadania według numeru z arkusza, np. { "1": 2, "12.2": 3 }. */
+  scores: Record<string, number>;
+  /** Czas pracy w minutach, jeśli uczeń go zmierzył. */
+  minutes: number | null;
+}

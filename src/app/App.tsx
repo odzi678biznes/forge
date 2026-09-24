@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { SUBJECT_LABELS, useForge, type Screen } from './useForge';
 import { useCourse } from './useCourse';
 import { Shell } from './Shell';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
 import { MasteryMap } from '@/features/mastery-map/MasteryMap';
@@ -20,6 +21,9 @@ import { LessonView } from '@/features/course/LessonView';
 import { CalendarView } from '@/features/course/CalendarView';
 import { ProgressView } from '@/features/course/ProgressView';
 import { FlashcardsView } from '@/features/flashcards/FlashcardsView';
+import { ExamsView } from '@/features/exams/ExamsView';
+import { MATH_EXAMS } from '@content/exams/math-exams';
+import type { ExamSheet } from '@content/exams/types';
 import type { Skill } from '@/data/types';
 import { MATH_CORPUS } from '@content/math/index';
 import { CS_CORPUS } from '@content/cs/index';
@@ -29,6 +33,9 @@ const DATA_SUBJECTS: SubjectInfo[] = [
   { id: 'math', label: SUBJECT_LABELS.math, skillIds: MATH_CORPUS.skills.map((s) => s.id) },
   { id: 'cs', label: SUBJECT_LABELS.cs, skillIds: CS_CORPUS.skills.map((s) => s.id) },
 ];
+/** Katalog oficjalnych arkuszy CKE według przedmiotu. */
+const EXAMS: Record<'math' | 'cs', ExamSheet[]> = { math: MATH_EXAMS, cs: [] };
+
 const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
 const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions];
 
@@ -257,6 +264,23 @@ export function App() {
       page = <WeeklyReportView report={state.weekly} rhythm={state.rhythm} onBack={toCommandCenter} />;
       break;
 
+    case 'exams':
+      page = (
+        <ExamsView
+          exams={EXAMS[state.subject]}
+          results={forge.examResults.filter((r) => r.subjectId === state.subject)}
+          subjectId={state.subject}
+          skills={skills}
+          topics={topics}
+          hasLesson={(id) => course.lessonOf.has(id)}
+          onSave={forge.saveExam}
+          onDelete={forge.deleteExam}
+          onPractice={practice}
+          onOpenLesson={forge.openLesson}
+        />
+      );
+      break;
+
     case 'error-lab':
       page = (
         <ErrorLab
@@ -317,7 +341,9 @@ export function App() {
       onNavigate={goTo}
       badges={badges}
     >
-      {page}
+      <ErrorBoundary key={state.screen} onHome={toCommandCenter}>
+        {page}
+      </ErrorBoundary>
     </Shell>
   );
 }

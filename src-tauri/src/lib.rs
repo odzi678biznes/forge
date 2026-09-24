@@ -37,6 +37,12 @@ fn migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
             sql: include_str!("../migrations/004_course.sql"),
         },
+        Migration {
+            version: 5,
+            description: "wyniki arkuszy CKE",
+            kind: MigrationKind::Up,
+            sql: include_str!("../migrations/005_exam_results.sql"),
+        },
     ]
 }
 
@@ -56,6 +62,9 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
+        // Otwieranie oficjalnych arkuszy CKE w przegladarce systemowej.
+        // Zakres adresow ogranicza capability (tylko https://cke.gov.pl/*).
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(

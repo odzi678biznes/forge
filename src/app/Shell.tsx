@@ -26,6 +26,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
+  { screen: 'exams', label: 'Arkusze CKE', icon: 'exam' },
   { screen: 'error-lab', label: 'Laboratorium błędów', icon: 'errors' },
   { screen: 'mastery-map', label: 'Mapa umiejętności', icon: 'map' },
   { screen: 'weekly-report', label: 'Raport tygodnia', icon: 'report' },

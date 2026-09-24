@@ -3,6 +3,7 @@ import {
   MasteryLevel,
   type Attempt,
   type CardState,
+  type ExamResult,
   type Confidence,
   type Correctness,
   type HintLevel,
@@ -81,6 +82,16 @@ interface PlanRow {
 interface PreferenceRow {
   key: string;
   value: string;
+}
+
+interface ExamResultRow {
+  id: string;
+  exam_id: string;
+  subject_id: string;
+  taken_at: number;
+  /** JSON: numer zadania -> punkty. */
+  scores: string;
+  minutes: number | null;
 }
 
 interface CardStateRow {
@@ -312,8 +323,37 @@ export class SqliteStorage implements StoragePort {
     );
   }
 
+  async loadExamResults(): Promise<ExamResult[]> {
+    const rows = await this.require().select<ExamResultRow[]>(
+      'SELECT * FROM exam_results ORDER BY taken_at',
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      examId: r.exam_id,
+      subjectId: r.subject_id,
+      takenAt: r.taken_at,
+      scores: JSON.parse(r.scores) as Record<string, number>,
+      minutes: r.minutes,
+    }));
+  }
+
+  /** Poprawka wyniku nadpisuje zapis - ten sam arkusz, to samo podejście. */
+  async saveExamResult(e: ExamResult): Promise<void> {
+    await this.require().execute(
+      `INSERT INTO exam_results (id, exam_id, subject_id, taken_at, scores, minutes)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO UPDATE SET
+         exam_id = excluded.exam_id,
+         subject_id = excluded.subject_id,
+         taken_at = excluded.taken_at,
+         scores = excluded.scores,
+         minutes = excluded.minutes`,
+      [e.id, e.examId, e.subjectId, e.takenAt, JSON.stringify(e.scores), e.minutes],
+    );
+  }
+
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates] =
+    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates, examResults] =
       await Promise.all([
         this.loadSkillStates(),
         this.loadAttempts(),
@@ -322,6 +362,7 @@ export class SqliteStorage implements StoragePort {
         this.loadPreferences(),
         this.loadLessonProgress(),
         this.loadCardStates(),
+        this.loadExamResults(),
       ]);
     return {
       version: SNAPSHOT_VERSION,
@@ -333,6 +374,7 @@ export class SqliteStorage implements StoragePort {
       preferences,
       lessonProgress,
       cardStates,
+      examResults,
     };
   }
 
@@ -347,6 +389,7 @@ export class SqliteStorage implements StoragePort {
     if (snapshot.plan) await this.savePlan(snapshot.plan);
     for (const l of snapshot.lessonProgress ?? []) await this.saveLessonProgress(l);
     for (const c of snapshot.cardStates ?? []) await this.saveCardState(c);
+    for (const e of snapshot.examResults ?? []) await this.saveExamResult(e);
   }
 
   async clear(): Promise<void> {
@@ -358,6 +401,7 @@ export class SqliteStorage implements StoragePort {
     await db.execute('DELETE FROM preferences');
     await db.execute('DELETE FROM lesson_progress');
     await db.execute('DELETE FROM card_states');
+    await db.execute('DELETE FROM exam_results');
   }
 
   /**
@@ -379,6 +423,7 @@ export class SqliteStorage implements StoragePort {
     await byIds('skill_states', 'skill_id', selection.skillIds);
     await byIds('lesson_progress', 'skill_id', selection.skillIds);
     await byIds('card_states', 'skill_id', selection.skillIds);
+    await byIds('exam_results', 'id', selection.examResultIds ?? []);
     if (selection.dropPlan) await db.execute('DELETE FROM plans');
   }
 

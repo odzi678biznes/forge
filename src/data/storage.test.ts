@@ -493,3 +493,56 @@ describe('kurs: lekcje i fiszki', () => {
     expect(() => validateSnapshot(bad)).toThrow(SnapshotValidationError);
   });
 });
+
+describe('wyniki arkuszy CKE', () => {
+  const result = (id: string, subjectId = 'math') => ({
+    id,
+    examId: 'mat-2505-pr',
+    subjectId,
+    takenAt: 1_700_000_000_000,
+    scores: { '1': 2, '12.2': 3 },
+    minutes: 175,
+  });
+
+  it('wynik przezywa restart, a poprawka nadpisuje ten sam zapis', async () => {
+    const name = freshName();
+    const first = new IndexedDbStorage(name);
+    await first.init();
+    await first.saveExamResult(result('e-1'));
+    await first.saveExamResult({ ...result('e-1'), scores: { '1': 1 } });
+    first.close();
+
+    const second = new IndexedDbStorage(name);
+    await second.init();
+    expect(await second.loadExamResults()).toEqual([{ ...result('e-1'), scores: { '1': 1 } }]);
+  });
+
+  it('eksport i import obejmuja wyniki arkuszy', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveExamResult(result('e-1'));
+    const copy: unknown = JSON.parse(JSON.stringify(await store.exportAll()));
+    await store.clear();
+    expect(await store.loadExamResults()).toEqual([]);
+    await store.importAll(copy);
+    expect(await store.loadExamResults()).toEqual([result('e-1')]);
+  });
+
+  it('usuniecie wskazanego wyniku zostawia pozostale', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveExamResult(result('e-1'));
+    await store.saveExamResult(result('e-2'));
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false, examResultIds: ['e-1'] });
+    expect((await store.loadExamResults()).map((e) => e.id)).toEqual(['e-2']);
+  });
+
+  it('kopia z uszkodzonym wynikiem arkusza jest odrzucana', () => {
+    const base = { version: 1, exportedAt: 1, skillStates: [], attempts: [], missions: [] };
+    expect(() => validateSnapshot({ ...base, examResults: [{ ...result('e-1'), scores: { '1': -2 } }] })).toThrow(
+      SnapshotValidationError,
+    );
+    expect(() => validateSnapshot({ ...base, examResults: [{ id: 'e-1' }] })).toThrow(SnapshotValidationError);
+    expect(validateSnapshot({ ...base, examResults: [result('e-1')] }).examResults).toHaveLength(1);
+  });
+});

@@ -1,6 +1,7 @@
 import type {
   Attempt,
   CardState,
+  ExamResult,
   LessonProgress,
   Mission,
   Preference,
@@ -44,6 +45,10 @@ export interface StoragePort {
   loadCardStates(): Promise<CardState[]>;
   saveCardState(state: CardState): Promise<void>;
 
+  /** Wyniki oficjalnych arkuszy CKE wpisane przez ucznia. */
+  loadExamResults(): Promise<ExamResult[]>;
+  saveExamResult(result: ExamResult): Promise<void>;
+
   /** Eksport do jawnego JSON (sek. 12). */
   exportAll(): Promise<SnapshotV1>;
   /** Import z walidacja schematu (sek. 12). */
@@ -86,6 +91,8 @@ export interface RecordSelection {
   skillIds: string[];
   /** Plan zbudowany na usuwanych wynikach traci podstawe i znika razem z nimi. */
   dropPlan: boolean;
+  /** Wyniki arkuszy - pole dopisane pozniej, brak oznacza pusta liste. */
+  examResultIds?: string[];
 }
 
 export interface BackupInfo {
@@ -124,6 +131,7 @@ export interface SnapshotV1 {
   preferences?: Preference[];
   lessonProgress?: LessonProgress[];
   cardStates?: CardState[];
+  examResults?: ExamResult[];
 }
 
 export class SnapshotValidationError extends Error {
@@ -219,6 +227,27 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     }
   }
 
+  const examResults = snap.examResults ?? [];
+  if (!Array.isArray(examResults)) {
+    throw new SnapshotValidationError('Wyniki arkuszy nie są listą.');
+  }
+  for (const e of examResults) {
+    const scoresOk =
+      typeof e?.scores === 'object' &&
+      e.scores !== null &&
+      Object.values(e.scores).every((v) => typeof v === 'number' && v >= 0);
+    if (
+      typeof e?.id !== 'string' ||
+      typeof e.examId !== 'string' ||
+      typeof e.subjectId !== 'string' ||
+      typeof e.takenAt !== 'number' ||
+      !scoresOk ||
+      !(e.minutes === null || typeof e.minutes === 'number')
+    ) {
+      throw new SnapshotValidationError('Niepełny wynik arkusza.');
+    }
+  }
+
   return {
     version: SNAPSHOT_VERSION,
     exportedAt: typeof snap.exportedAt === 'number' ? snap.exportedAt : Date.now(),
@@ -230,5 +259,6 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     preferences: Array.isArray(snap.preferences) ? snap.preferences : [],
     lessonProgress,
     cardStates,
+    examResults,
   };
 }

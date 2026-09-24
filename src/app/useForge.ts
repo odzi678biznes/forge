@@ -4,6 +4,7 @@ import {
   emptySkillState,
   type Attempt,
   type CardState,
+  type ExamResult,
   type Flashcard,
   type HintLevel,
   type LessonProgress,
@@ -31,6 +32,7 @@ import {
 } from '@/learning-engine/mission';
 import { newCardState, reviewCard, type CardRating } from '@/learning-engine/flashcards';
 import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
+import { scheduleExamReviews } from '@/learning-engine/exam-analysis';
 import {
   analyseDiagnostic,
   buildDiagnosticSet,
@@ -74,7 +76,8 @@ export type Screen =
   | 'lesson'
   | 'calendar'
   | 'progress'
-  | 'flashcards';
+  | 'flashcards'
+  | 'exams';
 
 export type SubjectId = 'math' | 'cs';
 
@@ -201,6 +204,7 @@ export function useForge(deps: ForgeDeps = {}) {
   const [missionDeadline, setMissionDeadline] = useState<number | null>(null);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
   const [cardStates, setCardStates] = useState<Map<string, CardState>>(new Map());
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [lessonSkillId, setLessonSkillId] = useState<string | null>(null);
   const [courseDeadline, setCourseDeadlineState] = useState(DEFAULT_COURSE_DEADLINE);
   const [examDate, setExamDateState] = useState<string | null>(null);
@@ -256,6 +260,7 @@ export function useForge(deps: ForgeDeps = {}) {
 
     setLessonProgress(await s.loadLessonProgress());
     setCardStates(new Map((await s.loadCardStates()).map((c) => [c.cardId, c])));
+    setExamResults(await s.loadExamResults());
   }, []);
 
   // Wczytanie profilu. Brak danych to poprawny stan, nie blad (sek. 16).
@@ -694,6 +699,36 @@ export function useForge(deps: ForgeDeps = {}) {
     [cardStates],
   );
 
+  /**
+   * Zapis wyniku arkusza. Słabe umiejętności (wyliczone przez widok arkuszy,
+   * który zna mapowanie zadań) dostają powtórkę na teraz - wynik z arkusza
+   * ma wracać do planu, a nie tylko leżeć w historii.
+   */
+  const saveExam = useCallback(
+    async (result: ExamResult, weakSkillIds: string[]) => {
+      await port().saveExamResult(result);
+      setExamResults((prev) =>
+        [...prev.filter((e) => e.id !== result.id), result].sort((a, b) => a.takenAt - b.takenAt),
+      );
+      const updated = scheduleExamReviews(skillStates, weakSkillIds, Date.now());
+      for (const s of updated) await port().saveSkillState(s);
+      if (updated.length > 0) {
+        setSkillStates((prev) => {
+          const next = new Map(prev);
+          for (const s of updated) next.set(s.skillId, s);
+          return next;
+        });
+      }
+      return updated.length;
+    },
+    [skillStates],
+  );
+
+  const deleteExam = useCallback(async (id: string) => {
+    await port().deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false, examResultIds: [id] });
+    setExamResults((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
   const setCourseDeadline = useCallback(async (key: string) => {
     if (!DATE_KEY.test(key)) return;
     setCourseDeadlineState(key);
@@ -798,6 +833,9 @@ export function useForge(deps: ForgeDeps = {}) {
     attempts,
     lessonProgress,
     cardStates,
+    examResults,
+    saveExam,
+    deleteExam,
     lessonSkillId,
     courseDeadline,
     examDate,

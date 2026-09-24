@@ -1,29 +1,55 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimalny zestaw uprawnien: okno aplikacji i lokalna baza SQLite. Blueprint sek. 12 wymaga zasady najmniejszych uprawnien, wiec nie wlaczamy dostepu do systemu plikow, sieci ani powloki.",
-  "windows": ["main"],
+  "description": "Minimalny zestaw uprawnien: okno aplikacji, lokalna baza SQLite i otwieranie oficjalnych arkuszy CKE w przegladarce. Blueprint sek. 12 wymaga zasady najmniejszych uprawnien, wiec nie wlaczamy dostepu do systemu plikow ani powloki, a otwierac mozna wylacznie adresy https://cke.gov.pl/.",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     {
       "identifier": "sql:allow-load",
-      "allow": [{ "url": "sqlite:forge.db" }]
+      "allow": [
+        {
+          "url": "sqlite:forge.db"
+        }
+      ]
     },
     {
       "identifier": "sql:allow-execute",
-      "allow": [{ "url": "sqlite:forge.db" }]
+      "allow": [
+        {
+          "url": "sqlite:forge.db"
+        }
+      ]
     },
     {
       "identifier": "sql:allow-select",
-      "allow": [{ "url": "sqlite:forge.db" }]
+      "allow": [
+        {
+          "url": "sqlite:forge.db"
+        }
+      ]
     },
     {
       "identifier": "sql:allow-close",
-      "allow": [{ "url": "sqlite:forge.db" }]
+      "allow": [
+        {
+          "url": "sqlite:forge.db"
+        }
+      ]
     },
     "allow-ai-set-key",
     "allow-ai-clear-key",
     "allow-ai-key-status",
-    "allow-ai-tutor"
+    "allow-ai-tutor",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://cke.gov.pl/*"
+        }
+      ]
+    }
   ]
 }

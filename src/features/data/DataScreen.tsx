@@ -357,7 +357,7 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
                 data &&
                 askDelete(
                   `subject:${s.id}`,
-                  planDeletion({ kind: 'subject', skillIds: s.skillIds, label: s.label }, data),
+                  planDeletion({ kind: 'subject', skillIds: s.skillIds, label: s.label, subjectId: s.id }, data),
                   `przed usunięciem przedmiotu ${s.label}`,
                 )
               }

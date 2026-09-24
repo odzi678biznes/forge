@@ -79,6 +79,7 @@ export function toDataSnapshot(snapshot: SnapshotV1): DataSnapshot {
     missions: snapshot.missions,
     skillIdsWithState: snapshot.skillStates.map((s) => s.skillId),
     planSkillIds: snapshot.plan?.targets.map((t) => t.skillId) ?? [],
+    examResults: (snapshot.examResults ?? []).map((e) => ({ id: e.id, subjectId: e.subjectId })),
   };
 }
 

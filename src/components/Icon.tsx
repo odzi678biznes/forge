@@ -21,7 +21,9 @@ export type IconName =
   | 'repeat'
   | 'more'
   | 'close'
-  | 'book';
+  | 'book'
+  | 'exam'
+  | 'external';
 
 const PATHS: Record<IconName, string> = {
   today: 'M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z',
@@ -42,6 +44,9 @@ const PATHS: Record<IconName, string> = {
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   close: 'M6 6l12 12M18 6 6 18',
   book: 'M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4V4ZM5 16a4 4 0 0 1 4-4h10',
+  // Arkusz z odhaczonymi zadaniami.
+  exam: 'M6 3h12v18H6V3ZM9 8l1.5 1.5L13 7M9 13l1.5 1.5L13 12M15 8h.01M15 13h.01M9 18h6',
+  external: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
 };
 
 interface Props {
