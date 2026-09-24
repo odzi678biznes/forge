@@ -9,7 +9,7 @@ import {
   POLY_SKILLS,
   POLY_TOPIC,
 } from './kurs/wielomiany';
-import { SEQUENCE_QUESTIONS, SEQUENCE_SKILLS, SEQUENCE_TOPIC } from './ciagi';
+import { SEQ_CARDS, SEQ_LESSONS, SEQ_QUESTIONS, SEQ_SKILLS, SEQ_TOPIC } from './kurs/ciagi';
 import {
   EXP_CARDS,
   EXP_LESSONS,
@@ -82,7 +82,7 @@ export const MATH_TOPICS: Topic[] = [
   QUAD_TOPIC,
   POLY_TOPIC,
   EXP_TOPIC,
-  SEQUENCE_TOPIC,
+  SEQ_TOPIC,
   TRIG_TOPIC,
   GEO_TOPIC,
   DERIV_TOPIC,
@@ -98,7 +98,7 @@ export const MATH_SKILLS: Skill[] = [
   ...QUAD_SKILLS,
   ...POLY_SKILLS,
   ...EXP_SKILLS,
-  ...SEQUENCE_SKILLS,
+  ...SEQ_SKILLS,
   ...TRIG_SKILLS,
   ...GEO_SKILLS,
   ...DERIV_SKILLS,
@@ -114,7 +114,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...QUAD_QUESTIONS,
   ...POLY_QUESTIONS,
   ...EXP_QUESTIONS,
-  ...SEQUENCE_QUESTIONS,
+  ...SEQ_QUESTIONS,
   ...TRIG_QUESTIONS,
   ...GEO_QUESTIONS,
   ...DERIV_QUESTIONS,
@@ -137,6 +137,7 @@ export const MATH_CORPUS: Corpus = {
     ...QUAD_LESSONS,
     ...POLY_LESSONS,
     ...EXP_LESSONS,
+    ...SEQ_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -147,6 +148,7 @@ export const MATH_CORPUS: Corpus = {
     ...QUAD_CARDS,
     ...POLY_CARDS,
     ...EXP_CARDS,
+    ...SEQ_CARDS,
   ],
 };
 
