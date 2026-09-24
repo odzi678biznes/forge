@@ -6,6 +6,7 @@ import {
   VARIANTS,
   analyseDiagnostic,
   buildDiagnosticSet,
+  diagnosticSkills,
   buildPlan,
 } from './diagnostics';
 import { DAY, T0, makeAttempt, makeQuestion, makeSkill } from './testing';
@@ -394,5 +395,21 @@ describe('prog nadmiernej pewnosci', () => {
 
     expect(krok(pewny)).toMatch(/pewno[sś][cć]/i);
     expect(krok(domyslny)).not.toMatch(/pewno[sś][cć]/i);
+  });
+});
+
+describe('wybor umiejetnosci do diagnozy', () => {
+  it('z kazdego dzialu bierze najwyzej dwie o najwiekszej wartosci maturalnej, w kolejnosci kursu', () => {
+    const topics = [
+      { id: 't1', subjectId: 'math', name: 'A' },
+      { id: 't2', subjectId: 'math', name: 'B' },
+    ];
+    const skills = [
+      makeSkill({ id: 'a', topicId: 't1', examValue: 0.2 }),
+      makeSkill({ id: 'b', topicId: 't1', examValue: 0.9 }),
+      makeSkill({ id: 'c', topicId: 't1', examValue: 0.8 }),
+      makeSkill({ id: 'd', topicId: 't2', examValue: 0.5 }),
+    ];
+    expect(diagnosticSkills(topics, skills).map((s) => s.id)).toEqual(['b', 'c', 'd']);
   });
 });

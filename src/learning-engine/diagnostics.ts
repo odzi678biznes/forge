@@ -20,6 +20,35 @@ import {
 // Zestaw diagnostyczny
 // ---------------------------------------------------------------------------
 
+/**
+ * Ile umiejętności z jednego działu trafia do diagnozy. Kurs ma ponad sto
+ * umiejętności - sonda na każdą oznaczałaby dwie godziny testu na starcie.
+ * Dwie najważniejsze z działu dają przekrój, a reszta jest w raporcie
+ * oznaczona jako niesprawdzona, nie jako zerowa.
+ */
+export const DIAGNOSTIC_SKILLS_PER_TOPIC = 2;
+
+/**
+ * Umiejętności objęte diagnozą: z każdego działu te o największej wartości
+ * maturalnej, w kolejności kursu.
+ */
+export function diagnosticSkills(
+  topics: Topic[],
+  skills: Skill[],
+  perTopic = DIAGNOSTIC_SKILLS_PER_TOPIC,
+): Skill[] {
+  return topics.flatMap((t) => {
+    const own = skills.filter((s) => s.topicId === t.id);
+    const chosen = new Set(
+      [...own]
+        .sort((a, b) => b.examValue - a.examValue)
+        .slice(0, perTopic)
+        .map((s) => s.id),
+    );
+    return own.filter((s) => chosen.has(s.id));
+  });
+}
+
 /** Trudność sondy diagnostycznej — środek skali, żeby nie zaniżać ani nie zawyżać. */
 const PROBE_DIFFICULTY = 3;
 

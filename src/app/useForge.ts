@@ -34,6 +34,7 @@ import { buildErrorLab, type ErrorGroup } from '@/learning-engine/error-lab';
 import {
   analyseDiagnostic,
   buildDiagnosticSet,
+  diagnosticSkills,
   buildPlan,
   type DiagnosticReport,
   type PlanVariant,
@@ -553,7 +554,11 @@ export function useForge(deps: ForgeDeps = {}) {
   // -------------------------------------------------------------------------
 
   const diagnosticSet = useMemo(
-    () => buildDiagnosticSet(MATH_CORPUS.skills, MATH_CORPUS.questions),
+    () =>
+      buildDiagnosticSet(
+        diagnosticSkills(MATH_CORPUS.topics, MATH_CORPUS.skills),
+        MATH_CORPUS.questions,
+      ),
     [],
   );
 

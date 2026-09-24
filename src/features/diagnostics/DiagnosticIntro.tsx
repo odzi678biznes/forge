@@ -34,9 +34,9 @@ export function DiagnosticIntro({ probeCount, hasPreviousPlan, onStart, onBack }
 
       <section className="diag__lead">
         <p>
-          Jedna sonda na każdą kompetencję, przekrojowo przez wszystkie działy.
-          Wynik ustawi plan nauki na podstawie tego, co rozwiążesz — nie na
-          podstawie tego, jak się oceniasz.
+          Po jednym zadaniu z dwóch najważniejszych umiejętności każdego działu —
+          przekrój przez cały kurs. Wynik ustawi plan nauki na podstawie tego, co
+          rozwiążesz, a nie tego, jak się oceniasz.
         </p>
       </section>
 
