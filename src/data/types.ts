@@ -157,6 +157,8 @@ export interface Question {
   steps?: string[];
   /** Odpowiedzi A-D dla `format === 'choice'` (w tej kolejności). */
   choices?: string[];
+  /** Rysunek do zadania: wykres funkcji albo figura geometryczna. */
+  figure?: Figure;
   hints: Hint[];
   /** Typowe bledy - klucz do Laboratorium bledow (sek. 7.4). */
   commonErrors: CommonError[];
@@ -303,6 +305,50 @@ export interface Preference {
 // Kurs: lekcje i fiszki
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Rysunki
+// ---------------------------------------------------------------------------
+
+/**
+ * Wykres w układzie współrzędnych. Opis deklaratywny, rysowany lokalnie jako
+ * SVG - bez obrazków z sieci i bez plików graficznych w repozytorium.
+ */
+export interface PlotFigure {
+  kind: 'plot';
+  /** Opis dla czytnika ekranu i dla syntezy mowy - obowiązkowy. */
+  alt: string;
+  x: [number, number];
+  y: [number, number];
+  curves?: Array<{
+    fn: (x: number) => number;
+    from?: number;
+    to?: number;
+    label?: string;
+    dashed?: boolean;
+  }>;
+  /** Łamane, np. wykres zadany punktami. */
+  polylines?: Array<{ points: Array<[number, number]>; label?: string }>;
+  points?: Array<{ at: [number, number]; label?: string; open?: boolean }>;
+  /** Linie pomocnicze: pionowa (x) albo pozioma (y), np. asymptoty. */
+  guides?: Array<{ x?: number; y?: number }>;
+}
+
+/** Figura geometryczna na płaszczyźnie; współrzędne w dowolnych jednostkach. */
+export interface GeometryFigure {
+  kind: 'geometry';
+  alt: string;
+  points: Record<string, [number, number]>;
+  segments?: Array<{ from: string; to: string; label?: string; dashed?: boolean }>;
+  polygons?: Array<{ vertices: string[] }>;
+  circles?: Array<{ center: string; radius: number }>;
+  /** Kąt przy wierzchołku `at` między ramionami do `from` i `to`. */
+  angles?: Array<{ at: string; from: string; to: string; label?: string; right?: boolean }>;
+  /** Czy podpisywać punkty ich nazwami (domyślnie tak). */
+  hidePointLabels?: boolean;
+}
+
+export type Figure = PlotFigure | GeometryFigure;
+
 /** Fragment lekcji. Tekst może zawierać wzory w $...$. */
 export type LessonBlock =
   | { kind: 'text'; body: string }
@@ -311,7 +357,9 @@ export type LessonBlock =
   /** "Zapamiętaj" - reguła do wyniesienia z lekcji. */
   | { kind: 'tip'; body: string }
   /** "Uwaga" - miejsce, w którym najczęściej traci się punkty. */
-  | { kind: 'warning'; body: string };
+  | { kind: 'warning'; body: string }
+  /** Rysunek z podpisem. */
+  | { kind: 'figure'; figure: Figure; caption?: string };
 
 export interface WorkedStep {
   text: string;

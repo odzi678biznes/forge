@@ -1,0 +1,125 @@
+.fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fig__svg {
+  width: 100%;
+  max-width: 26rem;
+  height: auto;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.fig figcaption {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.fig__grid {
+  stroke: var(--line);
+  stroke-width: 0.6;
+  opacity: 0.6;
+}
+
+.fig__axis {
+  stroke: var(--text-faint);
+  stroke-width: 1.2;
+}
+
+.fig__axis-head {
+  fill: var(--text-faint);
+}
+
+.fig__axis-label,
+.fig__tick {
+  fill: var(--text-faint);
+  font-size: 11px;
+  font-family: var(--font-ui);
+}
+
+.fig__axis-label {
+  font-style: italic;
+  font-size: 13px;
+}
+
+.fig__guide {
+  stroke: var(--challenge);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  opacity: 0.8;
+}
+
+.fig__curve {
+  fill: none;
+  stroke: var(--progress);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.fig__curve--dashed {
+  stroke-dasharray: 7 5;
+  stroke: var(--challenge);
+}
+
+.fig__curve-label,
+.fig__point-label,
+.fig__segment-label,
+.fig__angle-label {
+  fill: var(--text);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  font-style: italic;
+}
+
+.fig__point {
+  fill: var(--challenge);
+  stroke: var(--bg-deep);
+  stroke-width: 1.5;
+}
+
+.fig__point--open {
+  fill: var(--bg-deep);
+  stroke: var(--challenge);
+  stroke-width: 2;
+}
+
+.fig__polygon {
+  fill: color-mix(in srgb, var(--progress) 10%, transparent);
+  stroke: var(--progress);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.fig__circle {
+  fill: none;
+  stroke: var(--progress);
+  stroke-width: 2;
+}
+
+.fig__segment {
+  stroke: var(--progress);
+  stroke-width: 2;
+}
+
+.fig__segment--dashed {
+  stroke: var(--text-muted);
+  stroke-dasharray: 6 5;
+  stroke-width: 1.5;
+}
+
+.fig__angle {
+  fill: none;
+  stroke: var(--challenge);
+  stroke-width: 1.6;
+}
+
+.fig__vertex {
+  fill: var(--text);
+}

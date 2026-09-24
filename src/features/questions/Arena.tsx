@@ -8,6 +8,7 @@ import {
   type Question,
 } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
+import { Figure } from '@/components/Figure';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
 import { CodeEditor } from '@/features/code/CodeEditor';
@@ -234,6 +235,7 @@ export function Arena({
         <h1 className="arena__question">
           <Tex>{question.prompt}</Tex>
         </h1>
+        {question.figure && <Figure figure={question.figure} />}
         {/* Odczyt tylko na żądanie i tylko lokalnym głosem (sek. 2 i 11). */}
         <button
           type="button"

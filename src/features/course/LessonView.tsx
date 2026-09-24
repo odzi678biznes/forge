@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Lesson, LessonBlock, Skill, Topic, WorkedExample } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import { Icon } from '@/components/Icon';
+import { Figure } from '@/components/Figure';
 import { useSpeech } from '@/features/ai/useSpeech';
 import '@/features/ai/ai.css';
 import './course.css';
@@ -33,7 +34,9 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
   const readAloud = () => {
     const text = [
       lesson.intro,
-      ...lesson.blocks.map((b) => (b.kind === 'formula' ? `$${b.tex}$` : b.body)),
+      ...lesson.blocks.map((b) =>
+        b.kind === 'formula' ? `$${b.tex}$` : b.kind === 'figure' ? b.figure.alt : b.body,
+      ),
     ].join(' ');
     return speech.speaking ? speech.stop() : speech.speak(text);
   };
@@ -135,6 +138,8 @@ function Block({ block }: { block: LessonBlock }) {
           <Tex>{block.body}</Tex>
         </aside>
       );
+    case 'figure':
+      return <Figure figure={block.figure} {...(block.caption ? { caption: block.caption } : {})} />;
   }
 }
 

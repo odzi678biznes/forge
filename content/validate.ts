@@ -3,7 +3,7 @@ import katex from 'katex';
 import { grade, normalise, parseNumber } from '@/learning-engine/grading';
 import { buildSolution } from '@/learning-engine/run-tests';
 import { executeTests, judge } from '@/learning-engine/code-grading';
-import { HINT_LADDER, type Question } from '@/data/types';
+import { HINT_LADDER, type Figure, type Question } from '@/data/types';
 import type { Corpus } from './corpus';
 import { VERIFIERS } from './authoring';
 
@@ -70,7 +70,11 @@ export function validateCorpus(label: string, corpus: Corpus): void {
       [`lekcja ${l.skillId}`, l.intro],
       ...l.blocks.map((b): [string, string] => [
         `lekcja ${l.skillId}`,
-        b.kind === 'formula' ? `$${b.tex}$ ${b.caption ?? ''}` : b.body,
+        b.kind === 'formula'
+          ? `$${b.tex}$ ${b.caption ?? ''}`
+          : b.kind === 'figure'
+            ? `${b.figure.alt} ${b.caption ?? ''}`
+            : b.body,
       ]),
       ...l.examples.flatMap((e): Array<[string, string]> => [
         [`przyklad ${l.skillId}`, e.prompt],
@@ -349,6 +353,48 @@ export function validateCorpus(label: string, corpus: Corpus): void {
             `${where}: $${tex}$`,
           ).not.toThrow();
         }
+      }
+    });
+  });
+
+  describe(`${label}: rysunki`, () => {
+    const figures: Array<[string, Figure]> = [
+      ...questions.flatMap((q): Array<[string, Figure]> => (q.figure ? [[q.id, q.figure]] : [])),
+      ...lessons.flatMap((l) =>
+        l.blocks.flatMap((b): Array<[string, Figure]> => (b.kind === 'figure' ? [[`lekcja ${l.skillId}`, b.figure]] : [])),
+      ),
+    ];
+
+    it('kazdy rysunek ma opis dla czytnika ekranu', () => {
+      for (const [where, fig] of figures) expect(fig.alt.trim().length, where).toBeGreaterThan(10);
+    });
+
+    it('wykres ma poprawne zakresy, a krzywe istnieja w rysowanym obszarze', () => {
+      for (const [where, fig] of figures) {
+        if (fig.kind !== 'plot') continue;
+        expect(fig.x[0] < fig.x[1] && fig.y[0] < fig.y[1], where).toBe(true);
+        for (const c of fig.curves ?? []) {
+          const from = c.from ?? fig.x[0];
+          const to = c.to ?? fig.x[1];
+          const visible = Array.from({ length: 50 }, (_, i) => c.fn(from + ((to - from) * i) / 49)).filter(
+            (y) => Number.isFinite(y) && y >= fig.y[0] && y <= fig.y[1],
+          );
+          expect(visible.length, `${where}: krzywa poza wykresem`).toBeGreaterThan(5);
+        }
+      }
+    });
+
+    it('figura geometryczna odwoluje sie tylko do istniejacych punktow', () => {
+      for (const [where, fig] of figures) {
+        if (fig.kind !== 'geometry') continue;
+        const names = new Set(Object.keys(fig.points));
+        const used = [
+          ...(fig.segments ?? []).flatMap((s) => [s.from, s.to]),
+          ...(fig.polygons ?? []).flatMap((p) => p.vertices),
+          ...(fig.circles ?? []).map((c) => c.center),
+          ...(fig.angles ?? []).flatMap((a) => [a.at, a.from, a.to]),
+        ];
+        for (const n of used) expect(names.has(n), `${where}: brak punktu ${n}`).toBe(true);
       }
     });
   });
