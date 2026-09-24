@@ -38,7 +38,7 @@ export function diagnosticSkills(
   perTopic = DIAGNOSTIC_SKILLS_PER_TOPIC,
 ): Skill[] {
   return topics.flatMap((t) => {
-    const own = skills.filter((s) => s.topicId === t.id);
+    const own = skills.filter((s) => s.topicId === t.id && !s.extra);
     const chosen = new Set(
       [...own]
         .sort((a, b) => b.examValue - a.examValue)

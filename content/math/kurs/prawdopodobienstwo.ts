@@ -17,7 +17,7 @@ export const PROB_COURSE_TOPIC: Topic = {
   ...PROB_TOPIC,
   name: 'Kombinatoryka, prawdopodobieństwo i statystyka',
   summary:
-    'Reguła mnożenia, permutacje i kombinacje, model klasyczny, zdarzenia złożone, prawdopodobieństwo warunkowe, schemat Bernoulliego, średnia, mediana, odchylenie.',
+    'Reguła mnożenia, permutacje i kombinacje, model klasyczny, zdarzenia złożone, prawdopodobieństwo warunkowe, schemat Bernoulliego, średnia, mediana, dominanta.',
 };
 
 export const PROB_COURSE_SKILLS: Skill[] = [
@@ -69,9 +69,9 @@ export const PROB_COURSE_SKILLS: Skill[] = [
   {
     id: 'stat-descriptive',
     topicId: 'math-probability',
-    name: 'Statystyka: średnia, mediana, dominanta, odchylenie',
+    name: 'Statystyka: średnia, mediana, dominanta',
     level: 'PP',
-    ckeRequirement: 'Statystyka — średnia arytmetyczna i ważona, mediana, dominanta, odchylenie standardowe',
+    ckeRequirement: 'Statystyka — średnia arytmetyczna i ważona, mediana i dominanta (XII.2)',
     prerequisites: ['num-roots'],
     examValue: 0.55,
   },
@@ -234,19 +234,19 @@ export const PROB_LESSONS: Lesson[] = [
     skillId: 'stat-descriptive',
     minutes: 12,
     intro:
-      'Statystyka opisuje dane kilkoma liczbami: gdzie jest „środek” (średnia, mediana) i jak bardzo dane są rozrzucone (odchylenie standardowe).',
+      'Statystyka opisuje dane kilkoma liczbami: gdzie jest „środek” danych (średnia, mediana) i co pojawia się najczęściej (dominanta). Na maturze dane bywają podane w tabeli liczebności — trzeba umieć z niej liczyć.',
     blocks: [
       f(r`\bar{x} = \frac{x_1 + \ldots + x_n}{n} \qquad \bar{x}_w = \frac{w_1x_1 + \ldots + w_nx_n}{w_1 + \ldots + w_n}`),
       p('Mediana to środkowa wartość po UPORZĄDKOWANIU danych. Przy parzystej liczbie danych — średnia dwóch środkowych. Dominanta to wartość występująca najczęściej.'),
-      f(r`\sigma = \sqrt{\frac{(x_1 - \bar{x})^2 + \ldots + (x_n - \bar{x})^2}{n}}`, 'odchylenie standardowe'),
+      p(r`Tabela liczebności: wartość $x_i$ pojawia się $n_i$ razy. Średnia to $\frac{n_1x_1 + n_2x_2 + \ldots}{n_1 + n_2 + \ldots}$ — średnia ważona, w której wagami są liczebności. Medianę znajdziesz, licząc, na którym miejscu leży środkowa obserwacja.`),
       tip('Mediana jest odporna na skrajne wartości: jedna ogromna pensja podnosi średnią, ale nie medianę.'),
       warn('Nie licz mediany z nieuporządkowanych danych. Najpierw ustaw je rosnąco.'),
     ],
     examples: [
       example(
-        r`Oblicz odchylenie standardowe danych $2, 4, 4, 4, 5, 5, 7, 9$.`,
-        [r`$\bar{x} = 5$; kwadraty odchyleń: $9, 1, 1, 1, 0, 0, 4, 16$ — suma $32$.`, r`$\sigma = \sqrt{\frac{32}{8}} = 2$.`],
-        r`$2$`,
+        r`W klasie $20$ uczniów: $4$ ma ocenę $2$, $6$ — ocenę $3$, $7$ — ocenę $4$, $3$ — ocenę $5$. Wyznacz medianę ocen.`,
+        [r`Środkowe są obserwacje $10.$ i $11.$ (po uporządkowaniu).`, r`Miejsca $1$–$4$: ocena $2$, miejsca $5$–$10$: ocena $3$, miejsca $11$–$17$: ocena $4$ — mediana $\frac{3 + 4}{2} = 3{,}5$.`],
+        r`$3{,}5$`,
       ),
       example(
         r`Oceny: $5$ (waga $3$), $4$ (waga $2$), $3$ (waga $1$). Oblicz średnią ważoną.`,
@@ -254,7 +254,7 @@ export const PROB_LESSONS: Lesson[] = [
         r`$\frac{13}{3}$`,
       ),
     ],
-    pitfalls: ['Mediana z nieuporządkowanych danych.', 'Wariancja podana zamiast odchylenia (bez pierwiastka).', 'Średnia ważona dzielona przez liczbę ocen zamiast sumy wag.'],
+    pitfalls: ['Mediana z nieuporządkowanych danych.', 'Mediana wzięta jako środkowa wartość z tabeli zamiast środkowej obserwacji.', 'Średnia ważona dzielona przez liczbę ocen zamiast sumy wag.'],
   },
 ];
 
@@ -759,16 +759,19 @@ const NEW_QUESTIONS: Question[] = [
     skill: 'stat-descriptive',
     kind: 'typical',
     difficulty: 4,
-    prompt: r`Oblicz odchylenie standardowe danych $2, 4, 4, 4, 5, 5, 7, 9$.`,
-    answer: 2,
+    prompt: r`W ankiecie $20$ uczniów podało liczbę rodzeństwa: $0$ — $5$ osób, $1$ — $8$ osób, $2$ — $5$ osób, $3$ — $2$ osoby. O ile średnia liczba rodzeństwa jest większa od mediany?`,
+    answer: 0.2,
+    variants: ['1/5'],
+    tolerance: 1e-9,
     verify: () => {
-      const d = [2, 4, 4, 4, 5, 5, 7, 9];
-      const m = d.reduce((a, b) => a + b, 0) / d.length;
-      return Math.sqrt(d.reduce((a, b) => a + (b - m) ** 2, 0) / d.length);
+      const data = [...Array(5).fill(0), ...Array(8).fill(1), ...Array(5).fill(2), ...Array(2).fill(3)] as number[];
+      const mean = data.reduce((a, b) => a + b, 0) / data.length;
+      const median = ((data[9] ?? 0) + (data[10] ?? 0)) / 2;
+      return mean - median;
     },
-    hints: ['Od czego zaczynasz liczenie odchylenia?', 'Od średniej.', r`Średnia to $5$; kwadraty odchyleń: $9, 1, 1, 1, 0, 0, 4, 16$.`, r`Średnia kwadratów odchyleń, potem pierwiastek.`],
-    steps: [r`$\frac{32}{8} = 4$.`, r`$\sigma = \sqrt4 = 2$.`],
-    errors: [['4', 'Podana wariancja — bez pierwiastka.', 'Odchylenie standardowe to pierwiastek z wariancji.']],
+    hints: ['Jak policzyć średnią z tabeli liczebności?', 'Każdą wartość mnożysz przez liczbę osób, sumujesz i dzielisz przez wszystkich.', r`Mediana: obserwacje nr $10$ i $11$ — w której grupie wypadają?`, 'Policz obie wielkości i odejmij.'],
+    steps: [r`Średnia: $\frac{0 + 8 + 10 + 6}{20} = 1{,}2$; mediana: miejsca $6$–$13$ to wartość $1$, więc mediana $1$.`, r`Różnica: $0{,}2$.`],
+    errors: [['1.2', 'Podana średnia zamiast różnicy.', 'Pytanie dotyczy różnicy średniej i mediany.']],
   }),
   numeric({
     id: 'pr-st-7',
@@ -821,5 +824,5 @@ export const PROB_CARDS: Flashcard[] = [
   card('c-prb-bn-2', 'prob-bernoulli', 'pulapka', r`Czy można pominąć $\binom{n}{k}$?`, 'Nie — bez niego liczysz tylko jedną kolejność sukcesów.'),
 
   card('c-prb-st-1', 'stat-descriptive', 'definicja', 'Mediana?', 'Środkowa wartość UPORZĄDKOWANYCH danych; przy parzystej liczbie — średnia dwóch środkowych.'),
-  card('c-prb-st-2', 'stat-descriptive', 'wzor', 'Odchylenie standardowe?', r`$\sigma = \sqrt{\frac{\sum (x_i - \bar{x})^2}{n}}$`),
+  card('c-prb-st-2', 'stat-descriptive', 'metoda', 'Mediana z tabeli liczebności?', 'Ustal numer środkowej obserwacji (albo dwóch) i sprawdź, w której wartości wypada, sumując liczebności po kolei.'),
 ];

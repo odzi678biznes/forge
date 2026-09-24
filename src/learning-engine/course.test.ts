@@ -88,6 +88,20 @@ describe('szacunek gotowosci', () => {
   });
 });
 
+describe('material dodatkowy (poza wymaganiami egzaminu)', () => {
+  const withExtra = [...skills, makeSkill({ id: 'x', topicId: 't-1', level: 'PR', examValue: 1, extra: true })];
+
+  it('nie wchodzi do kolejnosci kursu ani planu', () => {
+    expect(courseOrder(topics, withExtra).map((s) => s.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('nie zmienia postepu dzialu ani gotowosci', () => {
+    expect(topicProgress(topics[1]!, withExtra, new Map(), new Set()).total).toBe(1);
+    const states = new Map([['x', withLevel('x', MasteryLevel.Retained)]]);
+    expect(readiness(withExtra, states, 'PR').ratio).toBe(0);
+  });
+});
+
 describe('aktywnosc', () => {
   it('grupuje po lokalnym dniu i odroznia sukces samodzielny od wspomaganego', () => {
     const day = new Date(2026, 8, 1, 10).getTime();

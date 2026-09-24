@@ -55,6 +55,13 @@ export interface Skill {
   prerequisites: string[];
   /** Waga maturalna 0..1 - jak czesto i za ile punktow pojawia sie na arkuszu. */
   examValue: number;
+  /**
+   * Materiał dodatkowy - poza wymaganiami egzaminacyjnymi od 2025 r. (podstawa
+   * programowa zmieniona w 2024 r.). Zostaje w kursie do ćwiczeń, ale nie
+   * wchodzi do planu, postępu ani gotowości: czas do matury idzie na to,
+   * co CKE sprawdza.
+   */
+  extra?: boolean;
 }
 
 export interface Topic {

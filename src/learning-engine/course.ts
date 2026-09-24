@@ -54,9 +54,16 @@ export function skillStatus(
 export const isCovered = (state: SkillState | undefined): boolean =>
   (state?.level ?? MasteryLevel.Unknown) >= COVERED_LEVEL;
 
-/** Umiejętności w kolejności kursu: działy po kolei, w dziale - po kolei. */
+/** Umiejętności sprawdzane na egzaminie - bez materiału dodatkowego. */
+export const examScope = (skills: Skill[]): Skill[] => skills.filter((s) => !s.extra);
+
+/**
+ * Umiejętności w kolejności kursu: działy po kolei, w dziale - po kolei.
+ * Materiał dodatkowy nie wchodzi do planu.
+ */
 export function courseOrder(topics: Topic[], skills: Skill[]): Skill[] {
-  return topics.flatMap((t) => skills.filter((s) => s.topicId === t.id));
+  const scope = examScope(skills);
+  return topics.flatMap((t) => scope.filter((s) => s.topicId === t.id));
 }
 
 /**
@@ -89,7 +96,7 @@ export function topicProgress(
   states: Map<string, SkillState>,
   lessonsDone: Set<string>,
 ): TopicProgress {
-  const own = skills.filter((s) => s.topicId === topic.id);
+  const own = examScope(skills).filter((s) => s.topicId === topic.id);
   const levels: TopicProgress['levels'] = {
     PP: { total: 0, covered: 0 },
     PR: { total: 0, covered: 0 },
@@ -149,7 +156,8 @@ export function readiness(
   states: Map<string, SkillState>,
   level: ExamLevel,
 ): Readiness {
-  const scope = level === 'PP' ? skills.filter((s) => examLevelOf(s) === 'PP') : skills;
+  const exam = examScope(skills);
+  const scope = level === 'PP' ? exam.filter((s) => examLevelOf(s) === 'PP') : exam;
   let weight = 0;
   let score = 0;
   for (const s of scope) {

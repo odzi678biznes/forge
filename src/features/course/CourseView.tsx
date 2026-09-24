@@ -99,6 +99,11 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
                             <span className={s.level === 'PP' ? 'chip chip--pp' : 'chip chip--pr'}>
                               {s.level === 'PP' ? 'podstawa' : 'rozszerzenie'}
                             </span>
+                            {s.extra && (
+                              <span className="chip" title="Poza wymaganiami egzaminu od 2025 r. — nie wchodzi do planu ani postępu.">
+                                dodatkowe
+                              </span>
+                            )}
                             <span>{STATUS_LABELS[status]}</span>
                             <span>· poziom: {MASTERY_LABELS[state?.level ?? MasteryLevel.Unknown]}</span>
                             {planned && status !== 'covered' && status !== 'retained' && (

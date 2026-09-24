@@ -70,7 +70,8 @@ export const EXP_SKILLS: Skill[] = [
     id: 'log-function',
     topicId: 'math-logarithms',
     name: 'Funkcja logarytmiczna',
-    level: 'PR',
+    // V.14 (zakres podstawowy): funkcje wykładnicza i logarytmiczna z wykresami.
+    level: 'PP',
     ckeRequirement: 'Funkcja logarytmiczna — dziedzina, wykres, przesunięcia',
     prerequisites: ['log-properties', 'fn-shift'],
     examValue: 0.5,
@@ -83,6 +84,9 @@ export const EXP_SKILLS: Skill[] = [
     ckeRequirement: 'Równania i nierówności wykładnicze i logarytmiczne — dziedzina, monotoniczność, podstawienie',
     prerequisites: ['log-function', 'exp-equations', 'quad-discriminant'],
     examValue: 0.65,
+    // Podstawa z 2024 r. nie wymienia równań i nierówności logarytmicznych
+    // w zakresie rozszerzonym - zostają jako trening własności logarytmów.
+    extra: true,
   },
 ];
 
