@@ -23,7 +23,7 @@ export function WeeklyReportView({ report, rhythm, onBack }: Props) {
     <main className="week">
       <header className="week__head">
         <button type="button" className="week__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
         <p className="week__eyebrow">Ostatnie 7 dni</p>
         <h1 className="week__title">Raport tygodniowy</h1>

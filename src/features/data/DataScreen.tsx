@@ -200,7 +200,7 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
     <main className="data">
       <header>
         <button type="button" className="data__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
         <p className="data__eyebrow">Tylko na tym komputerze</p>
         <h1 className="data__title">Twoje dane</h1>

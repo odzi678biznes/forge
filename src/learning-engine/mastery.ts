@@ -81,7 +81,7 @@ function promote(
   if (level === MasteryLevel.Independent) {
     if (independent && question.kind === 'transfer') {
       return commit(next, level, MasteryLevel.Transfer, attempt.answeredAt,
-        'Nowy kontekst rozwiazany samodzielnie.');
+        'Nowa sytuacja rozwiązana samodzielnie.');
     }
     return null;
   }
@@ -94,7 +94,7 @@ function promote(
       next.independentStreak >= INDEPENDENT_STREAK_FOR_LEVEL_3
     ) {
       return commit(next, level, MasteryLevel.Independent, attempt.answeredAt,
-        `${next.independentStreak} typowe zadania z rzedu bez pomocy.`);
+        `${next.independentStreak} typowe zadania z rzędu bez pomocy.`);
     }
     return null;
   }
@@ -105,14 +105,14 @@ function promote(
       return commit(next, level, MasteryLevel.Assisted, attempt.answeredAt,
         independent
           ? 'Poprawnie bez pomocy.'
-          : 'Wystarczyla mala wskazowka.');
+          : 'Wystarczyła mała wskazówka.');
     }
     return null;
   }
 
   // 0 -> 1: poprawnie, nawet po pelnym rozwiazaniu.
   return commit(next, level, MasteryLevel.Recognised, attempt.answeredAt,
-    independent ? 'Pierwsza poprawna odpowiedz.' : 'Poprawnie po podpowiedzi.');
+    independent ? 'Pierwsza poprawna odpowiedź.' : 'Poprawnie po podpowiedzi.');
 }
 
 /**
@@ -144,7 +144,7 @@ function demote(
 
   const to = (before.level - 1) as MasteryLevel;
   return commit(next, before.level, to, attempt.answeredAt,
-    'Blad bez pomocy na zadaniu w zakresie tego poziomu.');
+    'Błąd bez pomocy na zadaniu z zakresu tego poziomu.');
 }
 
 function commit(

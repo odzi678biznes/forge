@@ -50,7 +50,7 @@ export function AiSettings({ tutor, onChange, onBack }: Props) {
     <main className="ai-settings">
       <header>
         <button type="button" className="ai-settings__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
         <p className="ai-settings__eyebrow">Opcjonalne</p>
         <h1 className="ai-settings__title">AI</h1>

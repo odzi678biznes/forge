@@ -107,11 +107,11 @@ function clamp01(n: number): number {
 /** Rozklad priorytetu na jezyk naturalny - ekran "dlaczego to pytanie". */
 export function explain(b: PriorityBreakdown): string[] {
   const lines: string[] = [];
-  if (b.reviewDue > 0) lines.push('Zaplanowana powtorka jest wymagalna.');
-  if (b.skillGap >= 0.6) lines.push('Ta kompetencja jest wyraznie ponizej celu.');
-  if (b.examValue >= 0.7) lines.push('Wysoka wartosc maturalna.');
-  if (b.errorFrequency >= 0.4) lines.push('Powtarzajacy sie blad w ostatnich probach.');
-  if (b.interleaveNeed >= 0.9) lines.push('Dawno nie cwiczone - czas na przeplecenie.');
-  if (lines.length === 0) lines.push('Kontynuacja biezacego celu.');
+  if (b.reviewDue > 0) lines.push('Zaplanowana powtórka jest wymagalna.');
+  if (b.skillGap >= 0.6) lines.push('Ta umiejętność jest wyraźnie poniżej celu.');
+  if (b.examValue >= 0.7) lines.push('Wysoka wartość maturalna.');
+  if (b.errorFrequency >= 0.4) lines.push('Powtarzający się błąd w ostatnich próbach.');
+  if (b.interleaveNeed >= 0.9) lines.push('Dawno nie ćwiczone — czas na przeplecenie.');
+  if (lines.length === 0) lines.push('Kontynuacja bieżącego celu.');
   return lines;
 }

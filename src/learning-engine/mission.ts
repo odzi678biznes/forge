@@ -58,8 +58,8 @@ export function timeTrial(): MissionPlan {
   const count = MISSION_LENGTHS['time-trial'];
   return {
     kind: 'time-trial',
-    title: 'Proba czasowa',
-    rationale: `${count} zadan w warunkach arkusza. Licznik konczy misje, ale nie kasuje tego, co juz rozwiazales.`,
+    title: 'Próba czasowa',
+    rationale: `${count} zadań w warunkach arkusza. Licznik kończy misję, ale nie kasuje tego, co już rozwiązałeś.`,
     questionCount: count,
     timeLimitMs: count * SECONDS_PER_EXAM_QUESTION * 1000,
   };
@@ -132,9 +132,9 @@ export function recommendMission(input: PlanningInput): MissionPlan {
   // Powrot po przerwie ma pierwszenstwo: krotka misja bez nadrabiania zaleglosci.
   // Blueprint sek. 14 zakazuje karania za przerwe - to jest wejscie, nie kara.
   if (daysSinceLastSession !== null && daysSinceLastSession >= COMEBACK_THRESHOLD_DAYS) {
-    return plan('comeback', 'Powrot', [
+    return plan('comeback', 'Powrót', [
       `Przerwa ${daysSinceLastSession} dni.`,
-      'Krotka sesja na rozruch - bez nadrabiania zaleglosci.',
+      'Krótka sesja na rozruch — bez nadrabiania zaległości.',
     ]);
   }
 
@@ -142,31 +142,31 @@ export function recommendMission(input: PlanningInput): MissionPlan {
   if (touched.length === 0) {
     return plan('warmup', 'Rozgrzewka', [
       'Pierwsze uruchomienie.',
-      'Trzy krotkie pytania, zeby ustalic punkt wyjscia.',
+      'Trzy krótkie pytania, żeby ustalić punkt wyjścia.',
     ]);
   }
 
   if (due.length > 0) {
-    return plan('training', 'Powtorka', [
+    return plan('training', 'Powtórka', [
       due.length === 1
-        ? 'Jedna kompetencja czeka na zaplanowana powtorke.'
-        : `${due.length} kompetencje czekaja na zaplanowana powtorke.`,
-      'Pamiec po odstepie czasu jest wazniejsza niz nowy material.',
+        ? 'Jedna umiejętność czeka na zaplanowaną powtórkę.'
+        : `Umiejętności czekające na zaplanowaną powtórkę: ${due.length}.`,
+      'Pamięć po odstępie czasu jest ważniejsza niż nowy materiał.',
     ]);
   }
 
   if (withErrors.length > 0) {
     const first = withErrors[0];
     return plan('repair', 'Naprawa', [
-      `Powtarzajacy sie blad: ${first?.name ?? 'kompetencja z dziennika bledow'}.`,
-      'Seria z dziennika bledow, od fundamentu w gore.',
+      `Powtarzający się błąd: ${first?.name ?? 'umiejętność z dziennika błędów'}.`,
+      'Seria z dziennika błędów, od fundamentu w górę.',
     ]);
   }
 
   const weakest = pickWeakest(skills, states);
   return plan('training', 'Trening', [
-    weakest ? `Najnizej oceniona kompetencja: ${weakest.name}.` : 'Biezacy cel.',
-    'Pieciu pytan, rosnaca trudnosc.',
+    weakest ? `Najniżej oceniona umiejętność: ${weakest.name}.` : 'Bieżący cel.',
+    'Pięć pytań, rosnąca trudność.',
   ]);
 }
 
@@ -175,7 +175,7 @@ export function alternatives(recommended: MissionPlan): MissionPlan[] {
   const shorter: MissionPlan = {
     kind: 'warmup',
     title: 'Wersja minimum',
-    rationale: 'Masz malo czasu - trzy pytania i wyrazny koniec.',
+    rationale: 'Masz mało czasu — trzy pytania i wyraźny koniec.',
     questionCount: MISSION_LENGTHS.warmup,
   };
 
@@ -183,14 +183,14 @@ export function alternatives(recommended: MissionPlan): MissionPlan[] {
     recommended.kind === 'repair'
       ? {
           kind: 'training',
-          title: 'Zwykly trening',
-          rationale: 'Wolisz isc do przodu niz naprawiac - to tez jest wybor.',
+          title: 'Zwykły trening',
+          rationale: 'Wolisz iść do przodu niż naprawiać — to też jest wybór.',
           questionCount: MISSION_LENGTHS.training,
         }
       : {
           kind: 'mixed-patrol',
           title: 'Mieszany patrol',
-          rationale: 'Przeplatane typy zadan z calego dzialu.',
+          rationale: 'Przeplatane typy zadań z całego działu.',
           questionCount: MISSION_LENGTHS['mixed-patrol'],
         };
 

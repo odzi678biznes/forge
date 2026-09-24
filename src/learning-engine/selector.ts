@@ -61,12 +61,12 @@ export interface Selection {
 }
 
 const RULE_LABELS: Record<SelectionRule, string> = {
-  'review-due': 'Zaplanowana powtorka.',
-  'main-gap': 'Glowna luka w biezacym temacie.',
-  'transfer-check': 'Dwa sukcesy z rzedu - sprawdzam transfer.',
-  'foundation-repair': 'Cofam sie o poziom do fundamentu.',
-  interleave: 'Przeplatanie - trzy zadania tego samego typu z rzedu.',
-  fallback: 'Kolejne zadanie z biezacego celu.',
+  'review-due': 'Zaplanowana powtórka.',
+  'main-gap': 'Główna luka w bieżącym temacie.',
+  'transfer-check': 'Dwa sukcesy z rzędu — sprawdzam, czy umiesz to w nowej sytuacji.',
+  'foundation-repair': 'Po błędzie cofam się o krok, do fundamentu.',
+  interleave: 'Przeplatanie — trzy zadania tego samego typu z rzędu to dość.',
+  fallback: 'Kolejne zadanie z bieżącego celu.',
 };
 
 export function selectNextQuestion(input: SelectionInput): Selection | null {

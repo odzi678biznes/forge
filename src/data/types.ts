@@ -30,7 +30,7 @@ export type MasteryLevel = (typeof MasteryLevel)[keyof typeof MasteryLevel];
 
 export const MASTERY_LABELS: Record<MasteryLevel, string> = {
   0: 'Nieznane',
-  1: 'Rozpoznaje',
+  1: 'Rozpoznaję',
   2: 'Wspomagane',
   3: 'Samodzielne',
   4: 'Transfer',
@@ -77,11 +77,11 @@ export interface Subject {
 /** Blueprint sek. 5 - drabina pomocy. Poziom 0 = brak pomocy. */
 export const HINT_LADDER = [
   'Pytanie diagnostyczne',
-  'Mala wskazowka',
+  'Mała wskazówka',
   'Przypomnienie zasady',
-  'Fragment analogicznego przykladu',
-  'Jeden krok wspolnie',
-  'Pelne rozwiazanie',
+  'Fragment podobnego przykładu',
+  'Jeden krok wspólnie',
+  'Pełne rozwiązanie',
 ] as const;
 
 /** 0 = samodzielnie, 1..6 = kolejne szczeble drabiny pomocy. */

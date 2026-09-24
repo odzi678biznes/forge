@@ -30,13 +30,13 @@ export function ErrorLab({ groups, skills, onRepair, onBack }: Props) {
     <main className="lab">
       <header className="lab__head">
         <button type="button" className="lab__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
-        <h1 className="lab__title">Laboratorium bledow</h1>
+        <h1 className="lab__title">Laboratorium błędów</h1>
         <p className="lab__lead">
           {groups.length === 0
-            ? 'Dziennik jest pusty. Bledy trafiaja tu automatycznie, gdy system rozpozna ich przyczyne.'
-            : 'Bledy zgrupowane wedlug przyczyny, nie wedlug zadania.'}
+            ? 'Dziennik jest pusty. Błędy trafiają tu automatycznie, gdy system rozpozna ich przyczynę.'
+            : 'Błędy zgrupowane według przyczyny, nie według zadania. Każdy wpis znika po trzech poprawnych próbach z rzędu.'}
         </p>
       </header>
 
@@ -94,12 +94,12 @@ function ErrorCard({
       </h3>
 
       <div className="err-card__example">
-        <p className="err-card__label">Przyklad</p>
+        <p className="err-card__label">Przykład</p>
         <p className="err-card__prompt">
           <Tex>{group.exampleQuestion.prompt}</Tex>
         </p>
         <p className="err-card__answers">
-          <span className="err-card__given">Twoja odpowiedz: {group.exampleAnswer}</span>
+          <span className="err-card__given">Twoja odpowiedź: {group.exampleAnswer}</span>
           <span className="err-card__correct">
             Poprawna: <Tex>{group.exampleQuestion.answer}</Tex>
           </span>
@@ -107,7 +107,7 @@ function ErrorCard({
       </div>
 
       <div className="err-card__rule">
-        <p className="err-card__label">Zlamana zasada</p>
+        <p className="err-card__label">Złamana zasada</p>
         <p>
           <Tex>{group.error.rule}</Tex>
         </p>
@@ -116,7 +116,7 @@ function ErrorCard({
       <footer className="err-card__foot">
         {group.repaired ? (
           <p className="err-card__done">
-            Naprawione - {REPAIR_STREAK_REQUIRED} poprawne proby z rzedu po tym bledzie.
+            Naprawione — {REPAIR_STREAK_REQUIRED} poprawne próby z rzędu po tym błędzie.
           </p>
         ) : (
           <>
@@ -149,7 +149,7 @@ function RepairProgress({ streak }: { streak: number }) {
         />
       ))}
       <span className="err-card__progress-text">
-        {streak} z {REPAIR_STREAK_REQUIRED} poprawnych z rzedu
+        {streak} z {REPAIR_STREAK_REQUIRED} poprawnych z rzędu
       </span>
     </p>
   );

@@ -41,7 +41,7 @@ export function DiagnosticReportView({ report, preview, onChoose, onBack }: Prop
     <main className="diag">
       <header className="diag__head">
         <button type="button" className="diag__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
         <p className="diag__eyebrow">Wynik diagnozy</p>
         <h1 className="diag__title">

@@ -1,4 +1,4 @@
-import type { Skill, SkillState } from '@/data/types';
+import { MASTERY_LABELS, type Skill, type SkillState } from '@/data/types';
 import type { AnsweredStep } from '@/app/useForge';
 import { MasteryNode } from '@/features/mastery-map/MasteryNode';
 import './mission-summary.css';
@@ -51,27 +51,27 @@ export function MissionSummary({
   return (
     <main className="sum">
       <header className="sum__head">
-        <p className="sum__eyebrow">Misja ukonczona</p>
+        <p className="sum__eyebrow">Misja ukończona</p>
         <h1 className="sum__title">
           {independent} z {steps.length} samodzielnie
         </h1>
         <p className="sum__sub">
           {assisted > 0
-            ? `Dodatkowo ${assisted} po podpowiedzi - to nadal postep, tylko innego rodzaju.`
+            ? `Dodatkowo ${assisted} po podpowiedzi — to nadal postęp, tylko innego rodzaju.`
             : usedHints
-              ? 'Drabina pomocy byla uzywana, ale nie doprowadzila jeszcze do poprawnej odpowiedzi.'
+              ? 'Drabina pomocy była używana, ale nie doprowadziła jeszcze do poprawnej odpowiedzi.'
               : 'Bez korzystania z drabiny pomocy.'}
         </p>
       </header>
 
       {transitions.length > 0 ? (
         <section className="sum__changes" aria-labelledby="sum-changes">
-          <h2 id="sum-changes">Co sie zmienilo</h2>
+          <h2 id="sum-changes">Co się zmieniło</h2>
           <ul className="sum__list">
             {transitions.map((s, i) => (
               <li key={i}>
-                <strong>{s.selection.skill.name}</strong>: poziom {s.transition!.from}{' '}
-                &rarr; {s.transition!.to}.{' '}
+                <strong>{s.selection.skill.name}</strong>: {MASTERY_LABELS[s.transition!.from]}{' '}
+                &rarr; {MASTERY_LABELS[s.transition!.to]}.{' '}
                 <span className="sum__reason">{s.transition!.reason}</span>
               </li>
             ))}
@@ -79,10 +79,10 @@ export function MissionSummary({
         </section>
       ) : (
         <section className="sum__changes">
-          <h2>Co sie zmienilo</h2>
+          <h2>Co się zmieniło</h2>
           <p className="sum__none">
-            Zaden poziom kompetencji nie zmienil sie w tej misji. Proby zostaly
-            zapisane i wplyna na dobor kolejnych pytan.
+            Żaden poziom nie zmienił się w tej misji. Próby zostały zapisane i wpłyną
+            na dobór kolejnych zadań.
           </p>
         </section>
       )}
@@ -104,14 +104,14 @@ export function MissionSummary({
 
       {recommendBreak && (
         <p className="sum__break">
-          To czwarta misja dzisiaj. Dalsza nauka teraz przyniesie mniej niz przerwa.
-          Postep jest zapisany - nic nie przepadnie.
+          To czwarta misja dzisiaj. Dalsza nauka teraz przyniesie mniej niż przerwa.
+          Postęp jest zapisany — nic nie przepadnie.
         </p>
       )}
 
       {offerPause && (
         <p className="sum__pause">
-          Kontynuuj albo zrob przerwe - postep jest zapisany.
+          Kontynuuj albo zrób przerwę — postęp jest zapisany.
         </p>
       )}
 
@@ -121,7 +121,7 @@ export function MissionSummary({
           className={recommendBreak ? 'sum__secondary' : 'sum__primary'}
           onClick={onAgain}
         >
-          Jeszcze jedna
+          Wróć do planu dnia
         </button>
         <button
           type="button"
@@ -129,7 +129,7 @@ export function MissionSummary({
           onClick={onFinish}
           autoFocus={recommendBreak}
         >
-          Koniec na dzis
+          Koniec na dziś
         </button>
       </div>
     </main>

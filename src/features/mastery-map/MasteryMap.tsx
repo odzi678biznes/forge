@@ -43,11 +43,11 @@ export function MasteryMap({ skills, states, onSelect, onBack }: Props) {
     <main className="map">
       <header className="map__head">
         <button type="button" className="map__back" onClick={onBack}>
-          &larr; Centrum dowodzenia
+          &larr; Plan dnia
         </button>
-        <h1 className="map__title">Mapa kompetencji</h1>
+        <h1 className="map__title">Mapa umiejętności</h1>
         <p className="map__hint">
-          Kliknij wezel, zeby zaczac trening tej kompetencji.
+          Kliknij węzeł, żeby zacząć trening tej umiejętności. Strzałki pokazują, co trzeba umieć wcześniej.
         </p>
       </header>
 
@@ -148,15 +148,15 @@ function Legend() {
     <section className="map__legend" aria-label="Legenda">
       <p>
         <span className="map__swatch map__swatch--progress" />
-        Wypelnienie obwodu - poziom opanowania (0-5)
+        Wypełnienie obwodu — poziom opanowania (0–5)
       </p>
       <p>
         <span className="map__swatch map__swatch--challenge" />
-        Bursztynowy obwod - powtorka wymagalna dzis
+        Bursztynowy obwód — powtórka wymagalna dziś
       </p>
       <p>
         <span className="map__swatch map__swatch--dot" />
-        Kropka - powtarzajacy sie blad w tej kompetencji
+        Kropka — powtarzający się błąd w tej umiejętności
       </p>
       <p className="map__legend-note">
         Poziom {MasteryLevel.Independent} oznacza typowe zadanie rozwiazane bez pomocy,

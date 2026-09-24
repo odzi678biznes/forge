@@ -41,7 +41,7 @@ describe('rekomendacja misji', () => {
       ]),
     );
     expect(plan.kind).toBe('training');
-    expect(plan.title).toBe('Powtorka');
+    expect(plan.title).toBe('Powtórka');
   });
 
   it('bez powtorek, ale ze swiezym bledem proponuje naprawe i nazywa kompetencje', () => {
