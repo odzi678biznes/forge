@@ -47,6 +47,7 @@ import {
   DERIV_COURSE_TOPIC,
   DERIV_LESSONS,
 } from './kurs/pochodne';
+import { EXTRA_CARDS, EXTRA_LESSONS, EXTRA_QUESTIONS, EXTRA_SKILLS } from './kurs/uzupelnienia';
 import {
   PROB_CARDS,
   PROB_COURSE_QUESTIONS,
@@ -142,6 +143,8 @@ export const MATH_SKILLS: Skill[] = [
   ...STEREO_SKILLS,
   ...PROB_COURSE_SKILLS,
   ...DERIV_COURSE_SKILLS,
+  // Uzupełnienia do podstawy z 2024 r. - każda na końcu swojego działu.
+  ...EXTRA_SKILLS,
 ];
 
 export const MATH_QUESTIONS: Question[] = [
@@ -161,6 +164,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...STEREO_QUESTIONS,
   ...PROB_COURSE_QUESTIONS,
   ...DERIV_COURSE_QUESTIONS,
+  ...EXTRA_QUESTIONS,
 ];
 
 export type { Corpus };
@@ -187,6 +191,7 @@ export const MATH_CORPUS: Corpus = {
     ...STEREO_LESSONS,
     ...PROB_LESSONS,
     ...DERIV_LESSONS,
+    ...EXTRA_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -205,6 +210,7 @@ export const MATH_CORPUS: Corpus = {
     ...STEREO_CARDS,
     ...PROB_CARDS,
     ...DERIV_CARDS,
+    ...EXTRA_CARDS,
   ],
 };
 
