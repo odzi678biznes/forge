@@ -22,7 +22,8 @@ export const POLY_SKILLS: Skill[] = [
     id: 'poly-basics',
     topicId: 'math-polynomials',
     name: 'Wielomiany: stopień, wartość, równość',
-    level: 'PR',
+    // II.2 (zakres podstawowy): dodawanie, odejmowanie i mnożenie wielomianów.
+    level: 'PP',
     ckeRequirement: 'Wielomiany — stopień, działania, równość wielomianów',
     prerequisites: ['alg-expand', 'fn-basics'],
     examValue: 0.5,

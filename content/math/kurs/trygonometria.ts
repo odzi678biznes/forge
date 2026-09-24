@@ -59,9 +59,10 @@ export const TRIG_COURSE_SKILLS: Skill[] = [
   {
     id: 'trig-laws',
     topicId: 'math-trigonometry',
-    name: 'Twierdzenie sinusów i cosinusów',
-    level: 'PR',
-    ckeRequirement: 'Trygonometria — twierdzenie sinusów i twierdzenie cosinusów',
+    name: 'Twierdzenie cosinusów i sinusów',
+    // VII.3 (zakres podstawowy): twierdzenie cosinusów; twierdzenie sinusów to VII.R7.
+    level: 'PP',
+    ckeRequirement: 'Trygonometria — twierdzenie cosinusów (PP) i twierdzenie sinusów (PR)',
     prerequisites: ['trig-area'],
     examValue: 0.7,
   },
