@@ -86,7 +86,7 @@ export function latexToSpeech(tex: string): string {
   for (const [pattern, word] of WORDS) s = s.replace(pattern, word);
 
   s = s
-    .replace(/\\left|\\right|\\big|\\,|\\;|\\!/g, ' ')
+    .replace(/\\left|\\right|\\big|\\,|\\;|\\!|\\ /g, ' ')
     .replace(/\\[a-zA-Z]+/g, ' ') // nieznane polecenie — pomijamy zamiast czytać
     .replace(/[{}]/g, ' ')
     .replace(/'/g, ' prim ')

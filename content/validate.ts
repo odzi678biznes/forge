@@ -196,8 +196,10 @@ export function validateCorpus(label: string, corpus: Corpus): void {
      */
     const GUIDING_LEVELS = 4;
 
+    // Wykładnik ($x^2$) to nie wartość, którą uczeń mógłby przepisać jako
+    // wynik - pomijamy go, żeby reguła nie zgłaszała fałszywych przecieków.
     const numbersIn = (text: string): number[] =>
-      (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+      (text.replace(/\^\{[^}]*\}|\^\d/g, ' ').match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
 
     it('poziomy sa rosnace, bez powtorzen i w zakresie drabiny', () => {
       for (const q of questions) {
@@ -231,7 +233,9 @@ export function validateCorpus(label: string, corpus: Corpus): void {
       for (const q of numericQuestions) {
         const expected = parseNumber(normalise(q.answer));
         // Liczba obecna w tresci zadania to wspolczynnik, nie wynik.
-        const fromPrompt = new Set(numbersIn(q.prompt));
+        // W treści liczy się każda liczba, także wykładnik - skoro jest
+        // w poleceniu, podpowiedź, która ją powtarza, niczego nie zdradza.
+        const fromPrompt = new Set((q.prompt.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number));
 
         for (const h of q.hints.filter((x) => x.level <= GUIDING_LEVELS)) {
           const leaks = numbersIn(h.text).some((n) => n === expected && !fromPrompt.has(n));

@@ -19,6 +19,13 @@ import {
   NUMBERS_SKILLS,
   NUMBERS_TOPIC,
 } from './kurs/liczby';
+import {
+  ALGEBRA_CARDS,
+  ALGEBRA_LESSONS,
+  ALGEBRA_QUESTIONS,
+  ALGEBRA_SKILLS,
+  ALGEBRA_TOPIC,
+} from './kurs/wyrazenia';
 
 /**
  * Korpus tresci matematycznej.
@@ -38,6 +45,7 @@ export { MATH };
 /** Kolejność działów = kolejność kursu (kalendarz i mapa kursu idą po niej). */
 export const MATH_TOPICS: Topic[] = [
   NUMBERS_TOPIC,
+  ALGEBRA_TOPIC,
   QUADRATIC_TOPIC,
   SEQUENCE_TOPIC,
   LOG_TOPIC,
@@ -49,6 +57,7 @@ export const MATH_TOPICS: Topic[] = [
 
 export const MATH_SKILLS: Skill[] = [
   ...NUMBERS_SKILLS,
+  ...ALGEBRA_SKILLS,
   ...QUADRATIC_SKILLS,
   ...SEQUENCE_SKILLS,
   ...LOG_SKILLS,
@@ -60,6 +69,7 @@ export const MATH_SKILLS: Skill[] = [
 
 export const MATH_QUESTIONS: Question[] = [
   ...NUMBERS_QUESTIONS,
+  ...ALGEBRA_QUESTIONS,
   ...QUADRATIC_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
   ...LOG_QUESTIONS,
@@ -76,8 +86,8 @@ export const MATH_CORPUS: Corpus = {
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
-  lessons: [...NUMBERS_LESSONS],
-  flashcards: [...NUMBERS_CARDS],
+  lessons: [...NUMBERS_LESSONS, ...ALGEBRA_LESSONS],
+  flashcards: [...NUMBERS_CARDS, ...ALGEBRA_CARDS],
 };
 
 /** Kompetencje nalezace do danego dzialu. */
