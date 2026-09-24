@@ -4,6 +4,7 @@
  * Uruchomienie: npx vite-node scripts/hint-leaks.ts
  */
 import { MATH_CORPUS } from '../content/math';
+import { CS_CORPUS } from '../content/cs';
 import { normalise, parseNumber } from '../src/learning-engine/grading';
 
 const numbersIn = (text: string): number[] =>
@@ -15,7 +16,7 @@ const numbersIn = (text: string): number[] =>
   ).map(Number);
 
 let found = 0;
-for (const q of MATH_CORPUS.questions) {
+for (const q of [...MATH_CORPUS.questions, ...CS_CORPUS.questions]) {
   if (q.format !== 'numeric') continue;
   const expected = parseNumber(normalise(q.answer));
   const fromPrompt = new Set((q.prompt.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number));
