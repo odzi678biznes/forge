@@ -39,24 +39,6 @@ const REFERENCE: Record<string, string> = {
       while (j < b.length) w.push(b[j++]);
       return w;
     }`,
-  nwd: `
-    function nwd(a, b) {
-      while (b !== 0) { const r = a % b; a = b; b = r; }
-      return a;
-    }`,
-  czyPierwsza: `
-    function czyPierwsza(n) {
-      if (n < 2) return false;
-      for (let d = 2; d * d <= n; d++) if (n % d === 0) return false;
-      return true;
-    }`,
-  naDwojkowy: `
-    function naDwojkowy(n) {
-      if (n === 0) return '0';
-      let s = '';
-      while (n > 0) { s = (n % 2) + s; n = Math.floor(n / 2); }
-      return s;
-    }`,
 };
 
 // Zadania w Pythonie sprawdza python.test.ts - tu tylko JavaScript.

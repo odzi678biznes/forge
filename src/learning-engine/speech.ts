@@ -23,8 +23,16 @@ const WORDS: Array<[RegExp, string]> = [
   [/\\ldots/g, ' i tak dalej '],
   [/\\cdot/g, ' razy '],
   [/\\times/g, ' razy '],
-  [/\\leq?/g, ' mniejsze lub równe '],
-  [/\\geq?/g, ' większe lub równe '],
+  [/\\leftarrow/g, ' przyjmuje wartość '],
+  [/\\lceil/g, ' sufit z '],
+  [/\\rceil/g, ' '],
+  [/\\lfloor/g, ' podłoga z '],
+  [/\\rfloor/g, ' '],
+  [/\\bmod/g, ' modulo '],
+  [/\\varepsilon/g, ' epsilon '],
+  // Tylko samo \le / \leq — nie początek \left czy \leftarrow.
+  [/\\leq?(?![a-zA-Z])/g, ' mniejsze lub równe '],
+  [/\\geq?(?![a-zA-Z])/g, ' większe lub równe '],
   [/\\neq/g, ' różne od '],
   [/\\approx/g, ' w przybliżeniu '],
   [/\\Delta/g, ' delta '],
@@ -54,6 +62,8 @@ export function latexToSpeech(tex: string): string {
   let s = tex
     // Układ równań: kolejne równania czytamy jako wyliczenie.
     .replace(/\\begin\{cases\}|\\end\{cases\}/g, ' ')
+    .replace(/\\begin\{[bp]matrix\}/g, ' macierz ')
+    .replace(/\\end\{[bp]matrix\}/g, ' ')
     .replace(/\\\\/g, ' oraz ')
     .replace(/&/g, ' ')
     // Klamry zbioru {1, 2, …} — czytamy samą zawartość.

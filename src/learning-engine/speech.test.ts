@@ -43,6 +43,18 @@ describe('wzory na tekst mowiony', () => {
     expect(latexToSpeech('0{,}5^{\\circ}\\mathrm{C}')).toBe('0,5 stopni C');
   });
 
+  it('\\left nie jest czytane jako „mniejsze lub rowne”', () => {
+    expect(latexToSpeech('\\left(x + 1\\right) \\le 2')).toBe('x plus 1 mniejsze lub równe 2');
+    expect(latexToSpeech('x \\leftarrow 5')).toBe('x przyjmuje wartość 5');
+  });
+
+  it('sufit, podloga, modulo i macierz', () => {
+    expect(latexToSpeech('\\lceil \\frac{m}{l} \\rceil')).toBe('sufit z m przez l');
+    expect(latexToSpeech('\\lfloor \\sqrt{n} \\rfloor')).toBe('podłoga z pierwiastek z n');
+    expect(latexToSpeech('a^n \\bmod m')).toBe('a do potęgi n modulo m');
+    expect(latexToSpeech('\\begin{bmatrix} 1 & 1 \\\\ 1 & 0 \\end{bmatrix}')).toBe('macierz 1 1 oraz 1 0');
+  });
+
   it('nawias po zmiennej to mnozenie, a nie funkcja', () => {
     expect(latexToSpeech('x(10-x)')).not.toContain(' od ');
   });
