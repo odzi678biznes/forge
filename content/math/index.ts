@@ -9,6 +9,7 @@ import {
   POLY_SKILLS,
   POLY_TOPIC,
 } from './kurs/wielomiany';
+import { RAT_CARDS, RAT_LESSONS, RAT_QUESTIONS, RAT_SKILLS, RAT_TOPIC } from './kurs/wymierne';
 import { SEQ_CARDS, SEQ_LESSONS, SEQ_QUESTIONS, SEQ_SKILLS, SEQ_TOPIC } from './kurs/ciagi';
 import {
   EXP_CARDS,
@@ -107,6 +108,7 @@ export const MATH_TOPICS: Topic[] = [
   LINEAR_TOPIC,
   QUAD_TOPIC,
   POLY_TOPIC,
+  RAT_TOPIC,
   EXP_TOPIC,
   SEQ_TOPIC,
   TRIG_COURSE_TOPIC,
@@ -125,6 +127,7 @@ export const MATH_SKILLS: Skill[] = [
   ...LINEAR_SKILLS,
   ...QUAD_SKILLS,
   ...POLY_SKILLS,
+  ...RAT_SKILLS,
   ...EXP_SKILLS,
   ...SEQ_SKILLS,
   ...TRIG_COURSE_SKILLS,
@@ -143,6 +146,7 @@ export const MATH_QUESTIONS: Question[] = [
   ...LINEAR_QUESTIONS,
   ...QUAD_QUESTIONS,
   ...POLY_QUESTIONS,
+  ...RAT_QUESTIONS,
   ...EXP_QUESTIONS,
   ...SEQ_QUESTIONS,
   ...TRIG_COURSE_QUESTIONS,
@@ -168,6 +172,7 @@ export const MATH_CORPUS: Corpus = {
     ...LINEAR_LESSONS,
     ...QUAD_LESSONS,
     ...POLY_LESSONS,
+    ...RAT_LESSONS,
     ...EXP_LESSONS,
     ...SEQ_LESSONS,
     ...TRIG_LESSONS,
@@ -184,6 +189,7 @@ export const MATH_CORPUS: Corpus = {
     ...LINEAR_CARDS,
     ...QUAD_CARDS,
     ...POLY_CARDS,
+    ...RAT_CARDS,
     ...EXP_CARDS,
     ...SEQ_CARDS,
     ...TRIG_CARDS,
