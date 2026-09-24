@@ -9,9 +9,17 @@ import { VERIFIERS } from './authoring';
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
+/**
+ * Tekst bez fragmentów kodu w odwrotnych apostrofach — tak jak w `splitMath`,
+ * znak $ w kodzie (np. adres `$B$1` w arkuszu) nie otwiera wzoru.
+ */
+function withoutCode(text: string): string {
+  return text.replace(/`[^`]*`/g, '');
+}
+
 /** Wszystkie fragmenty $...$ z tekstu. */
 function mathSegments(text: string): string[] {
-  return [...text.matchAll(/\$([^$]*)\$/g)].map((m) => m[1] ?? '');
+  return [...withoutCode(text).matchAll(/\$([^$]*)\$/g)].map((m) => m[1] ?? '');
 }
 
 /** Liczba z prostego zapisu odpowiedzi zamknietej: 12, -0,5, \frac{3}{4}, -\dfrac{1}{2}. */
@@ -184,7 +192,7 @@ export function validateCorpus(label: string, corpus: Corpus): void {
 
     it('znaczniki LaTeX sa sparowane', () => {
       for (const q of questions) {
-        const dolary = (q.prompt.match(/\$/g) ?? []).length;
+        const dolary = (withoutCode(q.prompt).match(/\$/g) ?? []).length;
         expect(dolary % 2, `${q.id}: nieparzysta liczba znakow $`).toBe(0);
       }
     });
@@ -354,7 +362,7 @@ export function validateCorpus(label: string, corpus: Corpus): void {
 
     it('kazdy tekst ma sparowane znaki $', () => {
       for (const [where, t] of allTexts) {
-        expect((t.match(/\$/g) ?? []).length % 2, `${where}: "${t}"`).toBe(0);
+        expect((withoutCode(t).match(/\$/g) ?? []).length % 2, `${where}: "${t}"`).toBe(0);
       }
     });
 
