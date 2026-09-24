@@ -1,0 +1,211 @@
+/* --- Twoje dane (sek. 12) ------------------------------------------------- */
+
+.data {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.data__back {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.data__eyebrow {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+}
+
+.data__title {
+  margin: 0;
+  font-size: var(--t-hero);
+}
+
+.data__lead {
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+  max-width: 56ch;
+}
+
+.data__counts {
+  margin: var(--space-3) 0 0;
+  font-size: var(--t-small);
+  color: var(--text);
+}
+
+.data__box {
+  margin: 0;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.data__box h2 {
+  margin: 0;
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.data__box h3 {
+  margin: var(--space-3) 0 0;
+  font-size: var(--t-small);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.data__box p {
+  margin: 0;
+}
+
+.data__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.data__primary,
+.data__secondary,
+.data__danger {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius);
+}
+
+.data__primary {
+  font-weight: 650;
+  color: var(--bg-abyss);
+  background: var(--progress);
+  border: none;
+}
+
+.data__secondary {
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+
+/* Usuwanie jest wyraźnie inne niż reszta, ale bez alarmowego krzyku. */
+.data__danger {
+  background: none;
+  color: var(--incorrect);
+  border: 1px solid var(--incorrect);
+}
+
+.data__primary:disabled,
+.data__secondary:disabled,
+.data__danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.data__file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--t-small);
+}
+
+.data__file input {
+  color: var(--text);
+}
+
+.data__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.data__list--scroll {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.data__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'main action'
+    'meta action';
+  align-items: center;
+  column-gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.data__item-main {
+  grid-area: main;
+  color: var(--text);
+  font-size: var(--t-small);
+}
+
+.data__item-meta {
+  grid-area: meta;
+  font-size: var(--t-micro);
+  color: var(--text-faint);
+}
+
+.data__item button {
+  grid-area: action;
+}
+
+.data__empty {
+  font-size: var(--t-small);
+  color: var(--text-faint);
+}
+
+.data__confirm {
+  margin-top: var(--space-2);
+  padding: var(--space-4);
+  background: var(--bg-abyss);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--text);
+}
+
+.data__check {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.data__message {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  font-size: var(--t-small);
+}
+
+.data__message--ok {
+  color: var(--progress);
+  border: 1px solid var(--progress-dim);
+}
+
+.data__message--error {
+  color: var(--incorrect);
+  border: 1px solid var(--incorrect);
+}

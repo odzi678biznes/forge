@@ -1,7 +1,11 @@
 import type { Attempt, Mission, Preference, SavedPlan, SkillState } from './types';
 import {
+  MAX_BACKUPS,
   SNAPSHOT_VERSION,
+  newBackupId,
   validateSnapshot,
+  type BackupInfo,
+  type RecordSelection,
   type SnapshotV1,
   type StoragePort,
 } from './storage-port';
@@ -15,7 +19,7 @@ import {
  */
 
 const DB_NAME = 'forge';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORES = {
   skillStates: 'skillStates',
@@ -24,6 +28,16 @@ const STORES = {
   plan: 'plan',
   preferences: 'preferences',
 } as const;
+
+/**
+ * Kopie bezpieczenstwa sa poza STORES celowo: `clear()` czysci STORES, a kopia
+ * sprzed importu musi przetrwac czyszczenie, ktore import wykonuje.
+ */
+const BACKUPS = 'backups';
+
+interface BackupRecord extends BackupInfo {
+  snapshot: SnapshotV1;
+}
 
 /** Aktywny plan jest jeden, wiec trzymamy go pod stalym kluczem. */
 const ACTIVE_PLAN_KEY = 'active';
@@ -56,6 +70,10 @@ export class IndexedDbStorage implements StoragePort {
         }
         if (!db.objectStoreNames.contains(STORES.preferences)) {
           db.createObjectStore(STORES.preferences, { keyPath: 'key' });
+        }
+        // Migracja v3: kopie bezpieczenstwa (sek. 12).
+        if (!db.objectStoreNames.contains(BACKUPS)) {
+          db.createObjectStore(BACKUPS, { keyPath: 'id' });
         }
       };
 
@@ -162,6 +180,78 @@ export class IndexedDbStorage implements StoragePort {
           }),
       ),
     );
+  }
+
+  /** Jedna transakcja: sesja albo przedmiot znika w calosci albo wcale. */
+  async deleteRecords(selection: RecordSelection): Promise<void> {
+    const db = this.require();
+    const names = [STORES.attempts, STORES.missions, STORES.skillStates, STORES.plan];
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(names, 'readwrite');
+      for (const id of selection.attemptIds) tx.objectStore(STORES.attempts).delete(id);
+      for (const id of selection.missionIds) tx.objectStore(STORES.missions).delete(id);
+      for (const id of selection.skillIds) tx.objectStore(STORES.skillStates).delete(id);
+      if (selection.dropPlan) tx.objectStore(STORES.plan).delete(ACTIVE_PLAN_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  }
+
+  async saveBackup(reason: string): Promise<BackupInfo> {
+    const snapshot = await this.exportAll();
+    const record: BackupRecord = {
+      id: newBackupId(snapshot.exportedAt),
+      createdAt: snapshot.exportedAt,
+      reason,
+      attempts: snapshot.attempts.length,
+      missions: snapshot.missions.length,
+      snapshot,
+    };
+    await this.write(BACKUPS, record);
+
+    const stale = (await this.backupRecords()).slice(MAX_BACKUPS);
+    await Promise.all(stale.map((b) => this.remove(BACKUPS, b.id)));
+
+    const { snapshot: _omit, ...info } = record;
+    return info;
+  }
+
+  async listBackups(): Promise<BackupInfo[]> {
+    return (await this.backupRecords()).map(({ snapshot: _omit, ...info }) => info);
+  }
+
+  async loadBackup(id: string): Promise<SnapshotV1 | null> {
+    const record = (await this.backupRecords()).find((b) => b.id === id);
+    return record ? validateSnapshot(record.snapshot) : null;
+  }
+
+  async deleteBackups(): Promise<void> {
+    const db = this.require();
+    return new Promise((resolve, reject) => {
+      const req = db.transaction(BACKUPS, 'readwrite').objectStore(BACKUPS).clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  /** Przegladarka sama zarzadza plikami IndexedDB - nie mamy tu nic do zrobienia. */
+  async compact(): Promise<void> {}
+
+  /** Od najnowszej; przy tym samym czasie decyduje id, zeby kolejnosc byla stala. */
+  private async backupRecords(): Promise<BackupRecord[]> {
+    const all = await this.readAll<BackupRecord>(BACKUPS);
+    return all.sort((a, b) => b.createdAt - a.createdAt || (a.id < b.id ? 1 : -1));
+  }
+
+  private remove(store: string, key: IDBValidKey): Promise<void> {
+    const db = this.require();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
   }
 
   /** Zamyka polaczenie - test restartu otwiera baze od nowa. */

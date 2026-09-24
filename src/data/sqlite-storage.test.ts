@@ -240,6 +240,58 @@ describe('cykl zycia', () => {
   });
 });
 
+describe('usuwanie i kopie (sek. 12)', () => {
+  it('czyszczenie danych nie dotyka kopii bezpieczenstwa', async () => {
+    await (await ready()).clear();
+    const sqls = execute.mock.calls.map(([sql]) => String(sql));
+    expect(sqls.some((q) => q.includes('backups'))).toBe(false);
+  });
+
+  it('identyfikatory ida jednym parametrem JSON, nie sklejone w SQL', async () => {
+    const hostile = "a'); DROP TABLE attempts; --";
+    await (await ready()).deleteRecords({
+      attemptIds: [hostile, 'a-2'],
+      missionIds: [],
+      skillIds: ['s-1'],
+      dropPlan: false,
+    });
+
+    const calls = execute.mock.calls.map(([sql, params]) => ({ sql: String(sql), params }));
+    const attempts = calls.find((c) => c.sql.includes('DELETE FROM attempts'));
+    expect(attempts?.sql).toContain('json_each($1)');
+    expect(attempts?.sql).not.toContain(hostile);
+    expect(attempts?.params).toEqual([JSON.stringify([hostile, 'a-2'])]);
+    // Pusta lista nie generuje zapytania; plan zostaje.
+    expect(calls.some((c) => c.sql.includes('DELETE FROM missions'))).toBe(false);
+    expect(calls.some((c) => c.sql.includes('DELETE FROM plans'))).toBe(false);
+  });
+
+  it('kopia zapisuje pelny eksport i przycina stare kopie', async () => {
+    const info = await (await ready()).saveBackup('przed importem');
+    const calls = execute.mock.calls.map(([sql, params]) => ({ sql: String(sql), params: params as unknown[] }));
+
+    const insert = calls.find((c) => c.sql.includes('INSERT INTO backups'));
+    expect(insert?.params[0]).toBe(info.id);
+    expect(insert?.params[2]).toBe('przed importem');
+    expect(JSON.parse(String(insert?.params[5]))).toMatchObject({ version: 1 });
+
+    const prune = calls.find((c) => c.sql.includes('DELETE FROM backups'));
+    expect(prune?.params).toEqual([5]);
+  });
+
+  it('uszkodzona kopia w bazie konczy sie jawnym bledem walidacji', async () => {
+    const { SnapshotValidationError } = await import('./storage-port');
+    select.mockResolvedValueOnce([{ snapshot: '{nie json' }]);
+    await expect((await ready()).loadBackup('b-1')).rejects.toThrow(SnapshotValidationError);
+  });
+
+  it('kompaktowanie fizycznie usuwa skasowane dane z pliku i dziennika', async () => {
+    await (await ready()).compact();
+    const sqls = execute.mock.calls.map(([sql]) => String(sql));
+    expect(sqls).toEqual(['VACUUM', 'PRAGMA wal_checkpoint(TRUNCATE)']);
+  });
+});
+
 describe('plan i preferencje', () => {
   it('wczytuje wylacznie aktywny plan', async () => {
     select.mockResolvedValueOnce([

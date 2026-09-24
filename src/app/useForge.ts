@@ -62,7 +62,8 @@ export type Screen =
   | 'diagnostic-intro'
   | 'diagnostic-report'
   | 'weekly-report'
-  | 'ai-settings';
+  | 'ai-settings'
+  | 'data';
 
 export type SubjectId = 'math' | 'cs';
 
@@ -192,6 +193,41 @@ export function useForge(deps: ForgeDeps = {}) {
   const corpus = CORPORA[subject];
   const { skills, questions, topics } = corpus;
 
+  /**
+   * Wczytanie profilu z portu. Uzywane przy starcie i po zmianach z ekranu
+   * danych (import, przywrocenie kopii, usuniecie) - wtedy stan w pamieci
+   * musi pojsc za baza, a nie odwrotnie.
+   */
+  const loadProfile = useCallback(async (s: StoragePort, isCancelled: () => boolean) => {
+    const saved = await s.loadSkillStates();
+    if (isCancelled()) return;
+
+    const map = new Map<string, SkillState>();
+    for (const skill of ALL_SKILLS) {
+      map.set(skill.id, saved.find((x) => x.skillId === skill.id) ?? emptySkillState(skill.id));
+    }
+    setSkillStates(map);
+
+    setAttempts(await s.loadAttempts());
+    setSavedPlan(await s.loadPlan());
+
+    const loaded = await s.loadMissions();
+    setMissions(loaded);
+    setMissionsToday(loaded.filter((m) => isToday(m.startedAt)).length);
+
+    // Brak zapisanej preferencji (np. po usunieciu wszystkiego) to powrot do
+    // wartosci domyslnych, a nie zachowanie tych z pamieci.
+    const prefs = await s.loadPreferences();
+    const savedMode = prefs.find((x) => x.key === DAY_MODE_KEY)?.value;
+    setDayModeState(
+      savedMode === 'minimum' || savedMode === 'standard' || savedMode === 'strong'
+        ? savedMode
+        : 'standard',
+    );
+    const savedSubject = prefs.find((x) => x.key === SUBJECT_KEY)?.value;
+    setSubjectState(savedSubject === 'math' || savedSubject === 'cs' ? savedSubject : 'math');
+  }, []);
+
   // Wczytanie profilu. Brak danych to poprawny stan, nie blad (sek. 16).
   useEffect(() => {
     let cancelled = false;
@@ -199,37 +235,33 @@ export function useForge(deps: ForgeDeps = {}) {
       const s = store.current ?? (await createStorage());
       store.current = s;
       await s.init();
-      const saved = await s.loadSkillStates();
+      await loadProfile(s, () => cancelled);
       if (cancelled) return;
-
-      const map = new Map<string, SkillState>();
-      for (const skill of ALL_SKILLS) {
-        map.set(skill.id, saved.find((x) => x.skillId === skill.id) ?? emptySkillState(skill.id));
-      }
-      setSkillStates(map);
-
-      setAttempts(await s.loadAttempts());
-      setSavedPlan(await s.loadPlan());
-
-      const loaded = await s.loadMissions();
-      setMissions(loaded);
-      setMissionsToday(loaded.filter((m) => isToday(m.startedAt)).length);
-
-      const prefs = await s.loadPreferences();
-      const savedMode = prefs.find((x) => x.key === DAY_MODE_KEY)?.value;
-      if (savedMode === 'minimum' || savedMode === 'standard' || savedMode === 'strong') {
-        setDayModeState(savedMode);
-      }
-      const savedSubject = prefs.find((x) => x.key === SUBJECT_KEY)?.value;
-      if (savedSubject === 'math' || savedSubject === 'cs') setSubjectState(savedSubject);
-
       setReady(true);
       setScreen('command-center');
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadProfile]);
+
+  /**
+   * Po zmianie danych z zewnatrz: przeladowanie profilu i porzucenie stanu
+   * misji, ktory moglby wskazywac na usuniete rekordy.
+   */
+  const reloadProfile = useCallback(async () => {
+    diagnosticMissionRef.current = null;
+    askedRef.current = new Set();
+    setMission(null);
+    setPlan(null);
+    setCurrent(null);
+    setSteps([]);
+    setFeedback(null);
+    setDiagnosticQueue([]);
+    setRecentSkillIds([]);
+    setMissionDeadline(null);
+    await loadProfile(port(), () => false);
+  }, [loadProfile]);
 
   /** Przerwa liczona dla osoby, nie dla przedmiotu - obejmuje wszystkie kompetencje. */
   const daysSinceLastSession = useMemo(() => {
@@ -675,6 +707,8 @@ export function useForge(deps: ForgeDeps = {}) {
     previewPlan,
     choosePlan,
     diagnosticSize: diagnosticSet.length,
+    storage: port,
+    reloadProfile,
   };
 }
 

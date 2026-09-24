@@ -33,8 +33,62 @@ export interface StoragePort {
   /** Import z walidacja schematu (sek. 12). */
   importAll(snapshot: unknown): Promise<void>;
 
-  /** Usuniecie wszystkich danych uzytkownika. */
+  /** Usuniecie wszystkich danych uzytkownika. Kopii bezpieczenstwa nie rusza. */
   clear(): Promise<void>;
+
+  /** Usuniecie wskazanych rekordow - jednej sesji albo przedmiotu (sek. 12). */
+  deleteRecords(selection: RecordSelection): Promise<void>;
+
+  /**
+   * Kopia bezpieczenstwa przed zmiana (sek. 12). Przechowujemy ostatnie
+   * `MAX_BACKUPS`. `clear()` jej nie kasuje - import czysci dane, a kopia
+   * sprzed importu musi to przetrwac.
+   */
+  saveBackup(reason: string): Promise<BackupInfo>;
+  /** Od najnowszej. */
+  listBackups(): Promise<BackupInfo[]>;
+  /** Kopia przechodzi te sama walidacje co import z pliku. */
+  loadBackup(id: string): Promise<SnapshotV1 | null>;
+  deleteBackups(): Promise<void>;
+
+  /**
+   * Fizyczne usuniecie skasowanych danych z pliku. SQLite po DELETE trzyma
+   * stare wiersze w wolnych stronach i w dzienniku WAL, dopoki ich nie
+   * nadpisze - "usun" ma znaczyc usun, a nie ukryj.
+   */
+  compact(): Promise<void>;
+}
+
+/** Co dokladnie usunac - wyliczone wczesniej przez `planDeletion`. */
+export interface RecordSelection {
+  attemptIds: string[];
+  missionIds: string[];
+  skillIds: string[];
+  /** Plan zbudowany na usuwanych wynikach traci podstawe i znika razem z nimi. */
+  dropPlan: boolean;
+}
+
+export interface BackupInfo {
+  id: string;
+  createdAt: number;
+  reason: string;
+  attempts: number;
+  missions: number;
+}
+
+export const MAX_BACKUPS = 5;
+
+let backupSequence = 0;
+
+/**
+ * Identyfikator sortuje sie jak czas utworzenia, takze dla dwoch kopii z tej
+ * samej milisekundy - "od najnowszej" nie moze zalezec od losowej czesci.
+ */
+export function newBackupId(createdAt: number): string {
+  backupSequence = (backupSequence + 1) % 1_000_000;
+  const time = String(createdAt).padStart(15, '0');
+  const seq = String(backupSequence).padStart(6, '0');
+  return `b-${time}-${seq}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export const SNAPSHOT_VERSION = 1;
@@ -101,6 +155,23 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
   for (const a of snap.attempts as Attempt[]) {
     if (typeof a?.id !== 'string' || typeof a.questionId !== 'string') {
       throw new SnapshotValidationError('Proba bez identyfikatora pytania.');
+    }
+    // Import najpierw czysci baze. Rekord, ktory odrzucilaby dopiero baza
+    // (NOT NULL), zostawilby profil w polowie - lapiemy go tutaj.
+    if (
+      typeof a.skillId !== 'string' ||
+      typeof a.missionId !== 'string' ||
+      typeof a.userAnswer !== 'string' ||
+      typeof a.startedAt !== 'number' ||
+      typeof a.answeredAt !== 'number'
+    ) {
+      throw new SnapshotValidationError(`Niepelna proba "${a.id}".`);
+    }
+  }
+
+  for (const m of snap.missions as Mission[]) {
+    if (typeof m?.id !== 'string' || typeof m.startedAt !== 'number') {
+      throw new SnapshotValidationError('Misja bez identyfikatora albo daty rozpoczecia.');
     }
   }
 

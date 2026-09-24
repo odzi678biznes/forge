@@ -39,6 +39,7 @@ interface Props {
   onSubject: (next: SubjectId) => void;
   onOpenAi: () => void;
   aiEnabled: boolean;
+  onOpenData: () => void;
 }
 
 export function CommandCenter({
@@ -64,6 +65,7 @@ export function CommandCenter({
   onSubject,
   onOpenAi,
   aiEnabled,
+  onOpenData,
 }: Props) {
   const openErrors = openErrorCount(errorGroups);
   // Mapa stanow obejmuje oba przedmioty - liczymy tylko biezacy, inaczej
@@ -231,6 +233,9 @@ export function CommandCenter({
             </button>
             <button type="button" className="cc__link" onClick={onOpenAi}>
               {aiEnabled ? 'AI: wlaczone' : 'AI: wylaczone'}
+            </button>
+            <button type="button" className="cc__link" onClick={onOpenData}>
+              Twoje dane
             </button>
             <button type="button" className="cc__link" onClick={onOpenErrorLab}>
               Laboratorium bledow

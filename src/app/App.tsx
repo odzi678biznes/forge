@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForge } from './useForge';
+import { SUBJECT_LABELS, useForge } from './useForge';
 import { CommandCenter } from '@/features/missions/CommandCenter';
 import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
@@ -11,6 +11,17 @@ import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportVie
 import { WeeklyReportView } from '@/features/weekly-review/WeeklyReportView';
 import { AiSettings } from '@/features/ai/AiSettings';
 import { createTutor } from '@/features/ai/tutor';
+import { DataScreen, type SubjectInfo } from '@/features/data/DataScreen';
+import { MATH_CORPUS } from '@content/math/index';
+import { CS_CORPUS } from '@content/cs/index';
+
+/** Ekran danych dziala na obu przedmiotach naraz, niezaleznie od wybranego. */
+const DATA_SUBJECTS: SubjectInfo[] = [
+  { id: 'math', label: SUBJECT_LABELS.math, skillIds: MATH_CORPUS.skills.map((s) => s.id) },
+  { id: 'cs', label: SUBJECT_LABELS.cs, skillIds: CS_CORPUS.skills.map((s) => s.id) },
+];
+const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
+const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions];
 
 export function App() {
   const {
@@ -29,6 +40,8 @@ export function App() {
     setDayMode,
     setSubject,
     finishMissionNow,
+    storage,
+    reloadProfile,
   } = useForge();
 
   // AI jest opcjonalne i domyslnie wylaczone: wlacza je dopiero klucz
@@ -130,6 +143,19 @@ export function App() {
     return <AiSettings tutor={tutor} onChange={setAiEnabled} onBack={toCommandCenter} />;
   }
 
+  if (state.screen === 'data') {
+    return (
+      <DataScreen
+        storage={storage}
+        subjects={DATA_SUBJECTS}
+        skills={ALL_SKILLS}
+        questions={ALL_QUESTIONS}
+        onChanged={reloadProfile}
+        onBack={toCommandCenter}
+      />
+    );
+  }
+
   if (state.screen === 'weekly-report') {
     return (
       <WeeklyReportView
@@ -175,6 +201,7 @@ export function App() {
       onTimeTrial={() => beginMission(timeTrial())}
       onOpenAi={() => goTo('ai-settings')}
       aiEnabled={aiEnabled}
+      onOpenData={() => goTo('data')}
     />
   );
 }

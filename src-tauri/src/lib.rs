@@ -25,6 +25,12 @@ fn migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
             sql: include_str!("../migrations/002_plan.sql"),
         },
+        Migration {
+            version: 3,
+            description: "kopie bezpieczenstwa przed zmiana",
+            kind: MigrationKind::Up,
+            sql: include_str!("../migrations/003_backups.sql"),
+        },
     ]
 }
 

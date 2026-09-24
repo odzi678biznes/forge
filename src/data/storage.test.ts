@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { MasteryLevel, emptySkillState, type Attempt, type Mission } from './types';
 import { IndexedDbStorage } from './indexeddb-storage';
-import { SnapshotValidationError, validateSnapshot } from './storage-port';
+import { MAX_BACKUPS, SnapshotValidationError, validateSnapshot } from './storage-port';
 
 /**
  * Scenariusze obowiazkowe z Blueprint sek. 16:
@@ -263,5 +263,150 @@ describe('plan nauki i preferencje', () => {
     });
     expect(await store.loadPlan()).toBeNull();
     expect(await store.loadPreferences()).toEqual([]);
+  });
+});
+
+describe('usuwanie wybranych danych (sek. 12)', () => {
+  const second: Attempt = { ...attempt, id: 'a-2', missionId: 'm-2', skillId: 's-2' };
+  const otherMission: Mission = { ...mission, id: 'm-2' };
+
+  async function seeded() {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveSkillState({ ...emptySkillState('s-1'), level: MasteryLevel.Transfer });
+    await store.saveSkillState({ ...emptySkillState('s-2'), level: MasteryLevel.Independent });
+    await store.appendAttempt(attempt);
+    await store.appendAttempt(second);
+    await store.saveMission(mission);
+    await store.saveMission(otherMission);
+    return store;
+  }
+
+  it('usuwa dokladnie wskazane rekordy i nic wiecej', async () => {
+    const store = await seeded();
+    await store.deleteRecords({
+      attemptIds: ['a-1'],
+      missionIds: ['m-1'],
+      skillIds: ['s-1'],
+      dropPlan: false,
+    });
+
+    expect(await store.loadAttempts()).toEqual([second]);
+    expect(await store.loadMissions()).toEqual([otherMission]);
+    expect((await store.loadSkillStates()).map((s) => s.skillId)).toEqual(['s-2']);
+  });
+
+  it('plan znika tylko na wyrazne zadanie', async () => {
+    const store = await seeded();
+    const plan = {
+      id: 'p-1',
+      variant: 'realistic' as const,
+      createdAt: 1,
+      deadline: null,
+      targets: [],
+      diagnosisSnapshot: [],
+    };
+    await store.savePlan(plan);
+
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false });
+    expect(await store.loadPlan()).toEqual(plan);
+
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: true });
+    expect(await store.loadPlan()).toBeNull();
+  });
+});
+
+describe('kopie bezpieczenstwa (sek. 12)', () => {
+  it('kopia odtwarza stan sprzed zmiany', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.appendAttempt(attempt);
+    await store.saveMission(mission);
+
+    const info = await store.saveBackup('przed importem');
+    expect(info).toMatchObject({ reason: 'przed importem', attempts: 1, missions: 1 });
+
+    await store.clear();
+    expect(await store.loadAttempts()).toEqual([]);
+
+    const snapshot = await store.loadBackup(info.id);
+    await store.importAll(snapshot);
+    expect(await store.loadAttempts()).toEqual([attempt]);
+  });
+
+  it('czyszczenie danych nie kasuje kopii - import czysci, a kopia ma przetrwac', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveBackup('przed importem');
+    await store.clear();
+    expect(await store.listBackups()).toHaveLength(1);
+  });
+
+  it('trzyma tylko ostatnie kopie, od najnowszej', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    for (let i = 0; i < MAX_BACKUPS + 2; i += 1) {
+      await store.saveBackup(`kopia ${i}`);
+      await new Promise((r) => setTimeout(r, 2));
+    }
+    const list = await store.listBackups();
+    expect(list).toHaveLength(MAX_BACKUPS);
+    expect(list[0]?.reason).toBe(`kopia ${MAX_BACKUPS + 1}`);
+  });
+
+  it('usuniecie kopii jest osobna, jawna operacja', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.saveBackup('x');
+    await store.deleteBackups();
+    expect(await store.listBackups()).toEqual([]);
+  });
+
+  it('nieistniejaca kopia to null', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    expect(await store.loadBackup('b-nie-ma')).toBeNull();
+  });
+
+  it('baza z wersji 2 dostaje magazyn kopii bez utraty danych', async () => {
+    const name = freshName();
+    // Stara baza: wersja 2, bez magazynu kopii.
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.open(name, 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        db.createObjectStore('skillStates', { keyPath: 'skillId' });
+        db.createObjectStore('attempts', { keyPath: 'id' }).put(attempt);
+        db.createObjectStore('missions', { keyPath: 'id' });
+        db.createObjectStore('plan');
+        db.createObjectStore('preferences', { keyPath: 'key' });
+      };
+      req.onsuccess = () => {
+        req.result.close();
+        resolve();
+      };
+      req.onerror = () => reject(req.error);
+    });
+
+    const store = new IndexedDbStorage(name);
+    await store.init();
+    expect(await store.loadAttempts()).toEqual([attempt]);
+    await store.saveBackup('po migracji');
+    expect(await store.listBackups()).toHaveLength(1);
+  });
+});
+
+describe('walidacja kopii - rekordy niepelne', () => {
+  const base = { version: 1, exportedAt: 0, skillStates: [], attempts: [], missions: [] };
+
+  it('proba bez kompetencji jest odrzucona przed czyszczeniem bazy', () => {
+    const { skillId: _drop, ...partial } = attempt;
+    expect(() => validateSnapshot({ ...base, attempts: [partial] })).toThrow(/Niepelna proba/);
+  });
+
+  it('misja bez daty jest odrzucona', () => {
+    expect(() => validateSnapshot({ ...base, missions: [{ id: 'm-1' }] })).toThrow(
+      SnapshotValidationError,
+    );
   });
 });

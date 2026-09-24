@@ -13,8 +13,13 @@ import {
   type SkillState,
 } from './types';
 import {
+  MAX_BACKUPS,
   SNAPSHOT_VERSION,
+  SnapshotValidationError,
+  newBackupId,
   validateSnapshot,
+  type BackupInfo,
+  type RecordSelection,
   type SnapshotV1,
   type StoragePort,
 } from './storage-port';
@@ -74,6 +79,14 @@ interface PlanRow {
 interface PreferenceRow {
   key: string;
   value: string;
+}
+
+interface BackupRow {
+  id: string;
+  created_at: number;
+  reason: string;
+  attempts: number;
+  missions: number;
 }
 
 interface MissionRow {
@@ -276,6 +289,93 @@ export class SqliteStorage implements StoragePort {
     await db.execute('DELETE FROM skill_states');
     await db.execute('DELETE FROM plans');
     await db.execute('DELETE FROM preferences');
+  }
+
+  /**
+   * Lista identyfikatorow trafia jako JEDEN parametr z tablica JSON i jest
+   * rozwijana przez `json_each` - bez sklejania SQL i bez limitu liczby
+   * parametrow przy duzej sesji.
+   */
+  async deleteRecords(selection: RecordSelection): Promise<void> {
+    const db = this.require();
+    const byIds = async (table: string, column: string, ids: string[]) => {
+      if (ids.length === 0) return;
+      await db.execute(
+        `DELETE FROM ${table} WHERE ${column} IN (SELECT value FROM json_each($1))`,
+        [JSON.stringify(ids)],
+      );
+    };
+    await byIds('attempts', 'id', selection.attemptIds);
+    await byIds('missions', 'id', selection.missionIds);
+    await byIds('skill_states', 'skill_id', selection.skillIds);
+    if (selection.dropPlan) await db.execute('DELETE FROM plans');
+  }
+
+  async saveBackup(reason: string): Promise<BackupInfo> {
+    const db = this.require();
+    const snapshot = await this.exportAll();
+    const info: BackupInfo = {
+      id: newBackupId(snapshot.exportedAt),
+      createdAt: snapshot.exportedAt,
+      reason,
+      attempts: snapshot.attempts.length,
+      missions: snapshot.missions.length,
+    };
+    await db.execute(
+      `INSERT INTO backups (id, created_at, reason, attempts, missions, snapshot)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [info.id, info.createdAt, info.reason, info.attempts, info.missions, JSON.stringify(snapshot)],
+    );
+    await db.execute(
+      `DELETE FROM backups WHERE id NOT IN
+         (SELECT id FROM backups ORDER BY created_at DESC, id DESC LIMIT $1)`,
+      [MAX_BACKUPS],
+    );
+    return info;
+  }
+
+  async listBackups(): Promise<BackupInfo[]> {
+    const rows = await this.require().select<BackupRow[]>(
+      `SELECT id, created_at, reason, attempts, missions FROM backups
+       ORDER BY created_at DESC, id DESC`,
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      createdAt: r.created_at,
+      reason: r.reason,
+      attempts: r.attempts,
+      missions: r.missions,
+    }));
+  }
+
+  async loadBackup(id: string): Promise<SnapshotV1 | null> {
+    const rows = await this.require().select<Array<{ snapshot: string }>>(
+      'SELECT snapshot FROM backups WHERE id = $1',
+      [id],
+    );
+    const row = rows[0];
+    if (!row) return null;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(row.snapshot);
+    } catch {
+      throw new SnapshotValidationError('Kopia bezpieczenstwa jest uszkodzona.');
+    }
+    return validateSnapshot(parsed);
+  }
+
+  async deleteBackups(): Promise<void> {
+    await this.require().execute('DELETE FROM backups');
+  }
+
+  /**
+   * VACUUM przepisuje plik bez wolnych stron, a checkpoint TRUNCATE oproznia
+   * dziennik WAL - dopiero wtedy usuniete odpowiedzi znikaja z dysku.
+   */
+  async compact(): Promise<void> {
+    const db = this.require();
+    await db.execute('VACUUM');
+    await db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
   }
 
   async close(): Promise<void> {
