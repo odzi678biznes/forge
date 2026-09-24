@@ -12,6 +12,12 @@ const WORDS: Array<[RegExp, string]> = [
   [/\\%/g, ' procent '],
   [/\\iff/g, ' wtedy i tylko wtedy, gdy '],
   [/\\cup/g, ' suma '],
+  [/\\cap/g, ' iloczyn '],
+  [/\\mid/g, ' pod warunkiem '],
+  [/\\vee/g, ' lub '],
+  [/\\perp/g, ' prostopadła do '],
+  [/\\parallel/g, ' równoległa do '],
+  [/\\angle/g, ' kąt '],
   [/\\in\b/g, ' należy do '],
   [/\\ne\b/g, ' różne od '],
   [/\\ldots/g, ' i tak dalej '],
@@ -50,6 +56,8 @@ export function latexToSpeech(tex: string): string {
     .replace(/\\begin\{cases\}|\\end\{cases\}/g, ' ')
     .replace(/\\\\/g, ' oraz ')
     .replace(/&/g, ' ')
+    // Klamry zbioru {1, 2, …} — czytamy samą zawartość.
+    .replace(/\\\{|\\\}/g, ' ')
     .replace(/\^\s*\{?\\circ\}?/g, ' stopni ')
     // Przecinek dziesiętny w klamrach i odstęp tysięcy.
     .replace(/\{,\}/g, ',')

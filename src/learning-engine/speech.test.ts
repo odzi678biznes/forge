@@ -46,6 +46,12 @@ describe('wzory na tekst mowiony', () => {
   it('nawias po zmiennej to mnozenie, a nie funkcja', () => {
     expect(latexToSpeech('x(10-x)')).not.toContain(' od ');
   });
+
+  it('zbior, prawdopodobienstwo warunkowe i kat', () => {
+    expect(latexToSpeech(String.raw`\{1, 2, \ldots, 100\}`)).toBe('1, 2, i tak dalej , 100');
+    expect(latexToSpeech(String.raw`P(A \mid B)`)).toBe('P od A pod warunkiem B');
+    expect(latexToSpeech(String.raw`|\angle ACB|`)).toContain('kąt ACB');
+  });
 });
 
 describe('cala tresc zadania', () => {
