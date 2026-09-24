@@ -10,7 +10,13 @@ import {
   POLY_TOPIC,
 } from './kurs/wielomiany';
 import { SEQUENCE_QUESTIONS, SEQUENCE_SKILLS, SEQUENCE_TOPIC } from './ciagi';
-import { LOG_QUESTIONS, LOG_SKILLS, LOG_TOPIC } from './logarytmy';
+import {
+  EXP_CARDS,
+  EXP_LESSONS,
+  EXP_QUESTIONS,
+  EXP_SKILLS,
+  EXP_TOPIC,
+} from './kurs/wykladnicza';
 import { TRIG_QUESTIONS, TRIG_SKILLS, TRIG_TOPIC } from './trygonometria';
 import { GEO_QUESTIONS, GEO_SKILLS, GEO_TOPIC } from './geometria-analityczna';
 import { DERIV_QUESTIONS, DERIV_SKILLS, DERIV_TOPIC } from './pochodne';
@@ -75,8 +81,8 @@ export const MATH_TOPICS: Topic[] = [
   LINEAR_TOPIC,
   QUAD_TOPIC,
   POLY_TOPIC,
+  EXP_TOPIC,
   SEQUENCE_TOPIC,
-  LOG_TOPIC,
   TRIG_TOPIC,
   GEO_TOPIC,
   DERIV_TOPIC,
@@ -91,8 +97,8 @@ export const MATH_SKILLS: Skill[] = [
   ...LINEAR_SKILLS,
   ...QUAD_SKILLS,
   ...POLY_SKILLS,
+  ...EXP_SKILLS,
   ...SEQUENCE_SKILLS,
-  ...LOG_SKILLS,
   ...TRIG_SKILLS,
   ...GEO_SKILLS,
   ...DERIV_SKILLS,
@@ -107,8 +113,8 @@ export const MATH_QUESTIONS: Question[] = [
   ...LINEAR_QUESTIONS,
   ...QUAD_QUESTIONS,
   ...POLY_QUESTIONS,
+  ...EXP_QUESTIONS,
   ...SEQUENCE_QUESTIONS,
-  ...LOG_QUESTIONS,
   ...TRIG_QUESTIONS,
   ...GEO_QUESTIONS,
   ...DERIV_QUESTIONS,
@@ -130,6 +136,7 @@ export const MATH_CORPUS: Corpus = {
     ...LINEAR_LESSONS,
     ...QUAD_LESSONS,
     ...POLY_LESSONS,
+    ...EXP_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -139,6 +146,7 @@ export const MATH_CORPUS: Corpus = {
     ...LINEAR_CARDS,
     ...QUAD_CARDS,
     ...POLY_CARDS,
+    ...EXP_CARDS,
   ],
 };
 

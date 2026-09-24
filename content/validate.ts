@@ -19,11 +19,16 @@ function choiceValue(choiceText: string): number | null {
   const tex = choiceText
     .replace(/\$/g, '')
     .replace(/\s+/g, '')
+    // Odpowiedź zapisana jako przypisanie: "$a = 5$".
+    .replace(/^[a-z]=/, '')
     .replace(/\{,\}/g, '.')
     .replace(/,/g, '.')
-    // Jednostka poza wzorem: "$1020$ zł".
+    // Procent we wzorze ("$19\%$") i jednostka poza wzorem ("$1020$ zł").
+    .replace(/\\%$/, '%')
     .replace(/(zł|%|cm|m|kg|°)$/, '');
-  const frac = /^(-?)\\d?frac\{(\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}$/.exec(tex);
+  const frac =
+    /^(-?)\\d?frac\{(\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}$/.exec(tex) ??
+    /^(-?)\\d?frac(\d)(\d)$/.exec(tex);
   if (frac) return (frac[1] === '-' ? -1 : 1) * (Number(frac[2]) / Number(frac[3]));
   const n = Number(tex);
   return tex !== '' && Number.isFinite(n) ? n : null;
