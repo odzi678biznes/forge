@@ -40,7 +40,13 @@ import {
   STEREO_SKILLS,
   STEREO_TOPIC,
 } from './kurs/stereometria';
-import { DERIV_QUESTIONS, DERIV_SKILLS, DERIV_TOPIC } from './pochodne';
+import {
+  DERIV_CARDS,
+  DERIV_COURSE_QUESTIONS,
+  DERIV_COURSE_SKILLS,
+  DERIV_COURSE_TOPIC,
+  DERIV_LESSONS,
+} from './kurs/pochodne';
 import {
   PROB_CARDS,
   PROB_COURSE_QUESTIONS,
@@ -115,8 +121,8 @@ export const MATH_TOPICS: Topic[] = [
   PLAN_TOPIC,
   GEO_COURSE_TOPIC,
   STEREO_TOPIC,
-  DERIV_TOPIC,
   PROB_COURSE_TOPIC,
+  DERIV_COURSE_TOPIC,
 ];
 
 export const MATH_SKILLS: Skill[] = [
@@ -134,8 +140,8 @@ export const MATH_SKILLS: Skill[] = [
   ...PLAN_SKILLS,
   ...GEO_COURSE_SKILLS,
   ...STEREO_SKILLS,
-  ...DERIV_SKILLS,
   ...PROB_COURSE_SKILLS,
+  ...DERIV_COURSE_SKILLS,
 ];
 
 export const MATH_QUESTIONS: Question[] = [
@@ -153,8 +159,8 @@ export const MATH_QUESTIONS: Question[] = [
   ...PLAN_QUESTIONS,
   ...GEO_COURSE_QUESTIONS,
   ...STEREO_QUESTIONS,
-  ...DERIV_QUESTIONS,
   ...PROB_COURSE_QUESTIONS,
+  ...DERIV_COURSE_QUESTIONS,
 ];
 
 export type { Corpus };
@@ -180,6 +186,7 @@ export const MATH_CORPUS: Corpus = {
     ...GEO_LESSONS,
     ...STEREO_LESSONS,
     ...PROB_LESSONS,
+    ...DERIV_LESSONS,
   ],
   flashcards: [
     ...NUMBERS_CARDS,
@@ -197,6 +204,7 @@ export const MATH_CORPUS: Corpus = {
     ...GEO_CARDS,
     ...STEREO_CARDS,
     ...PROB_CARDS,
+    ...DERIV_CARDS,
   ],
 };
 
