@@ -65,7 +65,7 @@ export function ProgressView({ course, skills, states, attempts, onPractice }: P
 
       <section className="card progress__rings" aria-label="Podsumowanie">
         <Ring value={course.summary.ratio} label="Kurs przerobiony" size={120} />
-        <Ring value={course.readinessPP.ratio} label="Gotowość: podstawa" size={104} />
+        {course.readinessPP.skills > 0 && <Ring value={course.readinessPP.ratio} label="Gotowość: podstawa" size={104} />}
         <Ring value={course.readinessPR.ratio} label="Gotowość: rozszerzenie" size={104} tone="challenge" />
         <dl className="progress__stats">
           <div>

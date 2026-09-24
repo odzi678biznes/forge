@@ -188,7 +188,8 @@ export function TodayView(props: Props) {
         <section className="card today__rings" aria-label="Postęp">
           <h2 className="card__title today__rings-title">Twój postęp</h2>
           <Ring value={course.summary.ratio} label="Kurs przerobiony" size={84} />
-          <Ring value={course.readinessPP.ratio} label="Gotowość PP" size={84} />
+          {/* Informatyka ma tylko poziom rozszerzony - pierścień PP byłby pusty. */}
+          {course.readinessPP.skills > 0 && <Ring value={course.readinessPP.ratio} label="Gotowość PP" size={84} />}
           <Ring value={course.readinessPR.ratio} label="Gotowość PR" size={84} tone="challenge" />
           <p className="today__rings-note">Gotowość to szacunek z poziomów umiejętności, nie wynik arkusza.</p>
           <button type="button" className="link" onClick={props.onOpenCourse}>
