@@ -183,8 +183,8 @@ export const LINEAR_LESSONS: Lesson[] = [
     intro:
       'Proste równoległe biegną w tym samym kierunku — mają jednakowe nachylenie. Prostopadłe przecinają się pod kątem prostym — ich nachylenia są „odwrotne z przeciwnym znakiem”.',
     blocks: [
-      f(r`y = a_1x + b_1 \ \parallel\ y = a_2x + b_2 \iff a_1 = a_2`, 'proste równoległe'),
-      f(r`y = a_1x + b_1 \ \perp\ y = a_2x + b_2 \iff a_1 \cdot a_2 = -1`, 'proste prostopadłe'),
+      f(r`y = a_1x + b_1 \ \parallel\ y = a_2x + b_2 \qquad \iff a_1 = a_2`, 'proste równoległe'),
+      f(r`y = a_1x + b_1 \ \perp\ y = a_2x + b_2 \qquad \iff a_1 \cdot a_2 = -1`, 'proste prostopadłe'),
       p(r`Nachylenie prostopadłe: odwracasz ułamek i zmieniasz znak. Do $a = 2$ prostopadłe jest $-\frac{1}{2}$, do $a = -\frac{3}{4}$ — $\frac{4}{3}$.`),
       {
         kind: 'figure',
@@ -229,7 +229,7 @@ export const LINEAR_LESSONS: Lesson[] = [
       r`Zadania „z życia” — rachunki, taryfy, drogi, zapasy — prawie zawsze kryją funkcję liniową. Sztuka polega na tym, żeby rozpoznać, co jest stałą opłatą ($b$), a co tempem zmiany ($a$).`,
     blocks: [
       p(r`$b$ to wartość na starcie (dla $x = 0$): opłata stała, stan początkowy. $a$ to zmiana na jednostkę: cena za kilometr, spadek na godzinę.`),
-      f(r`\text{koszt} = \text{opłata stała} + \text{stawka} \cdot \text{liczba jednostek}`),
+      f(r`\text{koszt} = \text{opłata stała} \qquad + \text{stawka} \cdot \text{liczba jednostek}`),
       tip(
         r`Przed rachunkiem zapisz słownie, co oznacza $x$ i w jakich jednostkach. Połowa błędów w zadaniach tekstowych to pomylone jednostki: minuty z godzinami, złote z groszami.`,
       ),
@@ -261,7 +261,7 @@ export const LINEAR_LESSONS: Lesson[] = [
       r`Parametr to liczba nieznana, ale stała — na przykład $m$ we wzorze $f(x) = (m - 2)x + 3$. Pytanie brzmi zwykle: dla jakich $m$ funkcja ma daną własność?`,
     blocks: [
       p(r`Metoda: własność funkcji zamieniasz na warunek dla współczynników, a potem rozwiązujesz ten warunek jako równanie lub nierówność z niewiadomą $m$.`),
-      f(r`f(x) = (m-2)x + 3 \text{ rosnąca} \iff m - 2 > 0 \iff m > 2`),
+      f(r`f(x) = (m-2)x + 3 \text{ rosnąca} \qquad \iff m - 2 > 0 \iff m > 2`),
       p(r`Miejsce zerowe w przedziale: wyznaczasz $x_0 = -\frac{b}{a}$ jako wyrażenie z $m$ i żądasz, żeby należało do przedziału.`),
       tip(r`Nie zapominaj o przypadku $a = 0$ — funkcji stałej. Często trzeba go rozpatrzyć osobno.`),
       warn(r`Mnożąc nierówność przez wyrażenie z $m$, musisz znać jego znak. Jeśli go nie znasz — rozpatrz przypadki.`),

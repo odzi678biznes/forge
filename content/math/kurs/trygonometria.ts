@@ -322,7 +322,7 @@ export const TRIG_LESSONS: Lesson[] = [
       'Wzory na funkcje sumy i podwojonego kąta pozwalają liczyć wartości dla kątów spoza tabelki i upraszczać wyrażenia. Wszystkie są w tablicach CKE — trzeba umieć je rozpoznać i użyć.',
     blocks: [
       f(r`\sin 2\alpha = 2\sin\alpha\cos\alpha`),
-      f(r`\cos 2\alpha = \cos^2\alpha - \sin^2\alpha = 2\cos^2\alpha - 1 = 1 - 2\sin^2\alpha`),
+      f(r`\cos 2\alpha = \cos^2\alpha - \sin^2\alpha \qquad = 2\cos^2\alpha - 1 = 1 - 2\sin^2\alpha`),
       f(r`\sin(\alpha \pm \beta) = \sin\alpha\cos\beta \pm \cos\alpha\sin\beta`),
       f(r`\mathrm{tg}\,2\alpha = \frac{2\,\mathrm{tg}\,\alpha}{1 - \mathrm{tg}^2\alpha}`),
       tip(r`Widzisz $\sin x \cos x$? To połowa $\sin 2x$. Widzisz $\cos^2 x - \sin^2 x$? To $\cos 2x$.`),
@@ -361,7 +361,7 @@ export const TRIG_LESSONS: Lesson[] = [
         },
         caption: 'sin x = ½ ma w ⟨0, 2π) dwa rozwiązania: π/6 ≈ 0,52 i 5π/6 ≈ 2,62.',
       },
-      f(r`\sin x = \sin a \iff x = a + 2k\pi \ \vee\ x = \pi - a + 2k\pi`),
+      f(r`\sin x = \sin a \qquad \iff x = a + 2k\pi \qquad \vee\ x = \pi - a + 2k\pi`),
       f(r`\cos x = \cos a \iff x = \pm a + 2k\pi \qquad \mathrm{tg}\,x = \mathrm{tg}\,a \iff x = a + k\pi`),
       tip(r`Równanie z $\sin^2 x$ i $\sin x$ (albo $\cos 2x$ i $\sin x$) to ukryte równanie kwadratowe: podstaw $t = \sin x$, pamiętając, że $t \in \langle -1, 1 \rangle$.`),
       warn(r`Nie dziel równania przez $\cos x$ ani $\sin x$ — gubisz rozwiązania, w których się zerują. Wyłącz je przed nawias.`),

@@ -150,7 +150,7 @@ export const POLY_LESSONS: Lesson[] = [
       p(
         r`Jeśli wielomian ma współczynniki całkowite, to każdy jego pierwiastek całkowity dzieli wyraz wolny. Dla $x^3 - 6x^2 + 11x - 6$ kandydaci to $\pm 1, \pm 2, \pm 3, \pm 6$.`,
       ),
-      f(r`\text{pierwiastek wymierny } \tfrac{p}{q}: \quad p \text{ dzieli } a_0, \quad q \text{ dzieli } a_n`),
+      f(r`\text{pierwiastek wymierny } \tfrac{p}{q}: \qquad p \text{ dzieli } a_0, \quad q \text{ dzieli } a_n`),
       p(
         r`Krotność pierwiastka to liczba wystąpień czynnika $(x - a)$ w rozkładzie. W $(x - 2)^2(x + 1)$ liczba $2$ jest pierwiastkiem podwójnym: wykres dotyka osi i odbija się, zamiast ją przeciąć.`,
       ),

@@ -312,7 +312,7 @@ export const NUMBERS_LESSONS: Lesson[] = [
       ),
       f(r`|x - a| \le r \iff x \in \langle a - r,\ a + r \rangle`, 'liczby odległe od a najwyżej o r'),
       f(
-        r`|x - a| > r \iff x \in (-\infty,\ a - r) \cup (a + r,\ +\infty)`,
+        r`|x - a| > r \qquad \iff x \in (-\infty,\ a - r) \cup (a + r,\ +\infty)`,
         'liczby odległe od a o więcej niż r',
       ),
       warn(

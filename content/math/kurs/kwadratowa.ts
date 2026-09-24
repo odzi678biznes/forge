@@ -313,7 +313,7 @@ export const QUAD_LESSONS: Lesson[] = [
     blocks: [
       p(r`Krok 0: czy współczynnik przy $x^2$ może być zerem? Jeśli tak, dla tej wartości parametru równanie jest liniowe — rozpatrz je osobno.`),
       f(r`\text{dwa różne pierwiastki: } a \ne 0 \wedge \Delta > 0`),
-      f(r`\text{dwa różne pierwiastki dodatnie: } \Delta > 0,\ x_1 + x_2 > 0,\ x_1x_2 > 0`),
+      f(r`\text{dwa różne pierwiastki dodatnie:} \qquad \Delta > 0,\ x_1 + x_2 > 0,\ x_1x_2 > 0`),
       tip('Zapisz wszystkie warunki w jednej klamrze i na końcu weź część wspólną rozwiązań. Pominięty warunek to najczęstsza utrata punktów.'),
       warn('Przy „dokładnie jednym rozwiązaniu” pamiętaj o przypadku a = 0 — równanie liniowe też może mieć jedno rozwiązanie.'),
     ],

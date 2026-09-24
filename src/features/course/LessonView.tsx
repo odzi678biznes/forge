@@ -4,6 +4,7 @@ import { Math as Tex } from '@/components/Math';
 import { Icon } from '@/components/Icon';
 import { Figure } from '@/components/Figure';
 import { useSpeech } from '@/features/ai/useSpeech';
+import { formulaParts } from './formula-parts';
 import '@/features/ai/ai.css';
 import './course.css';
 
@@ -120,7 +121,13 @@ function Block({ block }: { block: LessonBlock }) {
     case 'formula':
       return (
         <figure className="lesson__formula">
-          <Tex display>{'$' + block.tex + '$'}</Tex>
+          <div className="lesson__formula-parts">
+            {formulaParts(block.tex).map((part, i) => (
+              <Tex key={i} display>
+                {'$' + part + '$'}
+              </Tex>
+            ))}
+          </div>
           {block.caption && <figcaption>{block.caption}</figcaption>}
         </figure>
       );
