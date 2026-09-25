@@ -7,7 +7,9 @@ import type { CommonError, Correctness, Question } from '@/data/types';
  * regul w przyszlosci nie moze cicho przepisac historii - stare proby maja
  * zostac czytelne w swietle regul, ktore wtedy obowiazywaly.
  */
-export const GRADING_VERSION = 'v1';
+// v2: prawdopodobieństwo w procentach, pełny wynik w zadaniach „postać kπ / k√n”,
+// jednostki słowne (minut, dni, sztuk...).
+export const GRADING_VERSION = 'v2';
 
 export interface Grade {
   correctness: Correctness;
@@ -66,12 +68,17 @@ function matches(question: Question, answer: string): boolean {
   const candidates = [question.answer, ...question.acceptedVariants].map(normalise);
 
   if (question.format === 'numeric') {
-    const given = parseNumber(stripUnit(stripAssignment(answer)));
+    const bare = stripFormFactor(question.prompt, stripAssignment(answer));
+    const given = parseNumber(stripUnit(bare));
     if (given === null) return false;
+    // Prawdopodobieństwo zapisane w procentach („37,5%”) to ta sama liczba.
+    const alsoGiven = bare.endsWith('%') && question.skillId.startsWith('prob-') ? given / 100 : null;
     const tolerance = question.tolerance ?? 0;
     return candidates.some((c) => {
       const expected = parseNumber(stripUnit(stripAssignment(c)));
-      return expected !== null && Math.abs(expected - given) <= tolerance;
+      if (expected === null) return false;
+      if (Math.abs(expected - given) <= tolerance) return true;
+      return alsoGiven !== null && Math.abs(expected - alsoGiven) <= tolerance + 1e-12;
     });
   }
 
@@ -108,7 +115,21 @@ export function stripAssignment(input: string): string {
  * bylaby zla liczba.
  */
 export function stripUnit(input: string): string {
-  return input.replace(/(%|zł|zl|pln|cm²|cm2|cm³|cm3|cm|mm|km|kg|°c|°|min|h|s|p\.?p\.?|m²|m2|m)$/, '');
+  return input.replace(
+    /(%|zł|zl|pln|cm²|cm2|cm³|cm3|cm|mm|km|kg|°c|°|minut[ay]?|min|godzin[ay]?|h|s|p\.?p\.?|m²|m2|m|dni|dzień|lat[a]?|sztuk[ia]?|osób|osoby|razy)$/,
+    '',
+  );
+}
+
+/**
+ * W zadaniach „wynik ma postać $k\sqrt3$ — podaj $k$” uczeń, który wpisze cały
+ * wynik („4√3”, „12π”), policzył dobrze — tylko nie doczytał polecenia.
+ */
+export function stripFormFactor(prompt: string, input: string): string {
+  const form = /postać \$k\s*(\\pi|\\sqrt\{?(\d+)\}?)\$/.exec(prompt);
+  if (!form) return input;
+  if (form[1] === '\\pi') return input.replace(/[*·]?(π|pi)$/, '');
+  return input.replace(new RegExp(`[*·]?(√|sqrt)\\(?${form[2]}\\)?$`), '');
 }
 
 /** Parsuje liczbe, akceptujac takze prosty ulamek postaci a/b. */

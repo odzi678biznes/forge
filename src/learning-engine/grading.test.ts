@@ -113,3 +113,35 @@ describe('jednostki i zadania zamkniete', () => {
     expect(grade(q, 'A').correctness).toBe('incorrect');
   });
 });
+
+describe('odpowiedzi dobre merytorycznie, zapisane inaczej (v2)', () => {
+  it('prawdopodobieństwo w procentach jest tą samą liczbą', () => {
+    const q = makeQuestion({ skillId: 'prob-conditional', answer: '0.375' });
+    for (const a of ['37,5%', '37.5 %', '0,375', '3/8']) expect(grade(q, a).correctness, a).toBe('correct');
+    expect(grade(q, '38%').correctness).toBe('incorrect');
+  });
+
+  it('poza prawdopodobieństwem procent nie jest dzielony przez 100', () => {
+    const q = makeQuestion({ skillId: 'num-percent', answer: '0.5' });
+    expect(grade(q, '50%').correctness).toBe('incorrect');
+  });
+
+  it('pełny wynik w zadaniu „postać kπ” liczy się jako k', () => {
+    const q = makeQuestion({ prompt: String.raw`Objętość ma postać $k\pi$. Podaj $k$.`, answer: '12' });
+    for (const a of ['12', '12π', '12 pi', '12·π']) expect(grade(q, a).correctness, a).toBe('correct');
+    expect(grade(q, '13π').correctness).toBe('incorrect');
+  });
+
+  it('pełny wynik w zadaniu „postać k√3” liczy się jako k — tylko z tym samym pierwiastkiem', () => {
+    const q = makeQuestion({ prompt: String.raw`Pole ma postać $k\sqrt3$. Podaj $k$.`, answer: '4' });
+    for (const a of ['4', '4√3', '4sqrt3', '4√(3)']) expect(grade(q, a).correctness, a).toBe('correct');
+    expect(grade(q, '4√2').correctness).toBe('incorrect');
+  });
+
+  it('jednostka słowna na końcu nie psuje liczby', () => {
+    const q = makeQuestion({ answer: '101' });
+    for (const a of ['101 minut', '101 minuty', '101 dni', '101 razy', '101 sztuk']) {
+      expect(grade(q, a).correctness, a).toBe('correct');
+    }
+  });
+});
