@@ -17,7 +17,7 @@ const PYTHON = CS_QUESTIONS.filter((q) => q.code?.language === 'python');
 
 let py: PyodideAPI;
 beforeAll(async () => {
-  py = await loadPyodide();
+  py = await loadPyodide({ indexURL: import.meta.env.PYODIDE_INDEX_URL });
 }, 60_000);
 
 function run(source: string, q: (typeof PYTHON)[number]) {

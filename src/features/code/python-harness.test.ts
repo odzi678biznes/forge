@@ -5,7 +5,7 @@ import { explainPythonError, runPythonTests } from './python-harness';
 let py: PyodideAPI;
 
 beforeAll(async () => {
-  py = await loadPyodide();
+  py = await loadPyodide({ indexURL: import.meta.env.PYODIDE_INDEX_URL });
 }, 60_000);
 
 describe('uruchamianie Pythona', () => {

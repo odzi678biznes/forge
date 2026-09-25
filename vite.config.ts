@@ -127,5 +127,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'content/**/*.test.ts'],
+    env: {
+      // Pyodide zgaduje swoj katalog ze sladu stosu; pod Vitestem na Linuksie
+      // (CI) mapa zrodel prowadzi go do node_modules/src/js/ i testy padaja.
+      // Jawna sciezka dziala tak samo na kazdym systemie.
+      PYODIDE_INDEX_URL: fileURLToPath(new URL('./node_modules/pyodide/', import.meta.url)).replace(/\\/g, '/'),
+    },
   },
 });

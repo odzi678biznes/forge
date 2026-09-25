@@ -15,7 +15,7 @@ const SQL = CS_QUESTIONS.filter((q) => q.code?.language === 'sql');
 
 let py: PyodideAPI;
 beforeAll(async () => {
-  py = await loadPyodide();
+  py = await loadPyodide({ indexURL: import.meta.env.PYODIDE_INDEX_URL });
 }, 60_000);
 
 function run(source: string, q: (typeof SQL)[number]) {
