@@ -961,7 +961,7 @@ export const EXP_QUESTIONS: Question[] = [...LOG_QUESTIONS, ...NEW_QUESTIONS];
 
 export const EXP_CARDS: Flashcard[] = [
   card('c-exp-fn-1', 'exp-function', 'definicja', r`Kiedy $a^x$ rośnie, a kiedy maleje?`, r`Rośnie dla $a > 1$, maleje dla $0 < a < 1$.`),
-  card('c-exp-fn-2', 'exp-function', 'wzor', r`$a^{-n} = \;?$`, r`$\frac{1}{a^n}$`),
+  card('c-exp-fn-2', 'exp-function', 'definicja', r`Zbiór wartości i asymptota wykresu $y = a^x$?`, r`$(0, +\infty)$; asymptota pozioma $y = 0$ — wykres nigdy nie dotyka osi $x$.`),
   card('c-exp-fn-3', 'exp-function', 'definicja', r`Przez jaki punkt przechodzi każdy wykres $a^x$?`, r`$(0, 1)$`),
 
   card('c-exp-eq-1', 'exp-equations', 'metoda', 'Jak rozwiązać równanie wykładnicze?', 'Sprowadź obie strony do tej samej podstawy i porównaj wykładniki.'),

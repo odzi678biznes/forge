@@ -290,7 +290,7 @@ export const PROJ_QUESTIONS: Question[] = [
     skill: 'biz-project-planning',
     kind: 'transfer',
     difficulty: 4,
-    prompt: 'W projekcie z poprzedniego zadania (A: 3 dni; B: 5 dni po A; C: 2 dni po A; D: 4 dni po B i C) ile dni zapasu ma zadanie C, czyli o ile może się opóźnić bez opóźnienia całego projektu?',
+    prompt: 'Projekt składa się z zadań: A (3 dni), B (5 dni, zaczyna się po A), C (2 dni, zaczyna się po A) i D (4 dni, zaczyna się po B i C). Ile dni zapasu ma zadanie C, czyli o ile może się opóźnić bez opóźnienia całego projektu?',
     answer: 3,
     verify: () => 5 - 2,
     hints: ['Na co czeka zadanie D?', 'Na zakończenie obu zadań: B i C.', 'Które z nich kończy się później?', 'B — różnica czasów B i C to zapas zadania C.'],

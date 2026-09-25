@@ -862,7 +862,7 @@ const NEW_QUESTIONS: Question[] = [
     skill: 'deriv-optimization',
     kind: 'typical',
     difficulty: 4,
-    prompt: r`W sytuacji z poprzedniego zadania (kartka $12 \times 12$, wycięte kwadraty o boku $x$) oblicz największą możliwą objętość pudełka.`,
+    prompt: r`Z kwadratowej kartki o boku $12$ wycięto w rogach cztery jednakowe kwadraty o boku $x$, a boki zagięto, tworząc otwarte pudełko. Oblicz największą możliwą objętość takiego pudełka.`,
     answer: 128,
     verify: () => 2 * (12 - 4) ** 2,
     hints: ['Dla jakiego x objętość jest największa?', r`$x = 2$.`, r`$V(2) = 2 \cdot (12 - 4)^2$.`, 'Policz.'],
