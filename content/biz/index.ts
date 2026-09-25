@@ -1,6 +1,7 @@
 import type { Question, Skill, Subject, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
 import { MARKET_CARDS, MARKET_LESSONS, MARKET_QUESTIONS, MARKET_SKILLS, MARKET_TOPIC } from './kurs/rynek';
+import { MACRO_CARDS, MACRO_LESSONS, MACRO_QUESTIONS, MACRO_SKILLS, MACRO_TOPIC } from './kurs/makro';
 
 /**
  * Korpus biznesu i zarządzania (matura rozszerzona, pierwsza sesja: maj 2027).
@@ -18,6 +19,7 @@ export const BIZ: Subject = { id: 'biz', name: 'Biznes i zarządzanie (rozszerzo
 /** Kolejność działów = kolejność kursu. */
 const CHAPTERS = [
   { topic: MARKET_TOPIC, skills: MARKET_SKILLS, questions: MARKET_QUESTIONS, lessons: MARKET_LESSONS, cards: MARKET_CARDS },
+  { topic: MACRO_TOPIC, skills: MACRO_SKILLS, questions: MACRO_QUESTIONS, lessons: MACRO_LESSONS, cards: MACRO_CARDS },
 ];
 
 export const BIZ_TOPICS: Topic[] = CHAPTERS.map((c) => c.topic);
