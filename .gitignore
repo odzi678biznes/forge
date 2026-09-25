@@ -11,3 +11,6 @@ src-tauri/gen/
 
 # Interpreter Pythona kopiowany z node_modules przy starcie Vite
 public/pyodide/
+
+# Posredni plik z scripts/icons.ps1 (zrodlo dla "npx tauri icon")
+scripts/.icon-1024.png

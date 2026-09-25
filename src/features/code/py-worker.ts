@@ -36,7 +36,8 @@ const scope = self as unknown as { postMessage: (m: Message) => void };
 const post = scope.postMessage.bind(scope);
 
 const ready = (async () => {
-  const base = new URL('/pyodide/', self.location.origin).href;
+  // BASE_URL: aplikacja moze byc hostowana w podkatalogu (wersja na telefon).
+  const base = new URL(`${import.meta.env.BASE_URL}pyodide/`, self.location.origin).href;
   const py = await loadPyodide({ indexURL: base });
   const survivors = lockDown(self);
   if (survivors.includes('postMessage')) {

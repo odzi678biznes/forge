@@ -23,6 +23,7 @@ import {
 } from './operations';
 import type { MergeReport } from '@/learning-engine/sync-merge';
 import { ATTEMPTS, MISSIONS, SKILLS, count } from '@/learning-engine/polish';
+import { OfflineBox } from './OfflineBox';
 import './data.css';
 
 /**
@@ -282,6 +283,8 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
         </label>
         {confirmBox('sync')}
       </section>
+
+      <OfflineBox />
 
       <section className="data__box">
         <h2>Import</h2>

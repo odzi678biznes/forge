@@ -32,6 +32,25 @@
   min-width: 0;
 }
 
+/* Nowa wersja (wersja na telefon): spokojna informacja, nie blokada. */
+.shell__update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-4) var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+.shell__update span {
+  flex: 1 1 16rem;
+}
+
 .shell__top,
 .shell__tabs,
 .shell__sheet {

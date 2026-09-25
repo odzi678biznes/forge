@@ -92,10 +92,14 @@ export class PythonCodeRunner implements CodeRunner {
     try {
       await this.ensure();
     } catch (err) {
+      // Wersja na telefon bez pobranego Pythona i bez sieci - to nie błąd kodu ucznia.
+      const offline = typeof navigator !== 'undefined' && !navigator.onLine;
       return {
         status: 'runtime-error',
         outcomes: [],
-        message: `Python nie wystartował: ${err instanceof Error ? err.message : String(err)}`,
+        message: offline
+          ? 'Python nie jest jeszcze pobrany na to urządzenie, a teraz nie ma internetu. Połącz się raz z siecią (albo pobierz Pythona w „Twoje dane”) i uruchom testy jeszcze raz.'
+          : `Python nie wystartował: ${err instanceof Error ? err.message : String(err)}`,
       };
     }
 

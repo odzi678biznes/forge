@@ -209,3 +209,37 @@
   color: var(--incorrect);
   border: 1px solid var(--incorrect);
 }
+
+/* Telefon i praca offline: lista stanów z ewentualnym przyciskiem. */
+.data__status {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Nazwa i stan jeden pod drugim, przycisk z prawej - tak samo na każdej szerokości. */
+.data__status li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--t-small);
+}
+
+.data__status li > span {
+  grid-column: 1;
+}
+
+.data__status li > button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.data__status-label {
+  color: var(--text);
+}

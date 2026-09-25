@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Icon, type IconName } from '@/components/Icon';
+import { installUpdate, subscribePwa, updateReady } from '@/platform/pwa';
 import { SUBJECT_LABELS, SUBJECT_SHORT, type Screen, type SubjectId } from './useForge';
 import './shell.css';
 
@@ -54,6 +55,8 @@ interface Props {
 
 export function Shell({ screen, subject, onSubject, onNavigate, badges, children }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const update = useSyncExternalStore(subscribePwa, updateReady);
+  const [updateLater, setUpdateLater] = useState(false);
   const active = PARENT[screen] ?? screen;
 
   const go = (s: Screen) => {
@@ -128,7 +131,20 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
         </div>
       )}
 
-      <div className="shell__content">{children}</div>
+      <div className="shell__content">
+        {update && !updateLater && (
+          <div className="shell__update" role="status">
+            <span>Jest nowa wersja FORGE. Odśwież, kiedy zechcesz — Twoje dane są zapisane.</span>
+            <button type="button" className="btn btn--small btn--primary" onClick={installUpdate}>
+              Odśwież
+            </button>
+            <button type="button" className="btn btn--small" onClick={() => setUpdateLater(true)}>
+              Później
+            </button>
+          </div>
+        )}
+        {children}
+      </div>
 
       <nav className="shell__tabs" aria-label="Nawigacja">
         {PRIMARY.map((n) => item(n, 'tab'))}
