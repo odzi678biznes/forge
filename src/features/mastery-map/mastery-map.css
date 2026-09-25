@@ -4,7 +4,7 @@
   padding: var(--space-8) var(--space-6) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-6);
 }
 
 .map__back {
@@ -28,73 +28,179 @@
 .map__hint {
   margin: 0;
   color: var(--text-muted);
+  max-width: 60ch;
 }
 
-.map__graph {
+/* --- Działy ---------------------------------------------------------------- */
+
+.map__topics {
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
 }
 
-.map__layer-label {
-  margin: 0 0 var(--space-4);
-  font-size: var(--t-micro);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+.map__topic {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.map__summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  cursor: pointer;
+  list-style: none;
+}
+
+.map__summary::-webkit-details-marker {
+  display: none;
+}
+
+.map__summary::before {
+  content: '▸';
   color: var(--text-faint);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
-.map__row {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  gap: var(--space-6);
-  flex-wrap: wrap;
+.map__topic[open] > .map__summary::before {
+  transform: rotate(90deg);
 }
 
-/* Pas z krawedziami zaleznosci miedzy warstwami. */
-.map__band {
-  width: 100%;
-  height: 64px;
+.map__topic-name {
+  font-weight: 600;
+}
+
+.map__topic-count {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.map__bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.map__bar > span {
   display: block;
+  height: 100%;
+  background: var(--progress);
 }
 
-.map__band--empty {
-  height: var(--space-8);
-}
+/* --- Umiejętności ---------------------------------------------------------- */
 
-.map__edge {
-  stroke: var(--line-strong);
-  stroke-width: 0.4;
-  vector-effect: non-scaling-stroke;
+.map__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
 }
 
 /*
- * Wezel jest przyciskiem, bo klikniecie ma uruchamiac trening (sek. 7.3).
- * Wyglada jak element mapy, zachowuje sie jak kontrolka.
+ * Węzeł jest przyciskiem, bo kliknięcie ma uruchamiać trening (sek. 7.3).
+ * Wygląda jak element mapy, zachowuje się jak kontrolka.
  */
 .map__node {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
   background: none;
   border: 1px solid transparent;
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  transition: border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-align: left;
+  transition: border-color var(--dur) var(--ease), background var(--dur-fast) var(--ease);
 }
 
 .map__node:hover {
   border-color: var(--line-strong);
-  transform: translateY(-2px);
+  background: var(--bg-raised);
+}
+
+.map__node-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.map__node-name {
+  font-size: var(--t-small);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.map__node-label {
+  font-size: var(--t-micro);
+  color: var(--text-muted);
+}
+
+.map__due {
+  color: var(--challenge);
 }
 
 .map__prereq {
   font-size: var(--t-micro);
   color: var(--text-faint);
-  max-width: 16ch;
-  text-align: center;
 }
+
+.map__ring {
+  flex-shrink: 0;
+}
+
+.map__ring-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 5;
+}
+
+.map__ring-fill {
+  fill: none;
+  stroke: var(--progress);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-slow) var(--ease);
+}
+
+.map__ring-fill--due {
+  stroke: var(--challenge);
+}
+
+.map__ring-level {
+  fill: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.map__ring-error {
+  fill: var(--challenge);
+}
+
+@media (max-width: 560px) {
+  .map {
+    padding: var(--space-6) var(--space-4) var(--space-12);
+  }
+
+  .map__summary {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .map__grid {
+    grid-template-columns: 1fr;
+    padding: 0 var(--space-2) var(--space-3);
+  }
+}
+
+/* --- Legenda --------------------------------------------------------------- */
 
 .map__legend {
   border-top: 1px solid var(--line);
@@ -114,6 +220,7 @@
 }
 
 .map__legend-note {
+  display: block !important;
   color: var(--text-faint);
   margin-top: var(--space-2) !important;
 }

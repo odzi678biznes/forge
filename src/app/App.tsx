@@ -251,6 +251,7 @@ export function App() {
       page = (
         <MasteryMap
           skills={skills}
+          topics={topics}
           states={state.skillStates}
           // Kliknięcie w węzeł uruchamia trening, nie otwiera statystyk (sek. 7.3).
           onSelect={(skill) =>

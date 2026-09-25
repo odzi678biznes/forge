@@ -53,7 +53,7 @@ export function AiSettings({ tutor, onChange, onBack }: Props) {
           &larr; Plan dnia
         </button>
         <p className="ai-settings__eyebrow">Opcjonalne</p>
-        <h1 className="ai-settings__title">AI</h1>
+        <h1 className="ai-settings__title">Nauczyciel AI</h1>
         <p className="ai-settings__lead">
           Aplikacja działa w pełni bez AI: drabina podpowiedzi, ocenianie, plan i raporty są lokalne.
           AI może dać dodatkową podpowiedź i ocenić tok rozumowania.

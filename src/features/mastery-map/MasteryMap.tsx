@@ -1,43 +1,75 @@
 import { useMemo } from 'react';
-import { MASTERY_LABELS, MasteryLevel, type Skill, type SkillState } from '@/data/types';
-import { layoutSkills, type Placed } from './layout';
-import { MasteryNode } from './MasteryNode';
+import { MASTERY_LABELS, MasteryLevel, type Skill, type SkillState, type Topic } from '@/data/types';
+import { COVERED_LEVEL } from '@/learning-engine/course';
+import { count } from '@/learning-engine/polish';
 import './mastery-map.css';
 
 /**
- * Mapa kompetencji - Blueprint sek. 7.3.
+ * Mapa umiejętności - Blueprint sek. 7.3.
  *
- * "Klikniecie uruchamia trening, nie otwiera pustej strony statystyk" - dlatego
- * kazdy wezel jest przyciskiem startujacym misje celowana, a nie linkiem do
- * podstrony z wykresami.
+ * "Kliknięcie uruchamia trening, nie otwiera pustej strony statystyk" - każdy
+ * węzeł jest przyciskiem startującym misję celowaną.
  *
- * Warstwy biegna z gory na dol: fundamenty na gorze, kompetencje zalezne nizej.
+ * Przy prawie stu umiejętnościach graf warstwowy ze strzałkami miał kilkanaście
+ * tysięcy pikseli wysokości, więc mapa jest pogrupowana działami (jak kurs),
+ * a zależność pokazujemy tam, gdzie ma znaczenie: przy umiejętności, której
+ * warunek wstępny nie jest jeszcze opanowany ("najpierw: ...").
  */
 
 interface Props {
   skills: Skill[];
+  topics: Topic[];
   states: Map<string, SkillState>;
   onSelect: (skill: Skill) => void;
   onBack: () => void;
 }
 
-export function MasteryMap({ skills, states, onSelect, onBack }: Props) {
-  const { placed, edges } = useMemo(() => layoutSkills(skills), [skills]);
+interface Group {
+  topic: Topic;
+  skills: Skill[];
+  covered: number;
+  open: boolean;
+}
 
-  const layers = useMemo(() => {
-    const grouped = new Map<number, Placed[]>();
-    for (const p of placed) {
-      const bucket = grouped.get(p.layer);
-      if (bucket) bucket.push(p);
-      else grouped.set(p.layer, [p]);
+export function MasteryMap({ skills, topics, states, onSelect, onBack }: Props) {
+  const now = Date.now();
+  const byId = useMemo(() => new Map(skills.map((s) => [s.id, s])), [skills]);
+  const level = (id: string) => states.get(id)?.level ?? MasteryLevel.Unknown;
+
+  const groups = useMemo(() => {
+    const out: Group[] = topics
+      .map((topic) => {
+        const members = skills.filter((s) => s.topicId === topic.id);
+        const covered = members.filter((s) => (states.get(s.id)?.level ?? 0) >= COVERED_LEVEL).length;
+        const started = members.some((s) => (states.get(s.id)?.level ?? 0) > MasteryLevel.Unknown);
+        const due = members.some((s) => {
+          const st = states.get(s.id);
+          return st?.reviewDueAt != null && st.reviewDueAt <= now;
+        });
+        // Otwarte działy: rozpoczęte i niedokończone albo z powtórką na dziś.
+        return { topic, skills: members, covered, open: (started && covered < members.length) || due };
+      })
+      .filter((g) => g.skills.length > 0);
+    // Gdy nic nie jest w toku, otwieramy pierwszy nieopanowany dział - od niego się zaczyna.
+    if (!out.some((g) => g.open)) {
+      const frontier = out.find((g) => g.covered < g.skills.length);
+      if (frontier) frontier.open = true;
     }
-    return [...grouped].sort((a, b) => a[0] - b[0]);
-  }, [placed]);
+    return out;
+    // `now` celowo poza zależnościami - wystarczy przeliczenie przy zmianie stanu.
+  }, [topics, skills, states]);
 
-  const layerOf = useMemo(
-    () => new Map(placed.map((p) => [p.skill.id, p])),
-    [placed],
-  );
+  const totalCovered = groups.reduce((sum, g) => sum + g.covered, 0);
+
+  /** Pierwszy warunek wstępny, który nie jest jeszcze opanowany. */
+  const missingPrereq = (skill: Skill): Skill | null => {
+    if (level(skill.id) >= COVERED_LEVEL) return null;
+    for (const id of skill.prerequisites) {
+      const pre = byId.get(id);
+      if (pre && level(id) < COVERED_LEVEL) return pre;
+    }
+    return null;
+  };
 
   return (
     <main className="map">
@@ -47,120 +79,107 @@ export function MasteryMap({ skills, states, onSelect, onBack }: Props) {
         </button>
         <h1 className="map__title">Mapa umiejętności</h1>
         <p className="map__hint">
-          Kliknij węzeł, żeby zacząć trening tej umiejętności. Strzałki pokazują, co trzeba umieć wcześniej.
+          {totalCovered} z {skills.length} umiejętności opanowanych samodzielnie. Kliknij umiejętność, żeby ją
+          trenować. „Najpierw” wskazuje, czego warto nauczyć się wcześniej.
         </p>
       </header>
 
-      <div className="map__graph">
-        {layers.map(([layer, members], i) => (
-          <div key={layer}>
-            {i > 0 && (
-              <EdgeBand
-                edges={edges}
-                layerOf={layerOf}
-                upperLayer={layers[i - 1]?.[0] ?? 0}
-                lowerLayer={layer}
-              />
-            )}
-
-            <div className="map__layer">
-              <p className="map__layer-label">
-                {layer === 0 ? 'Fundament' : `Wymaga poziomu ${layer}`}
-              </p>
-              <div className="map__row">
-                {members.map((p) => {
-                  const state = states.get(p.skill.id);
-                  if (!state) return null;
-                  return (
-                    <button
-                      key={p.skill.id}
-                      type="button"
-                      className="map__node"
-                      onClick={() => onSelect(p.skill)}
-                      aria-label={`Trenuj: ${p.skill.name}, poziom ${state.level} z 5, ${MASTERY_LABELS[state.level]}`}
-                    >
-                      <MasteryNode skill={p.skill} state={state} />
-                      {p.skill.prerequisites.length > 0 && (
-                        <span className="map__prereq">
-                          wymaga: {p.skill.prerequisites.map(nameOf(skills)).join(', ')}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+      <div className="map__topics">
+        {groups.map((g) => (
+          <details key={g.topic.id} className="map__topic" open={g.open}>
+            <summary className="map__summary">
+              <span className="map__topic-name">{g.topic.name}</span>
+              <span className="map__topic-count">
+                {g.covered}/{g.skills.length}
+              </span>
+              <span className="map__bar" aria-hidden>
+                <span style={{ width: `${(100 * g.covered) / g.skills.length}%` }} />
+              </span>
+            </summary>
+            <div className="map__grid">
+              {g.skills.map((skill) => {
+                const state = states.get(skill.id);
+                if (!state) return null;
+                const pre = missingPrereq(skill);
+                const due = state.reviewDueAt !== null && state.reviewDueAt <= now;
+                return (
+                  <button
+                    key={skill.id}
+                    type="button"
+                    className="map__node"
+                    onClick={() => onSelect(skill)}
+                    aria-label={`Trenuj: ${skill.name}, poziom ${state.level} z 5, ${MASTERY_LABELS[state.level]}${
+                      due ? ', powtórka dziś' : ''
+                    }${pre ? `, najpierw: ${pre.name}` : ''}`}
+                  >
+                    <MiniRing level={state.level} due={due} error={state.recentErrors.length > 0} />
+                    <span className="map__node-text">
+                      <span className="map__node-name">{skill.name}</span>
+                      <span className="map__node-label">
+                        {MASTERY_LABELS[state.level]}
+                        {due && <span className="map__due"> · powtórka dziś</span>}
+                      </span>
+                      {pre && <span className="map__prereq">najpierw: {pre.name}</span>}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </details>
         ))}
       </div>
 
-      <Legend />
+      <Legend total={skills.length} />
     </main>
   );
 }
 
-/**
- * Pas krawedzi miedzy dwiema sasiednimi warstwami. Wspolrzedne liczymy
- * z pozycji w warstwie, wiec nie potrzeba mierzenia DOM-u.
- */
-function EdgeBand({
-  edges,
-  layerOf,
-  upperLayer,
-  lowerLayer,
-}: {
-  edges: Array<{ from: string; to: string }>;
-  layerOf: Map<string, Placed>;
-  upperLayer: number;
-  lowerLayer: number;
-}) {
-  const lines = edges
-    .map((e) => {
-      const from = layerOf.get(e.from);
-      const to = layerOf.get(e.to);
-      if (!from || !to) return null;
-      if (from.layer !== upperLayer || to.layer !== lowerLayer) return null;
-      return { x1: centre(from), x2: centre(to), key: `${e.from}-${e.to}` };
-    })
-    .filter((l): l is NonNullable<typeof l> => l !== null);
+const R = 17;
+const CIRC = 2 * globalThis.Math.PI * R;
 
-  if (lines.length === 0) return <div className="map__band map__band--empty" />;
-
+/** Mały pierścień poziomu: wypełnienie = poziom, bursztyn = powtórka, kropka = powracający błąd. */
+function MiniRing({ level, due, error }: { level: MasteryLevel; due: boolean; error: boolean }) {
+  const fill = level / MasteryLevel.Retained;
   return (
-    <svg className="map__band" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-      {lines.map((l) => (
-        <line key={l.key} x1={l.x1} y1="0" x2={l.x2} y2="100" className="map__edge" />
-      ))}
+    <svg className="map__ring" width="44" height="44" viewBox="0 0 44 44" aria-hidden>
+      <circle cx="22" cy="22" r={R} className="map__ring-track" />
+      {fill > 0 && (
+        <circle
+          cx="22"
+          cy="22"
+          r={R}
+          className={due ? 'map__ring-fill map__ring-fill--due' : 'map__ring-fill'}
+          strokeDasharray={`${CIRC * fill} ${CIRC}`}
+          transform="rotate(-90 22 22)"
+        />
+      )}
+      <text x="22" y="23" className="map__ring-level">
+        {level}
+      </text>
+      {error && <circle cx="37" cy="7" r="4" className="map__ring-error" />}
     </svg>
   );
 }
 
-function centre(p: Placed): number {
-  return ((p.column + 0.5) / p.layerSize) * 100;
-}
-
-function nameOf(skills: Skill[]) {
-  return (id: string) => skills.find((s) => s.id === id)?.name ?? id;
-}
-
-function Legend() {
+function Legend({ total }: { total: number }) {
   return (
     <section className="map__legend" aria-label="Legenda">
       <p>
         <span className="map__swatch map__swatch--progress" />
-        Wypełnienie obwodu — poziom opanowania (0–5)
+        Wypełnienie pierścienia — poziom opanowania (0–5); od {COVERED_LEVEL} umiejętność jest opanowana
       </p>
       <p>
         <span className="map__swatch map__swatch--challenge" />
-        Bursztynowy obwód — powtórka wymagalna dziś
+        Bursztynowy pierścień — powtórka wymagalna dziś
       </p>
       <p>
         <span className="map__swatch map__swatch--dot" />
         Kropka — powtarzający się błąd w tej umiejętności
       </p>
       <p className="map__legend-note">
-        Poziom {MasteryLevel.Independent} oznacza typowe zadanie rozwiazane bez pomocy,
-        poziom {MasteryLevel.Retained} - poprawna odpowiedz po odroczeniu.
+        Poziom {MasteryLevel.Independent} to typowe zadanie rozwiązane bez pomocy, poziom{' '}
+        {MasteryLevel.Retained} — poprawna odpowiedź po kilku dniach przerwy. Na mapie jest{' '}
+        {count(total, ['umiejętność', 'umiejętności', 'umiejętności'])}.
       </p>
     </section>
   );
