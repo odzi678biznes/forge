@@ -556,12 +556,7 @@ export const DB_QUESTIONS: Question[] = [
     kind: 'transfer',
     difficulty: 4,
     prompt: 'Kolumna `wypozyczenia.id_ucznia` jest kluczem obcym wskazującym `uczniowie.id`. Która operacja naruszyłaby więzy integralności?',
-    choices: [
-      'dodanie wypożyczenia ucznia nr 99, gdy w tabeli uczniowie nie ma takiego ucznia',
-      'dodanie ucznia, który jeszcze nic nie wypożyczył',
-      'usunięcie zwróconego wypożyczenia',
-      'zmiana tytułu książki w tabeli ksiazki',
-    ],
+    choices: ['dodanie wypożyczenia ucznia nr 99, którego nie ma w tabeli uczniowie', 'dodanie nowego ucznia, który jeszcze nic nie wypożyczył', 'usunięcie z tabeli wypożyczenia, które zostało już zwrócone', 'zmiana tytułu książki, która jest aktualnie wypożyczona'],
     answer: 'A',
     hints: ['Czego pilnuje klucz obcy?', 'Żeby wskazywał istniejący wiersz tabeli nadrzędnej.', 'Która operacja tworzy „wiszące” odwołanie?', 'Odwołanie do ucznia, którego nie ma.'],
     steps: ['Klucz obcy musi wskazywać istniejący klucz podstawowy.', 'Wypożyczenie ucznia nr 99, którego nie ma, łamie tę zasadę.'],

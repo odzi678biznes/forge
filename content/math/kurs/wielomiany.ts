@@ -627,14 +627,14 @@ export const POLY_QUESTIONS: Question[] = [
     kind: 'typical',
     difficulty: 2,
     prompt: r`Równanie $x^4 + 3x^2 - 4 = 0$ ma`,
-    choices: ['dokładnie dwa rozwiązania', 'cztery rozwiązania', 'jedno rozwiązanie', 'zero rozwiązań'],
+    choices: ['dwa rozwiązania', 'cztery rozwiązania', 'jedno rozwiązanie', 'zero rozwiązań'],
     answer: 'A',
     hints: ['Jakie podstawienie upraszcza to równanie?', r`$t = x^2$: $t^2 + 3t - 4 = 0$.`, r`$t = 1$ lub $t = -4$.`, r`Czy $x^2 = -4$ ma rozwiązania?`],
     steps: [r`$t = 1$ lub $t = -4$; $t = -4$ odpada.`, r`$x^2 = 1$: $x = \pm 1$ — dwa rozwiązania.`],
     errors: [
-      ['B', r`Nie odrzucono $t = -4$.`, r`$t = x^2 \ge 0$ — ujemne $t$ nie daje rozwiązań.`],
-      ['C', r`Z $x^2 = 1$ wzięte tylko $x = 1$.`, r`$x^2 = 1 \iff x = \pm 1$.`],
-      ['D', 'Uznano, że ujemny pierwiastek w t przekreśla wszystko.', r`$t = 1$ daje dwa rozwiązania.`],
+      ['B', 'Nie odrzucono $t = -4$.', '$t = x^2 \\ge 0$ — ujemne $t$ nie daje rozwiązań.'],
+      ['C', 'Z $x^2 = 1$ wzięte tylko $x = 1$.', '$x^2 = 1 \\iff x = \\pm 1$.'],
+      ['D', 'Uznano, że ujemny pierwiastek w t przekreśla wszystko.', '$t = 1$ daje dwa rozwiązania.'],
     ],
   }),
   numeric({

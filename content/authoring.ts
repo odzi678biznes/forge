@@ -149,12 +149,60 @@ export function text(spec: TextSpec): Question {
  */
 export function choice(spec: ChoiceSpec): Question {
   if (spec.verify) VERIFIERS.set(spec.id, spec.verify);
-  return {
+  const q: Question = {
     ...base(spec),
     format: 'choice',
     answer: spec.answer,
     acceptedVariants: [],
     choices: spec.choices,
+  };
+  return shuffleChoices(q);
+}
+
+const LETTERS: Letter[] = ['A', 'B', 'C', 'D'];
+
+/** FNV-1a - ten sam identyfikator daje zawsze ten sam wynik. */
+function hashId(id: string): number {
+  let h = 2166136261;
+  for (const ch of id) {
+    h ^= ch.codePointAt(0)!;
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Kolejność odpowiedzi dla zadania: `order[nowaPozycja] = staraPozycja`. */
+export function choiceOrder(id: string): number[] {
+  let seed = hashId(id);
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    // Starsze bity - młodsze bity generatora liniowego mają krótki okres.
+    return seed >>> 16;
+  };
+  const order = [0, 1, 2, 3];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = next() % (i + 1);
+    [order[i], order[j]] = [order[j]!, order[i]!];
+  }
+  return order;
+}
+
+/**
+ * Autor zapisuje zwykle poprawną odpowiedź jako pierwszą. Bez mieszania
+ * prawie każde zadanie zamknięte miałoby odpowiedź A i uczeń uczyłby się
+ * litery zamiast treści. Kolejność zależy od id zadania - jest stała, więc
+ * zapisana odpowiedź ucznia znaczy zawsze to samo. Razem z odpowiedziami
+ * przestawiane są litery w typowych błędach.
+ */
+function shuffleChoices(q: Question): Question {
+  const order = choiceOrder(q.id);
+  const moved = new Map(order.map((from, to) => [LETTERS[from]!, LETTERS[to]!]));
+  const remap = (letter: string) => moved.get(letter as Letter) ?? letter;
+  return {
+    ...q,
+    answer: remap(q.answer),
+    choices: order.map((from) => q.choices![from]!),
+    commonErrors: q.commonErrors.map((e) => ({ ...e, matches: e.matches.map(remap) })),
   };
 }
 

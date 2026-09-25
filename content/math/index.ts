@@ -1,6 +1,7 @@
 import type { Question, Skill, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
 import { MATH } from './funkcja-kwadratowa';
+import './weryfikacja-starych';
 import { QUAD_CARDS, QUAD_LESSONS, QUAD_QUESTIONS, QUAD_SKILLS, QUAD_TOPIC } from './kurs/kwadratowa';
 import {
   POLY_CARDS,

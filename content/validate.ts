@@ -467,6 +467,16 @@ export function validateCorpus(label: string, corpus: Corpus): void {
           }
         }
       });
+
+      it('poprawna litera nie jest przewidywalna - zadna nie przewaza', () => {
+        // Bez tego uczeń uczy się litery zamiast treści (autor pisze
+        // poprawną odpowiedź zwykle jako pierwszą - patrz shuffleChoices).
+        if (choiceQuestions.length < 20) return;
+        for (const letter of LETTERS) {
+          const share = choiceQuestions.filter((q) => q.answer === letter).length / choiceQuestions.length;
+          expect(share, `litera ${letter}`).toBeLessThan(0.4);
+        }
+      });
     });
   }
 
