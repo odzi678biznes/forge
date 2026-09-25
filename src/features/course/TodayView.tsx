@@ -3,7 +3,8 @@ import type { MissionPlan } from '@/learning-engine/mission';
 import { MODE_LABELS, MODE_LOAD, type WeekRhythm } from '@/learning-engine/planner';
 import { daysUntil, formatDay, keyToDate } from '@/learning-engine/schedule';
 import { count } from '@/learning-engine/polish';
-import type { CourseView } from '@/app/useCourse';
+import type { CourseView, SubjectGlance } from '@/app/useCourse';
+import type { SubjectId } from '@/app/useForge';
 import { Icon } from '@/components/Icon';
 import { Ring } from '@/components/Ring';
 import './course.css';
@@ -34,6 +35,9 @@ interface Props {
   onOpenCalendar: () => void;
   onOpenCourse: () => void;
   diagnostic: { hasReport: boolean; onOpen: () => void } | null;
+  /** Skrót dnia pozostałych przedmiotów - żeby żaden nie wypadł z planu. */
+  others: { id: SubjectId; label: string; glance: SubjectGlance }[];
+  onSwitchSubject: (id: SubjectId) => void;
 }
 
 const WEEKDAYS = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
@@ -176,6 +180,33 @@ export function TodayView(props: Props) {
               )}
             </li>
           </ul>
+
+          {props.others.length > 0 && (
+            <>
+              <h3 className="plan__sub">Pozostałe przedmioty</h3>
+              <ul className="plan">
+                {props.others.map((o) => {
+                  const clear = glanceParts(o.glance).length === 0;
+                  return (
+                    <li key={o.id} className="plan__row">
+                      <span className={clear ? 'plan__check plan__check--on' : 'plan__check'} aria-hidden>
+                        {clear && <Icon name="check" size={16} />}
+                      </span>
+                      <span className="plan__text">
+                        <strong>{o.label}</strong>
+                        <span>{clear ? 'Na dziś nic nie czeka.' : glanceParts(o.glance).join(' · ')}</span>
+                      </span>
+                      {!clear && (
+                        <button type="button" className="btn btn--small" onClick={() => props.onSwitchSubject(o.id)}>
+                          Przejdź
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
 
           <p className={`today__pace today__pace--${course.schedule.status}`}>
             {course.schedule.message}{' '}
@@ -381,4 +412,12 @@ function NextStepCard({ next, course, topicName, recommended, ...p }: NextProps)
       )}
     </>
   );
+}
+
+function glanceParts(g: SubjectGlance): string[] {
+  const parts: string[] = [];
+  if (g.lessonsLeft > 0) parts.push(count(g.lessonsLeft, ['lekcja', 'lekcje', 'lekcji']));
+  if (g.reviewsDue > 0) parts.push(count(g.reviewsDue, ['powtórka', 'powtórki', 'powtórek']));
+  if (g.cardsWaiting > 0) parts.push(count(g.cardsWaiting, ['fiszka', 'fiszki', 'fiszek']));
+  return parts;
 }

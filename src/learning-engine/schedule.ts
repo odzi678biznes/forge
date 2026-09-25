@@ -83,6 +83,12 @@ export interface ScheduleInput {
   deadline: string;
   mode: DayMode;
   restWeekdays?: number[];
+  /**
+   * Minuty materiału, który zostaje w POZOSTAŁYCH przedmiotach. Dzień ma jeden
+   * budżet: bez tego każdy przedmiot z osobna "mieściłby się w trybie", a
+   * razem wychodziłoby dużo więcej, niż uczeń wybrał.
+   */
+  otherMinutes?: number;
 }
 
 export interface PlannedDay {
@@ -102,8 +108,10 @@ export interface Schedule {
   studyDaysLeft: number;
   /** Minuty nowego materiału dziennie potrzebne, żeby zdążyć. */
   requiredMinutesPerDay: number;
-  /** Minuty nowego materiału dziennie, które mieści obecny tryb. */
+  /** Minuty nowego materiału dziennie, które mieści obecny tryb (część tego przedmiotu). */
   capacityMinutesPerDay: number;
+  /** Jak `requiredMinutesPerDay`, ale dla wszystkich przedmiotów razem. */
+  combinedMinutesPerDay: number;
   status: ScheduleStatus;
   /** Najlżejszy tryb, który mieści się w terminie; null gdy żaden. */
   modeNeeded: DayMode | null;
@@ -125,7 +133,12 @@ export function buildSchedule(input: ScheduleInput): Schedule {
   const rest = input.restWeekdays ?? DEFAULT_REST_WEEKDAYS;
   const studyDays = studyDaysBetween(today, deadline, rest);
   const total = remaining.reduce((sum, r) => sum + r.minutes, 0);
-  const cap = capacity(mode);
+  const other = input.otherMinutes ?? 0;
+  const perDay = (minutes: number) => (studyDays.length === 0 ? Infinity : minutes / studyDays.length);
+  const combined = perDay(total + other);
+  // Budżet dnia dzielony proporcjonalnie do tego, ile materiału zostało.
+  const share = total + other > 0 ? total / (total + other) : 1;
+  const cap = capacity(mode) * share;
 
   if (remaining.length === 0) {
     return {
@@ -135,17 +148,19 @@ export function buildSchedule(input: ScheduleInput): Schedule {
       studyDaysLeft: studyDays.length,
       requiredMinutesPerDay: 0,
       capacityMinutesPerDay: cap,
+      combinedMinutesPerDay: combined,
       status: 'done',
       modeNeeded: 'minimum',
       message: 'Cały materiał przerobiony. Teraz szlifowanie: arkusze i powtórki.',
     };
   }
 
-  const required = studyDays.length === 0 ? Infinity : total / studyDays.length;
+  const required = perDay(total);
   // Tempo równe potrzebnemu - równe dni do samego terminu. Tylko gdy potrzeba
-  // więcej, niż mieści tryb, tempo jest obcięte do trybu i termin się przesuwa.
+  // więcej, niż mieści tryb, tempo jest obcięte do trybu i termin się przesuwa
+  // (wszystkim przedmiotom w tej samej proporcji).
   const pace = Math.min(required, cap);
-  const onTrack = required <= cap;
+  const onTrack = combined <= capacity(mode) + 1e-9;
 
   // Dni nauki od dziś, przedłużone za termin, gdy tempo nie wystarcza.
   const days: PlannedDay[] = [];
@@ -169,14 +184,17 @@ export function buildSchedule(input: ScheduleInput): Schedule {
 
   const finishDate = days[days.length - 1]?.date ?? null;
   const modeNeeded =
-    (['minimum', 'standard', 'strong'] as DayMode[]).find((m) => capacity(m) >= required) ?? null;
+    (['minimum', 'standard', 'strong'] as DayMode[]).find((m) => capacity(m) >= combined - 1e-9) ?? null;
 
+  const all = other > 0;
   const message = onTrack
-    ? `Zdążysz do ${formatDay(deadline)}: ok. ${Math.round(required)} min nowego materiału dziennie plus powtórki.`
+    ? `Zdążysz do ${formatDay(deadline)}: ok. ${Math.round(required)} min nowego materiału dziennie` +
+      (all ? ` z tego przedmiotu (${Math.round(combined)} min ze wszystkich)` : '') +
+      ' plus powtórki.'
     : `Przy tym trybie skończysz ${finishDate ? formatDay(finishDate) : 'później'}.` +
       (modeNeeded
-        ? ` Tryb „${MODE_NAMES[modeNeeded]}” zmieściłby się w terminie.`
-        : ' Żaden tryb nie mieści całości w terminie - warto przesunąć termin albo zacząć od najważniejszych działów.');
+        ? ` Tryb „${MODE_NAMES[modeNeeded]}” zmieściłby ${all ? 'wszystkie przedmioty' : 'całość'} w terminie.`
+        : ` Żaden tryb nie mieści ${all ? 'wszystkich przedmiotów' : 'całości'} w terminie - warto przesunąć termin albo zacząć od najważniejszych działów.`);
 
   return {
     days,
@@ -185,6 +203,7 @@ export function buildSchedule(input: ScheduleInput): Schedule {
     studyDaysLeft: studyDays.length,
     requiredMinutesPerDay: required,
     capacityMinutesPerDay: cap,
+    combinedMinutesPerDay: combined,
     status: onTrack ? 'on-track' : 'behind',
     modeNeeded,
     message,

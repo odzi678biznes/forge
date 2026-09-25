@@ -48,6 +48,8 @@ export interface CourseInput {
   cardStates: Map<string, CardState>;
   dayMode: DayMode;
   deadline: string;
+  /** Materiał pozostałych przedmiotów w minutach - dzień ma jeden budżet. */
+  otherMinutes?: number;
 }
 
 export interface CourseView {
@@ -75,7 +77,7 @@ export interface CourseView {
 }
 
 export function useCourse(input: CourseInput): CourseView {
-  const { corpus, states, attempts, lessonProgress, cardStates, dayMode, deadline } = input;
+  const { corpus, states, attempts, lessonProgress, cardStates, dayMode, deadline, otherMinutes = 0 } = input;
   // Jedna chwila na całe wyliczenie - inaczej "dziś" mogłoby się rozjechać
   // między planem a fiszkami o północy.
   const now = Date.now();
@@ -88,43 +90,14 @@ export function useCourse(input: CourseInput): CourseView {
     [lessonProgress],
   );
 
-  const dayStart = startOfDay(now);
-
-  /**
-   * Umiejętności przerobione DZIŚ zostają w dzisiejszym planie jako odhaczone.
-   * Bez tego plan liczony od nowa dorzucałby kolejną lekcję zaraz po
-   * skończeniu poprzedniej - dzień bez końca to dokładnie to, czego sek. 14
-   * zabrania.
-   */
-  const coveredToday = useMemo(
-    () =>
-      new Set(
-        ordered
-          .filter((s) => {
-            const st = states.get(s.id);
-            return isCovered(st) && (st?.levelReachedAt ?? 0) >= dayStart;
-          })
-          .map((s) => s.id),
-      ),
-    [ordered, states, dayStart],
+  // Plan liczy się raz na dzień i przy każdej zmianie danych - `now` w środku
+  // dnia go nie zmienia, więc nie jest zależnością.
+  const plan = useMemo(
+    () => planToday({ ordered, states, lessonOf, lessonsDone, now, deadline, dayMode, otherMinutes }),
+    [ordered, states, lessonOf, lessonsDone, today, deadline, dayMode, otherMinutes],
   );
-
-  const schedule = useMemo(() => {
-    const remaining = ordered
-      .filter((s) => !isCovered(states.get(s.id)) || coveredToday.has(s.id))
-      .map((s) => ({
-        skillId: s.id,
-        minutes: (lessonOf.get(s.id)?.minutes ?? 10) + PRACTICE_MINUTES,
-      }));
-    return buildSchedule({ remaining, today, deadline, mode: dayMode });
-  }, [ordered, states, coveredToday, lessonOf, today, deadline, dayMode]);
-
-  const byId = useMemo(() => new Map(corpus.skills.map((s) => [s.id, s])), [corpus]);
-  const first = schedule.days[0];
-  const todayLessons =
-    first && first.date === today
-      ? first.skillIds.map((id) => byId.get(id)).filter((s): s is Skill => s !== undefined)
-      : [];
+  const { schedule, todayLessons, todayDone } = plan;
+  const dayStart = startOfDay(now);
 
   const cards = useMemo(() => {
     const rank = new Map(ordered.map((s, i) => [s.id, i]));
@@ -133,21 +106,7 @@ export function useCourse(input: CourseInput): CourseView {
     );
   }, [corpus, ordered]);
 
-  const unlocked = useMemo(
-    () =>
-      new Set(
-        ordered
-          .filter((s) => lessonsDone.has(s.id) || (states.get(s.id)?.totalAttempts ?? 0) > 0)
-          .map((s) => s.id),
-      ),
-    [ordered, lessonsDone, states],
-  );
-
-  const todayDone = new Set(
-    todayLessons
-      .filter((s) => coveredToday.has(s.id) || isCovered(states.get(s.id)) || lessonsDone.has(s.id))
-      .map((s) => s.id),
-  );
+  const unlocked = useMemo(() => unlockedSkills(ordered, lessonsDone, states), [ordered, lessonsDone, states]);
 
   const cardSession = buildCardSession({
     cards,
@@ -170,13 +129,124 @@ export function useCourse(input: CourseInput): CourseView {
     topics: corpus.topics.map((t) => topicProgress(t, corpus.skills, states, lessonsDone)),
     readinessPP: readiness(corpus.skills, states, 'PP'),
     readinessPR: readiness(corpus.skills, states, 'PR'),
-    reviewsDue: corpus.skills.filter((s) => {
-      const st = states.get(s.id);
-      return st ? isDue(st, now) : false;
-    }),
+    reviewsDue: dueSkills(corpus.skills, states, now),
     cardSession,
     cards,
     unlocked,
     activity: activityByDay(attempts, lessonProgress),
+  };
+}
+
+interface PlanInput {
+  ordered: Skill[];
+  states: Map<string, SkillState>;
+  lessonOf: Map<string, Lesson>;
+  lessonsDone: Set<string>;
+  now: number;
+  deadline: string;
+  dayMode: DayMode;
+  otherMinutes: number;
+}
+
+/**
+ * Czy umiejętność jest jeszcze w planie: nieprzerobiona albo przerobiona
+ * DZIŚ. Te drugie zostają w dzisiejszym planie jako odhaczone - bez tego plan
+ * liczony od nowa dorzucałby kolejną lekcję zaraz po skończeniu poprzedniej,
+ * a dzień bez końca to dokładnie to, czego sek. 14 zabrania.
+ */
+function inPlan(st: SkillState | undefined, dayStart: number): boolean {
+  return !isCovered(st) || (st?.levelReachedAt ?? 0) >= dayStart;
+}
+
+const workMinutes = (skillId: string, lessonOf: Map<string, Lesson>) =>
+  (lessonOf.get(skillId)?.minutes ?? 10) + PRACTICE_MINUTES;
+
+/** Ile minut nowego materiału zostało w przedmiocie (do wspólnego budżetu dnia). */
+export function remainingMinutes(corpus: Corpus, states: Map<string, SkillState>, now: number): number {
+  const lessonOf = new Map(corpus.lessons.map((l) => [l.skillId, l]));
+  const dayStart = startOfDay(now);
+  return corpus.skills
+    .filter((s) => inPlan(states.get(s.id), dayStart))
+    .reduce((sum, s) => sum + workMinutes(s.id, lessonOf), 0);
+}
+
+/** Kalendarz do końca materiału i to, co z niego przypada na dziś. */
+export function planToday(input: PlanInput): { schedule: Schedule; todayLessons: Skill[]; todayDone: Set<string> } {
+  const { ordered, states, lessonOf, lessonsDone, now, deadline, dayMode, otherMinutes } = input;
+  const today = dayKey(now);
+  const dayStart = startOfDay(now);
+
+  const remaining = ordered
+    .filter((s) => inPlan(states.get(s.id), dayStart))
+    .map((s) => ({ skillId: s.id, minutes: workMinutes(s.id, lessonOf) }));
+  const schedule = buildSchedule({ remaining, today, deadline, mode: dayMode, otherMinutes });
+
+  const byId = new Map(ordered.map((s) => [s.id, s]));
+  const first = schedule.days[0];
+  const todayLessons =
+    first && first.date === today
+      ? first.skillIds.map((id) => byId.get(id)).filter((s): s is Skill => s !== undefined)
+      : [];
+
+  const todayDone = new Set(
+    todayLessons.filter((s) => isCovered(states.get(s.id)) || lessonsDone.has(s.id)).map((s) => s.id),
+  );
+
+  return { schedule, todayLessons, todayDone };
+}
+
+/** Umiejętności, których fiszki są już dostępne (po lekcji albo próbach). */
+function unlockedSkills(ordered: Skill[], lessonsDone: Set<string>, states: Map<string, SkillState>): Set<string> {
+  return new Set(
+    ordered
+      .filter((s) => lessonsDone.has(s.id) || (states.get(s.id)?.totalAttempts ?? 0) > 0)
+      .map((s) => s.id),
+  );
+}
+
+function dueSkills(skills: Skill[], states: Map<string, SkillState>, now: number): Skill[] {
+  return skills.filter((s) => {
+    const st = states.get(s.id);
+    return st ? isDue(st, now) : false;
+  });
+}
+
+/** Skrót dnia dla przedmiotu, który nie jest teraz wybrany. */
+export interface SubjectGlance {
+  lessonsLeft: number;
+  reviewsDue: number;
+  cardsWaiting: number;
+}
+
+/**
+ * To samo wyliczenie co w `useCourse`, ale tylko liczby - dla przypomnienia
+ * na ekranie "Dziś", że inne przedmioty też mają swój plan.
+ */
+export function subjectGlance(input: CourseInput, now: number): SubjectGlance {
+  const { corpus, states, lessonProgress, cardStates, dayMode, deadline, otherMinutes = 0 } = input;
+  const ordered = courseOrder(corpus.topics, corpus.skills);
+  const lessonOf = new Map(corpus.lessons.map((l) => [l.skillId, l]));
+  const lessonsDone = new Set(lessonProgress.map((l) => l.skillId));
+  const { todayLessons, todayDone } = planToday({
+    ordered,
+    states,
+    lessonOf,
+    lessonsDone,
+    now,
+    deadline,
+    dayMode,
+    otherMinutes,
+  });
+  const cards = buildCardSession({
+    cards: corpus.flashcards,
+    states: cardStates,
+    unlockedSkillIds: unlockedSkills(ordered, lessonsDone, states),
+    introducedToday: introducedSince(cardStates.values(), startOfDay(now)),
+    now,
+  });
+  return {
+    lessonsLeft: todayLessons.filter((s) => !todayDone.has(s.id)).length,
+    reviewsDue: dueSkills(corpus.skills, states, now).length,
+    cardsWaiting: cards.queue.length,
   };
 }

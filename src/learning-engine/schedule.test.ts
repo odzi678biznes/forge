@@ -96,3 +96,34 @@ describe('plan kursu do stycznia', () => {
     expect(s.days.some((d) => d.skillIds.length === 0)).toBe(true);
   });
 });
+
+describe('jeden budzet dnia dla wszystkich przedmiotow', () => {
+  const base = { today: START, deadline: DEADLINE, mode: 'standard' as const };
+
+  it('przedmiot miesci sie sam, ale nie razem z innymi - plan mowi to wprost', () => {
+    const alone = buildSchedule({ ...base, remaining: items(100) });
+    expect(alone.status).toBe('on-track');
+    const together = buildSchedule({ ...base, remaining: items(100), otherMinutes: 3000 });
+    expect(together.status).toBe('behind');
+    expect(together.modeNeeded).toBe('strong');
+    expect(together.message).toMatch(/wszystkie przedmioty/);
+    expect(together.finishDate! > DEADLINE).toBe(true);
+  });
+
+  it('za malo czasu - wszystkie przedmioty zwalniaja w tej samej proporcji', () => {
+    // 4000 + 4000 min i 2000 + 6000 min: ta sama suma, wiec ten sam koniec.
+    const a = buildSchedule({ ...base, remaining: items(100), otherMinutes: 4000 });
+    const b = buildSchedule({ ...base, remaining: items(50), otherMinutes: 6000 });
+    const gap = Math.abs(studyDaysBetween(START, a.finishDate!, []).length - studyDaysBetween(START, b.finishDate!, []).length);
+    expect(gap).toBeLessThanOrEqual(3);
+  });
+
+  it('gdy razem sie miesci - tempo bez zmian, a komunikat podaje sume', () => {
+    const alone = buildSchedule({ ...base, remaining: items(50) });
+    const together = buildSchedule({ ...base, remaining: items(50), otherMinutes: 1000 });
+    expect(together.status).toBe('on-track');
+    expect(together.days).toEqual(alone.days);
+    expect(together.combinedMinutesPerDay).toBeGreaterThan(together.requiredMinutesPerDay);
+    expect(together.message).toMatch(/ze wszystkich/);
+  });
+});

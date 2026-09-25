@@ -97,7 +97,7 @@ export const SUBJECT_SHORT: Record<SubjectId, string> = {
   biz: 'BiZ',
 };
 
-const CORPORA: Record<SubjectId, Corpus> = { math: MATH_CORPUS, cs: CS_CORPUS, biz: BIZ_CORPUS };
+export const CORPORA: Record<SubjectId, Corpus> = { math: MATH_CORPUS, cs: CS_CORPUS, biz: BIZ_CORPUS };
 
 /**
  * Stany kompetencji trzymamy dla WSZYSTKICH przedmiotow naraz. Identyfikatory

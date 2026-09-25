@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { SUBJECT_LABELS, useForge, type Screen } from './useForge';
-import { useCourse } from './useCourse';
+import { CORPORA, SUBJECT_LABELS, useForge, type Screen, type SubjectId } from './useForge';
+import { remainingMinutes, subjectGlance, useCourse } from './useCourse';
+import { dayKey } from '@/learning-engine/schedule';
 import { Shell } from './Shell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { MissionSummary } from '@/features/missions/MissionSummary';
@@ -40,6 +41,8 @@ const DATA_SUBJECTS: SubjectInfo[] = [
 /** Biznes i zarządzanie: pierwsza matura w maju 2027, arkuszy jeszcze nie ma. */
 const EXAMS: Record<'math' | 'cs' | 'biz', ExamSheet[]> = { math: MATH_EXAMS, cs: CS_EXAMS, biz: [] };
 
+const SUBJECT_IDS = Object.keys(CORPORA) as SubjectId[];
+
 const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills, ...BIZ_CORPUS.skills];
 const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions, ...BIZ_CORPUS.questions];
 
@@ -57,6 +60,18 @@ export function App() {
   }, [tutor]);
   const catalogue = useMemo(() => questions.flatMap((q) => q.commonErrors), [questions]);
 
+  // Dzień ma jeden budżet na wszystkie przedmioty: każdy kalendarz wie, ile
+  // materiału zostało w pozostałych.
+  const day = dayKey(Date.now());
+  const loads = useMemo(() => {
+    const now = Date.now();
+    return Object.fromEntries(
+      SUBJECT_IDS.map((id) => [id, remainingMinutes(CORPORA[id], state.skillStates, now)]),
+    ) as Record<SubjectId, number>;
+    // `day`: po północy "przerobione dziś" przestaje być dzisiejsze.
+  }, [state.skillStates, day]);
+  const totalLoad = SUBJECT_IDS.reduce((sum, id) => sum + loads[id], 0);
+
   const course = useCourse({
     corpus,
     states: state.skillStates,
@@ -65,7 +80,30 @@ export function App() {
     cardStates: forge.cardStates,
     dayMode: state.dayMode,
     deadline: forge.courseDeadline,
+    otherMinutes: totalLoad - loads[state.subject],
   });
+
+  const others = useMemo(
+    () =>
+      SUBJECT_IDS.filter((id) => id !== state.subject).map((id) => ({
+        id,
+        label: SUBJECT_LABELS[id],
+        glance: subjectGlance(
+          {
+            corpus: CORPORA[id],
+            states: state.skillStates,
+            attempts: forge.attempts,
+            lessonProgress: forge.lessonProgress,
+            cardStates: forge.cardStates,
+            dayMode: state.dayMode,
+            deadline: forge.courseDeadline,
+            otherMinutes: totalLoad - loads[id],
+          },
+          Date.now(),
+        ),
+      })),
+    [state.subject, state.skillStates, state.dayMode, forge.attempts, forge.lessonProgress, forge.cardStates, forge.courseDeadline, loads, totalLoad],
+  );
 
   const practice = (skill: Skill) => beginMission(practiceFor(skill));
 
@@ -317,6 +355,10 @@ export function App() {
           onOpenFlashcards={() => goTo('flashcards')}
           onOpenCalendar={() => goTo('calendar')}
           onOpenCourse={() => goTo('course')}
+          others={others}
+          onSwitchSubject={(id) => {
+            void forge.setSubject(id);
+          }}
           diagnostic={
             state.subject === 'math'
               ? {
