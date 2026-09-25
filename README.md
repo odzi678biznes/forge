@@ -75,6 +75,9 @@ bywa przybliżone.
   Minimum / Standard / Mocny).
 - **Postęp**, **Mapa umiejętności**, **Raport tygodnia**, **Laboratorium
   błędów** (błędy zgrupowane po przyczynie, z naprawą).
+- **Diagnoza przekrojowa** — w każdym przedmiocie osobno: po zadaniu z dwóch
+  najważniejszych umiejętności działu (matematyka 32, informatyka 20, biznes
+  16), raport luk i trzy warianty planu. Każdy przedmiot ma własny plan.
 - **Arkusze CKE** — arkusz w PDF, wpisywanie punktów, analiza: które
   umiejętności kosztowały najwięcej punktów i co powtórzyć.
 - **Zadania z kodem** — edytor, testy widoczne i ukryte, Python uruchamiany
@@ -102,6 +105,7 @@ npm run tauri:dev
 | `npm run dev` | sam interfejs w przeglądarce (IndexedDB), port 1420 |
 | `npm run build` | wersja webowa w `dist/` (także na telefon) |
 | `npm test` | testy (Vitest), w tym wzorcowe rozwiązania w Pythonie i SQL |
+| `npm run test:e2e` | build i testy E2E (Playwright) w Edge: lekcja, diagnoza, Python w przeglądarce, układ telefonu, offline |
 | `npm run typecheck` | kontrola typów |
 
 Wymagania: Node 20+, Rust stable, Visual Studio Build Tools z workloadem C++
@@ -118,8 +122,9 @@ przeglądarki nie pozwalają inaczej na pracę offline ani instalację.
 **Publikacja (jednorazowo).** Najprościej przez GitHub Pages: repozytorium na
 GitHubie, w nim Settings → Pages → Source: *GitHub Actions*. Workflow
 `.github/workflows/pages.yml` przy każdym wypchnięciu na `main` uruchamia
-testy, buduje aplikację pod adres `https://<użytkownik>.github.io/<repozytorium>/`
-i ją publikuje. Na darmowym planie GitHub Pages wymaga publicznego
+testy (Vitest), buduje aplikację pod adres
+`https://<użytkownik>.github.io/<repozytorium>/`, sprawdza ten build testami E2E
+(Playwright) i dopiero wtedy go publikuje. Na darmowym planie GitHub Pages wymaga publicznego
 repozytorium. Każdy inny hosting plików statycznych też wystarczy:
 `npm run build` i wysłanie folderu `dist` (w podkatalogu:
 `FORGE_BASE=/sciezka/ npm run build`).
@@ -241,11 +246,12 @@ Zapytania do bazy są parametryzowane.
 
 - Treść nie przeszła weryfikacji nauczyciela (patrz wyżej).
 - Brak automatycznej synchronizacji — celowo, bo wymagałaby serwera i konta.
-- Nauczyciel AI tylko w aplikacji desktopowej.
-- Diagnoza przekrojowa tylko z matematyki.
-- Przebiegi w przeglądarce (lekcja, zadanie z Pythonem i SQL, arkusz, telefon
-  390 px, praca offline) sprawdzane ręcznie; w repozytorium są tylko testy
-  jednostkowe i integracyjne (Vitest), bez zestawu E2E.
+- Nauczyciel AI tylko w aplikacji desktopowej — celowo: tam klucz API zostaje
+  w procesie aplikacji (Rust) i strona nie może go odczytać; w przeglądarce
+  musiałby leżeć w JavaScripcie strony.
+- Testy E2E (`e2e/`) obejmują najważniejsze przebiegi, ale nie wszystkie
+  ekrany — arkusze CKE, fiszki i ekran danych sprawdzają testy jednostkowe
+  i ręczny przegląd.
 
 ---
 

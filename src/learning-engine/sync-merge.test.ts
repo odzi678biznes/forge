@@ -114,6 +114,25 @@ describe('synchronizacja przez plik', () => {
     ]);
   });
 
+  it('plan każdego przedmiotu: lokalny wygrywa, brakujący przychodzi z pliku', () => {
+    const plan = (id: string, subjectId?: string) => ({
+      id,
+      variant: 'realistic' as const,
+      createdAt: 1,
+      deadline: null,
+      targets: [],
+      diagnosisSnapshot: [],
+      ...(subjectId ? { subjectId } : {}),
+    });
+    // Komputer: plan matematyki w starym formacie. Telefon: inny plan
+    // matematyki i plan informatyki, którego na komputerze nie ma.
+    const pc = snapshot({ plan: plan('p-pc') });
+    const phone = snapshot({ plans: [plan('p-phone', 'math'), plan('p-cs', 'cs')] });
+    const { merged } = mergeSnapshots(pc, phone, 99);
+    expect(merged.plans?.map((p) => p.id)).toEqual(['p-pc', 'p-cs']);
+    expect(merged.plan?.id).toBe('p-pc');
+  });
+
   it('wynik łączenia przechodzi walidację importu', () => {
     const pc = snapshot({
       attempts: [attempt('a-1', 10)],

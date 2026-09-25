@@ -33,6 +33,7 @@
   },
   "include": [
     "src",
-    "content"
+    "content",
+    "e2e"
   ]
 }

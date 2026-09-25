@@ -15,10 +15,12 @@ import {
   type SavedPlan,
   type SkillState,
 } from './types';
+import { planSubject } from './types';
 import {
   MAX_BACKUPS,
   SNAPSHOT_VERSION,
   SnapshotValidationError,
+  mathPlan,
   newBackupId,
   validateSnapshot,
   type BackupInfo,
@@ -77,6 +79,8 @@ interface PlanRow {
   targets: string;
   diagnosis_snapshot: string;
   active: number;
+  /** Od migracji 006; starsze wiersze dostaly 'math'. */
+  subject_id: string;
 }
 
 interface PreferenceRow {
@@ -230,28 +234,38 @@ export class SqliteStorage implements StoragePort {
     );
   }
 
-  async loadPlan(): Promise<SavedPlan | null> {
+  /** Najnowszy aktywny plan kazdego przedmiotu. */
+  async loadPlans(): Promise<SavedPlan[]> {
     const rows = await this.require().select<PlanRow[]>(
-      'SELECT * FROM plans WHERE active = 1 ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM plans WHERE active = 1 ORDER BY created_at DESC',
     );
-    const row = rows[0];
-    return row ? toPlan(row) : null;
+    const bySubject = new Map<string, SavedPlan>();
+    for (const row of rows) {
+      const plan = toPlan(row);
+      if (!bySubject.has(planSubject(plan))) bySubject.set(planSubject(plan), plan);
+    }
+    return [...bySubject.values()];
   }
 
-  /** Nowy plan zastepuje poprzedni, ale go nie kasuje - historia zostaje. */
+  /**
+   * Nowy plan zastepuje poprzedni plan tego samego przedmiotu, ale go nie
+   * kasuje - historia zostaje. Plany innych przedmiotow sie nie zmieniaja.
+   */
   async savePlan(plan: SavedPlan): Promise<void> {
     const db = this.require();
-    await db.execute('UPDATE plans SET active = 0 WHERE active = 1');
+    const subjectId = planSubject(plan);
+    await db.execute('UPDATE plans SET active = 0 WHERE active = 1 AND subject_id = $1', [subjectId]);
     await db.execute(
       `INSERT INTO plans
-         (id, variant, created_at, deadline, targets, diagnosis_snapshot, active)
-       VALUES ($1, $2, $3, $4, $5, $6, 1)
+         (id, variant, created_at, deadline, targets, diagnosis_snapshot, active, subject_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 1, $7)
        ON CONFLICT (id) DO UPDATE SET
          variant = excluded.variant,
          deadline = excluded.deadline,
          targets = excluded.targets,
          diagnosis_snapshot = excluded.diagnosis_snapshot,
-         active = 1`,
+         active = 1,
+         subject_id = excluded.subject_id`,
       [
         plan.id,
         plan.variant,
@@ -259,6 +273,7 @@ export class SqliteStorage implements StoragePort {
         plan.deadline,
         JSON.stringify(plan.targets),
         JSON.stringify(plan.diagnosisSnapshot),
+        subjectId,
       ],
     );
   }
@@ -353,12 +368,12 @@ export class SqliteStorage implements StoragePort {
   }
 
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates, examResults] =
+    const [skillStates, attempts, missions, plans, preferences, lessonProgress, cardStates, examResults] =
       await Promise.all([
         this.loadSkillStates(),
         this.loadAttempts(),
         this.loadMissions(),
-        this.loadPlan(),
+        this.loadPlans(),
         this.loadPreferences(),
         this.loadLessonProgress(),
         this.loadCardStates(),
@@ -370,7 +385,8 @@ export class SqliteStorage implements StoragePort {
       skillStates,
       attempts,
       missions,
-      plan,
+      plans,
+      plan: mathPlan(plans),
       preferences,
       lessonProgress,
       cardStates,
@@ -386,7 +402,7 @@ export class SqliteStorage implements StoragePort {
     for (const a of snapshot.attempts) await this.appendAttempt(a);
     for (const m of snapshot.missions) await this.saveMission(m);
     for (const pref of snapshot.preferences ?? []) await this.setPreference(pref.key, pref.value);
-    if (snapshot.plan) await this.savePlan(snapshot.plan);
+    for (const p of snapshot.plans ?? []) await this.savePlan(p);
     for (const l of snapshot.lessonProgress ?? []) await this.saveLessonProgress(l);
     for (const c of snapshot.cardStates ?? []) await this.saveCardState(c);
     for (const e of snapshot.examResults ?? []) await this.saveExamResult(e);
@@ -424,7 +440,7 @@ export class SqliteStorage implements StoragePort {
     await byIds('lesson_progress', 'skill_id', selection.skillIds);
     await byIds('card_states', 'skill_id', selection.skillIds);
     await byIds('exam_results', 'id', selection.examResultIds ?? []);
-    if (selection.dropPlan) await db.execute('DELETE FROM plans');
+    await byIds('plans', 'subject_id', selection.dropPlanSubjects);
   }
 
   async saveBackup(reason: string): Promise<BackupInfo> {
@@ -549,6 +565,7 @@ function toPlan(r: PlanRow): SavedPlan {
     deadline: r.deadline,
     targets: parseJsonArray(r.targets),
     diagnosisSnapshot: parseJsonArray(r.diagnosis_snapshot),
+    subjectId: r.subject_id ?? 'math',
   };
 }
 

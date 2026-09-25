@@ -8,9 +8,11 @@ import type {
   SavedPlan,
   SkillState,
 } from './types';
+import { planSubject } from './types';
 import {
   MAX_BACKUPS,
   SNAPSHOT_VERSION,
+  mathPlan,
   newBackupId,
   validateSnapshot,
   type BackupInfo,
@@ -53,6 +55,14 @@ interface BackupRecord extends BackupInfo {
 
 /** Aktywny plan jest jeden, wiec trzymamy go pod stalym kluczem. */
 const ACTIVE_PLAN_KEY = 'active';
+
+/**
+ * Klucz aktywnego planu przedmiotu. Matematyka zostaje pod kluczem sprzed
+ * planow na przedmiot, wiec zapisany wczesniej plan dalej sie wczytuje.
+ */
+function planKey(subjectId: string): string {
+  return subjectId === 'math' ? ACTIVE_PLAN_KEY : `${ACTIVE_PLAN_KEY}:${subjectId}`;
+}
 
 export class IndexedDbStorage implements StoragePort {
   private db: IDBDatabase | null = null;
@@ -129,11 +139,11 @@ export class IndexedDbStorage implements StoragePort {
     return this.write(STORES.missions, mission);
   }
 
-  async loadPlan(): Promise<SavedPlan | null> {
+  async loadPlans(): Promise<SavedPlan[]> {
     const db = this.require();
     return new Promise((resolve, reject) => {
-      const req = db.transaction(STORES.plan, 'readonly').objectStore(STORES.plan).get(ACTIVE_PLAN_KEY);
-      req.onsuccess = () => resolve((req.result as SavedPlan | undefined) ?? null);
+      const req = db.transaction(STORES.plan, 'readonly').objectStore(STORES.plan).getAll();
+      req.onsuccess = () => resolve(req.result as SavedPlan[]);
       req.onerror = () => reject(req.error);
     });
   }
@@ -142,7 +152,7 @@ export class IndexedDbStorage implements StoragePort {
     const db = this.require();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORES.plan, 'readwrite');
-      tx.objectStore(STORES.plan).put(plan, ACTIVE_PLAN_KEY);
+      tx.objectStore(STORES.plan).put(plan, planKey(planSubject(plan)));
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -185,12 +195,12 @@ export class IndexedDbStorage implements StoragePort {
   }
 
   async exportAll(): Promise<SnapshotV1> {
-    const [skillStates, attempts, missions, plan, preferences, lessonProgress, cardStates, examResults] =
+    const [skillStates, attempts, missions, plans, preferences, lessonProgress, cardStates, examResults] =
       await Promise.all([
         this.loadSkillStates(),
         this.loadAttempts(),
         this.loadMissions(),
-        this.loadPlan(),
+        this.loadPlans(),
         this.loadPreferences(),
         this.loadLessonProgress(),
         this.loadCardStates(),
@@ -202,7 +212,8 @@ export class IndexedDbStorage implements StoragePort {
       skillStates,
       attempts,
       missions,
-      plan,
+      plans,
+      plan: mathPlan(plans),
       preferences,
       lessonProgress,
       cardStates,
@@ -222,7 +233,7 @@ export class IndexedDbStorage implements StoragePort {
       ...snapshot.attempts.map((a) => this.appendAttempt(a)),
       ...snapshot.missions.map((m) => this.saveMission(m)),
       ...(snapshot.preferences ?? []).map((p) => this.setPreference(p.key, p.value)),
-      ...(snapshot.plan ? [this.savePlan(snapshot.plan)] : []),
+      ...(snapshot.plans ?? []).map((p) => this.savePlan(p)),
       ...(snapshot.lessonProgress ?? []).map((l) => this.write(STORES.lessonProgress, l)),
       ...(snapshot.cardStates ?? []).map((c) => this.saveCardState(c)),
       ...(snapshot.examResults ?? []).map((e) => this.saveExamResult(e)),
@@ -275,7 +286,7 @@ export class IndexedDbStorage implements StoragePort {
         };
       }
       for (const id of selection.examResultIds ?? []) tx.objectStore(STORES.examResults).delete(id);
-      if (selection.dropPlan) tx.objectStore(STORES.plan).delete(ACTIVE_PLAN_KEY);
+      for (const subjectId of selection.dropPlanSubjects) tx.objectStore(STORES.plan).delete(planKey(subjectId));
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);

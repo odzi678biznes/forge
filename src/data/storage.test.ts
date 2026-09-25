@@ -184,6 +184,40 @@ describe('walidacja kopii', () => {
     expect(() => validateSnapshot('nie-json')).toThrow(SnapshotValidationError);
     expect(() => validateSnapshot(null)).toThrow(SnapshotValidationError);
   });
+
+  describe('plany nauki', () => {
+    const plan = {
+      id: 'p-1',
+      variant: 'realistic' as const,
+      createdAt: 10,
+      deadline: null,
+      targets: [],
+      diagnosisSnapshot: [],
+    };
+
+    it('starsza kopia z jednym planem to plan matematyki', () => {
+      const snap = validateSnapshot({ ...valid, plan });
+      expect(snap.plans).toEqual([plan]);
+      expect(snap.plan).toEqual(plan);
+    });
+
+    it('nowa kopia niesie plan kazdego przedmiotu, a pole plan - matematyke', () => {
+      const cs = { ...plan, id: 'p-cs', subjectId: 'cs' };
+      const snap = validateSnapshot({ ...valid, plans: [plan, cs], plan });
+      expect(snap.plans).toEqual([plan, cs]);
+      expect(snap.plan).toEqual(plan);
+    });
+
+    it('z dwoch planow jednego przedmiotu zostaje nowszy', () => {
+      const newer = { ...plan, id: 'p-2', createdAt: 20, subjectId: 'math' };
+      expect(validateSnapshot({ ...valid, plans: [newer, plan] }).plans).toEqual([newer]);
+    });
+
+    it('odrzuca niepelny plan zamiast go naprawiac', () => {
+      expect(() => validateSnapshot({ ...valid, plans: [{ id: 'p-1' }] })).toThrow(/plan/i);
+      expect(() => validateSnapshot({ ...valid, plans: 'nie-lista' })).toThrow(/plan/i);
+    });
+  });
 });
 
 describe('plan nauki i preferencje', () => {
@@ -199,7 +233,7 @@ describe('plan nauki i preferencje', () => {
   it('brak planu przy pierwszym uruchomieniu to null, nie blad', async () => {
     const store = new IndexedDbStorage(freshName());
     await store.init();
-    expect(await store.loadPlan()).toBeNull();
+    expect(await store.loadPlans()).toEqual([]);
     expect(await store.loadPreferences()).toEqual([]);
   });
 
@@ -213,7 +247,7 @@ describe('plan nauki i preferencje', () => {
 
     const second = new IndexedDbStorage(name);
     await second.init();
-    expect(await second.loadPlan()).toEqual(plan);
+    expect(await second.loadPlans()).toEqual([plan]);
     expect(await second.loadPreferences()).toEqual([{ key: 'dayMode', value: 'standard' }]);
   });
 
@@ -222,7 +256,19 @@ describe('plan nauki i preferencje', () => {
     await store.init();
     await store.savePlan(plan);
     await store.savePlan({ ...plan, id: 'p-2', variant: 'minimum' });
-    expect((await store.loadPlan())?.variant).toBe('minimum');
+    expect((await store.loadPlans()).map((p) => p.variant)).toEqual(['minimum']);
+  });
+
+  it('kazdy przedmiot ma wlasny plan; plan bez przedmiotu to matematyka', async () => {
+    const store = new IndexedDbStorage(freshName());
+    await store.init();
+    await store.savePlan(plan);
+    await store.savePlan({ ...plan, id: 'p-cs', subjectId: 'cs' });
+    await store.savePlan({ ...plan, id: 'p-cs-2', subjectId: 'cs', variant: 'ambitious' });
+    await store.savePlan({ ...plan, id: 'p-math-2', subjectId: 'math', variant: 'minimum' });
+
+    const plans = await store.loadPlans();
+    expect(plans.map((p) => p.id).sort()).toEqual(['p-cs-2', 'p-math-2']);
   });
 
   it('ta sama preferencja jest nadpisywana, nie duplikowana', async () => {
@@ -243,10 +289,10 @@ describe('plan nauki i preferencje', () => {
 
     const snapshot: unknown = JSON.parse(JSON.stringify(await store.exportAll()));
     await store.clear();
-    expect(await store.loadPlan()).toBeNull();
+    expect(await store.loadPlans()).toEqual([]);
 
     await store.importAll(snapshot);
-    expect(await store.loadPlan()).toEqual(plan);
+    expect(await store.loadPlans()).toEqual([plan]);
     expect(await store.loadPreferences()).toEqual([{ key: 'dayMode', value: 'strong' }]);
   });
 
@@ -261,7 +307,7 @@ describe('plan nauki i preferencje', () => {
       attempts: [],
       missions: [],
     });
-    expect(await store.loadPlan()).toBeNull();
+    expect(await store.loadPlans()).toEqual([]);
     expect(await store.loadPreferences()).toEqual([]);
   });
 });
@@ -288,7 +334,7 @@ describe('usuwanie wybranych danych (sek. 12)', () => {
       attemptIds: ['a-1'],
       missionIds: ['m-1'],
       skillIds: ['s-1'],
-      dropPlan: false,
+      dropPlanSubjects: [],
     });
 
     expect(await store.loadAttempts()).toEqual([second]);
@@ -296,7 +342,7 @@ describe('usuwanie wybranych danych (sek. 12)', () => {
     expect((await store.loadSkillStates()).map((s) => s.skillId)).toEqual(['s-2']);
   });
 
-  it('plan znika tylko na wyrazne zadanie', async () => {
+  it('plan znika tylko na wyrazne zadanie i tylko wskazanego przedmiotu', async () => {
     const store = await seeded();
     const plan = {
       id: 'p-1',
@@ -306,13 +352,15 @@ describe('usuwanie wybranych danych (sek. 12)', () => {
       targets: [],
       diagnosisSnapshot: [],
     };
+    const bizPlan = { ...plan, id: 'p-biz', subjectId: 'biz' };
     await store.savePlan(plan);
+    await store.savePlan(bizPlan);
 
-    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false });
-    expect(await store.loadPlan()).toEqual(plan);
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlanSubjects: [] });
+    expect(await store.loadPlans()).toHaveLength(2);
 
-    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: true });
-    expect(await store.loadPlan()).toBeNull();
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlanSubjects: ['math'] });
+    expect(await store.loadPlans()).toEqual([bizPlan]);
   });
 });
 
@@ -453,7 +501,7 @@ describe('kurs: lekcje i fiszki', () => {
     await store.saveCardState(card('c-1', 's-1'));
     await store.saveCardState(card('c-2', 's-2'));
 
-    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: ['s-1'], dropPlan: false });
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: ['s-1'], dropPlanSubjects: [] });
 
     expect((await store.loadLessonProgress()).map((l) => l.skillId)).toEqual(['s-2']);
     expect((await store.loadCardStates()).map((c) => c.cardId)).toEqual(['c-2']);
@@ -533,7 +581,7 @@ describe('wyniki arkuszy CKE', () => {
     await store.init();
     await store.saveExamResult(result('e-1'));
     await store.saveExamResult(result('e-2'));
-    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false, examResultIds: ['e-1'] });
+    await store.deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlanSubjects: [], examResultIds: ['e-1'] });
     expect((await store.loadExamResults()).map((e) => e.id)).toEqual(['e-2']);
   });
 

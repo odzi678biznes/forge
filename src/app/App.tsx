@@ -265,6 +265,7 @@ export function App() {
     case 'diagnostic-intro':
       page = (
         <DiagnosticIntro
+          subjectName={SUBJECT_LABELS[state.subject]}
           probeCount={forge.diagnosticSize}
           hasPreviousPlan={state.savedPlan !== null}
           onStart={forge.startDiagnostic}
@@ -360,15 +361,11 @@ export function App() {
           onSwitchSubject={(id) => {
             void forge.setSubject(id);
           }}
-          diagnostic={
-            state.subject === 'math'
-              ? {
-                  hasReport: state.report !== null && state.savedPlan === null,
-                  onOpen: () =>
-                    goTo(state.report !== null && state.savedPlan === null ? 'diagnostic-report' : 'diagnostic-intro'),
-                }
-              : null
-          }
+          diagnostic={{
+            hasReport: state.report !== null && state.savedPlan === null,
+            onOpen: () =>
+              goTo(state.report !== null && state.savedPlan === null ? 'diagnostic-report' : 'diagnostic-intro'),
+          }}
         />
       );
   }

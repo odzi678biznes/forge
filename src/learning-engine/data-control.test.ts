@@ -32,7 +32,10 @@ const data: DataSnapshot = {
   ],
   missions: [mission('m-math'), mission('m-cs'), mission('m-mix')],
   skillIdsWithState: ['math-1', 'math-2', 'cs-1'],
-  planSkillIds: ['math-2'],
+  plans: [
+    { subjectId: 'math', skillIds: ['math-2'] },
+    { subjectId: 'cs', skillIds: ['cs-1'] },
+  ],
 };
 
 describe('plan usuwania - pojedyncza sesja', () => {
@@ -47,7 +50,7 @@ describe('plan usuwania - pojedyncza sesja', () => {
   });
 
   it('nie usuwa planu - to decyzja uzytkownika, nie wynik jednej sesji', () => {
-    expect(planDeletion({ kind: 'mission', missionId: 'm-math' }, data).dropPlan).toBe(false);
+    expect(planDeletion({ kind: 'mission', missionId: 'm-math' }, data).dropPlanSubjects).toEqual([]);
   });
 
   it('nieistniejaca sesja niczego nie usuwa', () => {
@@ -109,12 +112,13 @@ describe('plan usuwania - caly przedmiot', () => {
   });
 
   it('plan zbudowany z wynikow przedmiotu znika razem z nimi', () => {
-    expect(planDeletion(math, data).dropPlan).toBe(true);
+    expect(planDeletion(math, data).dropPlanSubjects).toEqual(['math']);
   });
 
   it('plan innego przedmiotu zostaje', () => {
     const cs = { kind: 'subject' as const, skillIds: ['cs-1'], label: 'Informatyka' };
-    expect(planDeletion(cs, data).dropPlan).toBe(false);
+    expect(planDeletion(cs, data).dropPlanSubjects).toEqual(['cs']);
+    expect(planDeletion({ ...cs, skillIds: ['biz-1'] }, data).dropPlanSubjects).toEqual([]);
   });
 
   it('opis skutku podaje liczby przed potwierdzeniem', () => {

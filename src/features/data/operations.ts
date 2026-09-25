@@ -5,6 +5,7 @@ import {
   type SnapshotV1,
   type StoragePort,
 } from '@/data/storage-port';
+import { planSubject } from '@/data/types';
 import type { DataSnapshot, DeletionPlan } from '@/learning-engine/data-control';
 import { mergeSnapshots, type MergeReport } from '@/learning-engine/sync-merge';
 
@@ -95,7 +96,10 @@ export function toDataSnapshot(snapshot: SnapshotV1): DataSnapshot {
     attempts: snapshot.attempts,
     missions: snapshot.missions,
     skillIdsWithState: snapshot.skillStates.map((s) => s.skillId),
-    planSkillIds: snapshot.plan?.targets.map((t) => t.skillId) ?? [],
+    plans: (snapshot.plans ?? []).map((p) => ({
+      subjectId: planSubject(p),
+      skillIds: p.targets.map((t) => t.skillId),
+    })),
     examResults: (snapshot.examResults ?? []).map((e) => ({ id: e.id, subjectId: e.subjectId })),
   };
 }

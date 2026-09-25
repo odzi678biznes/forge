@@ -10,6 +10,7 @@ import './diagnostics.css';
  */
 
 interface Props {
+  subjectName: string;
   probeCount: number;
   hasPreviousPlan: boolean;
   onStart: () => void;
@@ -19,7 +20,7 @@ interface Props {
 /** Sonda diagnostyczna to zadanie otwarte — liczymy ok. 90 sekund. */
 const SECONDS_PER_PROBE = 90;
 
-export function DiagnosticIntro({ probeCount, hasPreviousPlan, onStart, onBack }: Props) {
+export function DiagnosticIntro({ subjectName, probeCount, hasPreviousPlan, onStart, onBack }: Props) {
   const minutes = globalThis.Math.round((probeCount * SECONDS_PER_PROBE) / 60);
 
   return (
@@ -28,15 +29,15 @@ export function DiagnosticIntro({ probeCount, hasPreviousPlan, onStart, onBack }
         <button type="button" className="diag__back" onClick={onBack}>
           &larr; Plan dnia
         </button>
-        <p className="diag__eyebrow">Diagnoza</p>
+        <p className="diag__eyebrow">Diagnoza · {subjectName}</p>
         <h1 className="diag__title">Gdzie naprawdę jesteś</h1>
       </header>
 
       <section className="diag__lead">
         <p>
           Po jednym zadaniu z dwóch najważniejszych umiejętności każdego działu —
-          przekrój przez cały kurs. Wynik ustawi plan nauki na podstawie tego, co
-          rozwiążesz, a nie tego, jak się oceniasz.
+          przekrój przez cały kurs tego przedmiotu. Wynik ustawi plan nauki na
+          podstawie tego, co rozwiążesz, a nie tego, jak się oceniasz.
         </p>
       </section>
 
@@ -80,8 +81,8 @@ export function DiagnosticIntro({ probeCount, hasPreviousPlan, onStart, onBack }
 
       {hasPreviousPlan && (
         <p className="diag__warn">
-          Masz już aktywny plan. Nowa diagnoza go zastąpi — poprzedni zostanie
-          w historii.
+          Masz już aktywny plan z tego przedmiotu. Nowa diagnoza go zastąpi.
+          Plany pozostałych przedmiotów się nie zmienią.
         </p>
       )}
 

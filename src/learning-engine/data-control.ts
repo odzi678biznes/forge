@@ -26,8 +26,8 @@ export interface DataSnapshot {
   missions: Mission[];
   /** Id kompetencji, które mają zapisany stan. */
   skillIdsWithState: string[];
-  /** Kompetencje, na które celuje aktywny plan; pusta lista, gdy planu nie ma. */
-  planSkillIds: string[];
+  /** Aktywne plany: przedmiot i kompetencje, na które celuje; pusta lista, gdy planów nie ma. */
+  plans: Array<{ subjectId: string; skillIds: string[] }>;
   /** Wyniki arkuszy CKE; brak pola = brak wyników. */
   examResults?: Array<{ id: string; subjectId: string }>;
 }
@@ -39,7 +39,7 @@ export function planDeletion(target: DeletionTarget, data: DataSnapshot): Deleti
       attemptIds: data.attempts.map((a) => a.id),
       missionIds: data.missions.map((m) => m.id),
       skillIds: [...data.skillIdsWithState],
-      dropPlan: true,
+      dropPlanSubjects: data.plans.map((p) => p.subjectId),
       examResultIds: exams.map((e) => e.id),
       summary: `Wszystkie dane: ${count(data.missions.length, MISSIONS)}, ${count(data.attempts.length, ATTEMPTS)} i stan ${data.skillIdsWithState.length} kompetencji${exams.length > 0 ? `, a także ${count(exams.length, EXAM_RESULTS)}` : ''}.`,
     };
@@ -57,7 +57,7 @@ export function planDeletion(target: DeletionTarget, data: DataSnapshot): Deleti
       skillIds: [],
       // Plan to decyzja użytkownika podjęta na podstawie diagnozy - usunięcie
       // jednej sesji jej nie cofa.
-      dropPlan: false,
+      dropPlanSubjects: [],
       examResultIds: [],
       summary: exists
         ? `Jedna sesja i jej ${count(attempts.length, ATTEMPTS)}. Poziomy kompetencji zostają bez zmian.`
@@ -80,7 +80,10 @@ export function planDeletion(target: DeletionTarget, data: DataSnapshot): Deleti
 
   const skillIds = data.skillIdsWithState.filter((id) => skills.has(id));
   // Plan zbudowany z wyników tego przedmiotu traci podstawę razem z nimi.
-  const dropPlan = data.planSkillIds.some((id) => skills.has(id));
+  // Plany innych przedmiotów zostają.
+  const dropPlanSubjects = data.plans
+    .filter((p) => p.skillIds.some((id) => skills.has(id)))
+    .map((p) => p.subjectId);
   const examResultIds = target.subjectId
     ? exams.filter((e) => e.subjectId === target.subjectId).map((e) => e.id)
     : [];
@@ -89,9 +92,9 @@ export function planDeletion(target: DeletionTarget, data: DataSnapshot): Deleti
     attemptIds: attempts.map((a) => a.id),
     missionIds,
     skillIds,
-    dropPlan,
+    dropPlanSubjects,
     examResultIds,
-    summary: `Przedmiot „${target.label}": ${count(attempts.length, ATTEMPTS)}, ${count(missionIds.length, MISSIONS)} i stan ${skillIds.length} kompetencji${examResultIds.length > 0 ? `, ${count(examResultIds.length, EXAM_RESULTS)}` : ''}${dropPlan ? ', a także plan nauki' : ''}.`,
+    summary: `Przedmiot „${target.label}": ${count(attempts.length, ATTEMPTS)}, ${count(missionIds.length, MISSIONS)} i stan ${skillIds.length} kompetencji${examResultIds.length > 0 ? `, ${count(examResultIds.length, EXAM_RESULTS)}` : ''}${dropPlanSubjects.length > 0 ? ', a także plan nauki' : ''}.`,
   };
 }
 

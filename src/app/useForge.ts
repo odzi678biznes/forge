@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MasteryLevel,
   emptySkillState,
+  planSubject,
   type Attempt,
   type CardState,
   type CodeLanguage,
@@ -146,7 +147,7 @@ export interface ForgeState {
   errorGroups: ErrorGroup[];
   /** Raport z ostatniej diagnozy albo null (sek. 15, Etap 3). */
   report: DiagnosticReport | null;
-  /** Aktywny plan nauki albo null, gdy diagnoza jeszcze nie przeszla. */
+  /** Aktywny plan nauki biezacego przedmiotu albo null, gdy jego diagnoza jeszcze nie przeszla. */
   savedPlan: SavedPlan | null;
   /** Ile sond zostalo w biezacej diagnozie. */
   diagnosticRemaining: number;
@@ -229,7 +230,7 @@ export function useForge(deps: ForgeDeps = {}) {
   const [running, setRunning] = useState(false);
   const [missionsToday, setMissionsToday] = useState(0);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [dayMode, setDayModeState] = useState<DayMode>('standard');
   const [missionDeadline, setMissionDeadline] = useState<number | null>(null);
@@ -242,13 +243,20 @@ export function useForge(deps: ForgeDeps = {}) {
   // Kolejka sond diagnostycznych. Gdy niepusta, 'advance' bierze pytanie
   // stad zamiast pytac selektor - diagnoza ma staly przekroj, nie adaptacje.
   const [diagnosticQueue, setDiagnosticQueue] = useState<Question[]>([]);
-  const diagnosticMissionRef = useRef<string | null>(null);
+  // Biezaca diagnoza i jej przedmiot - raport innego przedmiotu jej nie widzi.
+  const diagnosticMissionRef = useRef<{ id: string; subject: SubjectId } | null>(null);
   const [recentSkillIds, setRecentSkillIds] = useState<string[]>([]);
   const askedRef = useRef<Set<string>>(new Set());
   const startedAtRef = useRef<number>(Date.now());
 
   const corpus = CORPORA[subject];
   const { skills, questions, topics } = corpus;
+
+  /** Kazdy przedmiot ma wlasna diagnoze i wlasny plan. */
+  const savedPlan = useMemo(
+    () => savedPlans.find((p) => planSubject(p) === subject) ?? null,
+    [savedPlans, subject],
+  );
 
   /**
    * Wczytanie profilu z portu. Uzywane przy starcie i po zmianach z ekranu
@@ -266,7 +274,7 @@ export function useForge(deps: ForgeDeps = {}) {
     setSkillStates(map);
 
     setAttempts(await s.loadAttempts());
-    setSavedPlan(await s.loadPlan());
+    setSavedPlans(await s.loadPlans());
 
     const loaded = await s.loadMissions();
     setMissions(loaded);
@@ -587,16 +595,14 @@ export function useForge(deps: ForgeDeps = {}) {
   }, [mission, closeMission]);
 
   // -------------------------------------------------------------------------
-  // Diagnoza (sek. 15, Etap 3) - zgodnie z blueprintem matematyczna
+  // Diagnoza (sek. 15, Etap 3) - blueprint opisal ja dla matematyki; ten sam
+  // przekroj (dwie najwazniejsze umiejetnosci dzialu) dziala dla kazdego
+  // przedmiotu, wiec kazdy ma wlasna diagnoze i wlasny plan.
   // -------------------------------------------------------------------------
 
   const diagnosticSet = useMemo(
-    () =>
-      buildDiagnosticSet(
-        diagnosticSkills(MATH_CORPUS.topics, MATH_CORPUS.skills),
-        MATH_CORPUS.questions,
-      ),
-    [],
+    () => buildDiagnosticSet(diagnosticSkills(topics, skills), questions),
+    [topics, skills, questions],
   );
 
   const startDiagnostic = useCallback(() => {
@@ -604,8 +610,8 @@ export function useForge(deps: ForgeDeps = {}) {
     const probe = first ? asProbe(first) : null;
     if (!probe) return;
 
-    const id = `m-diag-${Date.now()}`;
-    diagnosticMissionRef.current = id;
+    const id = `m-diag-${subject}-${Date.now()}`;
+    diagnosticMissionRef.current = { id, subject };
     askedRef.current = new Set([probe.question.id]);
     startedAtRef.current = Date.now();
 
@@ -613,7 +619,7 @@ export function useForge(deps: ForgeDeps = {}) {
     setMission({
       id,
       kind: 'diagnostic',
-      title: 'Diagnoza',
+      title: `Diagnoza: ${SUBJECT_LABELS[subject]}`,
       rationale: 'Przekrojowy pomiar wszystkich kompetencji.',
       questionIds: [],
       startedAt: Date.now(),
@@ -630,34 +636,38 @@ export function useForge(deps: ForgeDeps = {}) {
     setFeedback(null);
     setCurrent(probe);
     setScreen('arena');
-  }, [diagnosticSet, asProbe]);
+  }, [diagnosticSet, asProbe, subject]);
 
   /**
    * Raport liczony wylacznie z prob nalezacych do misji diagnostycznej.
    * Zwykle misje nie zanieczyszczaja pomiaru.
    */
   const report = useMemo((): DiagnosticReport | null => {
-    const id = diagnosticMissionRef.current;
-    const probes = attempts.filter((a) =>
-      id === null ? a.missionId.startsWith('m-diag-') : a.missionId === id,
+    const own = new Set(skills.map((s) => s.id));
+    const ref = diagnosticMissionRef.current;
+    // Po diagnozie w tej sesji liczy sie tylko ona; po ponownym uruchomieniu
+    // aplikacji - wszystkie sondy przedmiotu (ostatnia proba wygrywa).
+    const currentId = ref !== null && ref.subject === subject ? ref.id : null;
+    const probes = attempts.filter(
+      (a) =>
+        own.has(a.skillId) &&
+        (currentId === null ? a.missionId.startsWith('m-diag-') : a.missionId === currentId),
     );
     if (probes.length === 0) return null;
-    return analyseDiagnostic(probes, MATH_CORPUS.skills, MATH_CORPUS.topics, Date.now());
-  }, [attempts]);
+    return analyseDiagnostic(probes, skills, topics, Date.now());
+  }, [attempts, skills, topics, subject]);
 
   /** Podglad planu dla wariantu - liczony na zywo, bez zapisu. */
   const previewPlan = useCallback(
     (variant: PlanVariant, deadline: number | null) =>
-      report
-        ? buildPlan(report, MATH_CORPUS.skills, MATH_CORPUS.topics, variant, deadline)
-        : null,
-    [report],
+      report ? buildPlan(report, skills, topics, variant, deadline) : null,
+    [report, skills, topics],
   );
 
   const choosePlan = useCallback(
     async (variant: PlanVariant, deadline: number | null) => {
       if (!report) return;
-      const built = buildPlan(report, MATH_CORPUS.skills, MATH_CORPUS.topics, variant, deadline);
+      const built = buildPlan(report, skills, topics, variant, deadline);
 
       const toSave: SavedPlan = {
         id: `p-${Date.now()}`,
@@ -672,13 +682,14 @@ export function useForge(deps: ForgeDeps = {}) {
           skillId: d.skillId,
           level: d.estimatedLevel,
         })),
+        subjectId: subject,
       };
 
       await port().savePlan(toSave);
-      setSavedPlan(toSave);
+      setSavedPlans((prev) => [...prev.filter((p) => planSubject(p) !== subject), toSave]);
       setScreen('command-center');
     },
-    [report],
+    [report, skills, topics, subject],
   );
 
   const toCommandCenter = useCallback(() => {
@@ -757,7 +768,7 @@ export function useForge(deps: ForgeDeps = {}) {
   );
 
   const deleteExam = useCallback(async (id: string) => {
-    await port().deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlan: false, examResultIds: [id] });
+    await port().deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlanSubjects: [], examResultIds: [id] });
     setExamResults((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
@@ -790,15 +801,15 @@ export function useForge(deps: ForgeDeps = {}) {
   const daily = useMemo(
     () =>
       planDay({
-        // Plan pochodzi z diagnozy matematycznej, wiec obowiazuje tylko tam.
-        plan: subject === 'math' ? savedPlan : null,
+        // Plan pochodzi z diagnozy biezacego przedmiotu.
+        plan: savedPlan,
         skills,
         states: skillStates,
         mode: dayMode,
         daysSinceLastSession,
         now: Date.now(),
       }),
-    [subject, savedPlan, skills, skillStates, dayMode, daysSinceLastSession],
+    [savedPlan, skills, skillStates, dayMode, daysSinceLastSession],
   );
 
   /** Rytm dotyczy osoby, nie przedmiotu - liczy wszystkie misje. */

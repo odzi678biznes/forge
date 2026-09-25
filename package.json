@@ -13,7 +13,8 @@
     "typecheck": "tsc -b --noEmit",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
@@ -25,6 +26,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2.11.5",
     "@types/katex": "^0.16.7",
     "@types/react": "^18.3.12",

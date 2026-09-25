@@ -14,3 +14,8 @@ public/pyodide/
 
 # Posredni plik z scripts/icons.ps1 (zrodlo dla "npx tauri icon")
 scripts/.icon-1024.png
+
+# Wyniki testow E2E (Playwright) i pliki robocze przegladarki MCP
+test-results/
+playwright-report/
+.playwright-mcp/

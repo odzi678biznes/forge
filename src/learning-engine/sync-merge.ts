@@ -1,5 +1,5 @@
-import type { SnapshotV1 } from '@/data/storage-port';
-import type { CardState, SkillState } from '@/data/types';
+import { mathPlan, type SnapshotV1 } from '@/data/storage-port';
+import { planSubject, type CardState, type SavedPlan, type SkillState } from '@/data/types';
 
 /**
  * Synchronizacja dwóch urządzeń przez plik (np. komputer i telefon).
@@ -15,8 +15,9 @@ import type { CardState, SkillState } from '@/data/types';
  *   lokalny, ale z wcześniejszym terminem powtórki, żeby powtórka
  *   zaplanowana na drugim urządzeniu nie przepadła),
  * - stan fiszki — ten z większą liczbą powtórek (przy remisie nowszy),
- * - ustawienia i plan — lokalne (to ustawienia tego urządzenia);
- *   z pliku bierzemy tylko to, czego tu brakuje.
+ * - ustawienia i plany — lokalne (to ustawienia tego urządzenia);
+ *   z pliku bierzemy tylko to, czego tu brakuje (np. plan przedmiotu,
+ *   którego diagnozę zrobiono tylko na drugim urządzeniu).
  *
  * Funkcja jest czysta: nie zapisuje niczego, zwraca nowy snapshot i raport.
  */
@@ -44,6 +45,11 @@ function unionById<T>(local: T[], incoming: T[], key: (x: T) => string, prefer?:
     }
   }
   return { items: [...byKey.values()], added };
+}
+
+/** Kopie sprzed planów na przedmiot mają tylko `plan` (matematyki). */
+function plansOf(s: SnapshotV1): SavedPlan[] {
+  return s.plans ?? (s.plan ? [s.plan] : []);
 }
 
 function earlierDue(a: number | null, b: number | null): number | null {
@@ -93,6 +99,7 @@ export function mergeSnapshots(local: SnapshotV1, incoming: SnapshotV1, now: num
   });
 
   const preferences = unionById(local.preferences ?? [], incoming.preferences ?? [], (p) => p.key).items;
+  const plans = unionById(plansOf(local), plansOf(incoming), planSubject).items;
 
   const merged: SnapshotV1 = {
     version: local.version,
@@ -100,7 +107,8 @@ export function mergeSnapshots(local: SnapshotV1, incoming: SnapshotV1, now: num
     skillStates: skills.items,
     attempts: attempts.items.sort((a, b) => a.answeredAt - b.answeredAt),
     missions: missions.items.sort((a, b) => a.startedAt - b.startedAt),
-    plan: local.plan ?? incoming.plan ?? null,
+    plans,
+    plan: mathPlan(plans),
     preferences,
     lessonProgress: lessons.items,
     cardStates: cards.items,

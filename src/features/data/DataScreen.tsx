@@ -237,7 +237,10 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
             Teraz: {count(snapshot.missions.length, MISSIONS)},{' '}
             {count(snapshot.attempts.length, ATTEMPTS)}, {count(snapshot.skillStates.length, SKILLS)}{' '}
             ze stanem
-            {snapshot.plan ? ', aktywny plan nauki' : ''}.
+            {(snapshot.plans?.length ?? 0) > 0
+              ? `, ${snapshot.plans?.length === 1 ? 'aktywny plan nauki' : `aktywne plany nauki: ${snapshot.plans?.length}`}`
+              : ''}
+            .
           </p>
         )}
       </header>

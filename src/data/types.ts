@@ -332,6 +332,16 @@ export interface SavedPlan {
   targets: Array<{ skillId: string; targetLevel: MasteryLevel }>;
   /** Migawka diagnozy, z ktorej plan powstal - do porownania postepu. */
   diagnosisSnapshot: Array<{ skillId: string; level: MasteryLevel }>;
+  /**
+   * Przedmiot planu. Kazdy przedmiot ma wlasny aktywny plan. Brak pola to
+   * matematyka - plany sprzed diagnozy pozostalych przedmiotow go nie maja.
+   */
+  subjectId?: string;
+}
+
+/** Przedmiot planu z uwzglednieniem planow zapisanych przed polem `subjectId`. */
+export function planSubject(plan: SavedPlan): string {
+  return plan.subjectId ?? 'math';
 }
 
 /** Preferencje uzytkownika - proste pary klucz/wartosc. */

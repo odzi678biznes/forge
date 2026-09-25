@@ -261,7 +261,7 @@ describe('usuwanie i kopie (sek. 12)', () => {
       attemptIds: [hostile, 'a-2'],
       missionIds: [],
       skillIds: ['s-1'],
-      dropPlan: false,
+      dropPlanSubjects: [],
     });
 
     const calls = execute.mock.calls.map(([sql, params]) => ({ sql: String(sql), params }));
@@ -277,6 +277,14 @@ describe('usuwanie i kopie (sek. 12)', () => {
     // Pusta lista nie generuje zapytania; plan zostaje.
     expect(calls.some((c) => c.sql.includes('DELETE FROM missions'))).toBe(false);
     expect(calls.some((c) => c.sql.includes('DELETE FROM plans'))).toBe(false);
+  });
+
+  it('plan znika tylko dla wskazanych przedmiotow', async () => {
+    await (await ready()).deleteRecords({ attemptIds: [], missionIds: [], skillIds: [], dropPlanSubjects: ['cs'] });
+    const calls = execute.mock.calls.map(([sql, params]) => ({ sql: String(sql), params }));
+    const plans = calls.find((c) => c.sql.includes('DELETE FROM plans'));
+    expect(plans?.sql).toContain('subject_id IN (SELECT value FROM json_each($1))');
+    expect(plans?.params).toEqual([JSON.stringify(['cs'])]);
   });
 
   it('kopia zapisuje pelny eksport i przycina stare kopie', async () => {
@@ -306,33 +314,44 @@ describe('usuwanie i kopie (sek. 12)', () => {
 });
 
 describe('plan i preferencje', () => {
-  it('wczytuje wylacznie aktywny plan', async () => {
+  it('wczytuje wylacznie aktywne plany, najnowszy na przedmiot', async () => {
+    const row = {
+      id: 'p-1',
+      variant: 'realistic',
+      created_at: 100,
+      deadline: 200,
+      targets: '[{"skillId":"s-1","targetLevel":3}]',
+      diagnosis_snapshot: '[{"skillId":"s-1","level":1}]',
+      active: 1,
+      subject_id: 'math',
+    };
+    // Zapytanie sortuje od najnowszego - pierwszy wiersz przedmiotu wygrywa.
     select.mockResolvedValueOnce([
-      {
-        id: 'p-1',
-        variant: 'realistic',
-        created_at: 100,
-        deadline: 200,
-        targets: '[{"skillId":"s-1","targetLevel":3}]',
-        diagnosis_snapshot: '[{"skillId":"s-1","level":1}]',
-        active: 1,
-      },
+      { ...row, id: 'p-cs', created_at: 300, subject_id: 'cs' },
+      row,
+      { ...row, id: 'p-stary', created_at: 50 },
     ]);
 
-    const plan = await (await ready()).loadPlan();
+    const plans = await (await ready()).loadPlans();
     const [sql] = select.mock.calls[0] ?? [];
     expect(String(sql)).toContain('active = 1');
-    expect(plan?.variant).toBe('realistic');
-    expect(plan?.targets).toEqual([{ skillId: 's-1', targetLevel: 3 }]);
-    expect(plan?.diagnosisSnapshot).toEqual([{ skillId: 's-1', level: 1 }]);
+    expect(String(sql)).toContain('ORDER BY created_at DESC');
+    expect(plans.map((p) => [p.id, p.subjectId])).toEqual([
+      ['p-cs', 'cs'],
+      ['p-1', 'math'],
+    ]);
+    const math = plans[1];
+    expect(math?.variant).toBe('realistic');
+    expect(math?.targets).toEqual([{ skillId: 's-1', targetLevel: 3 }]);
+    expect(math?.diagnosisSnapshot).toEqual([{ skillId: 's-1', level: 1 }]);
   });
 
-  it('brak planu to null, nie blad', async () => {
+  it('brak planu to pusta lista, nie blad', async () => {
     select.mockResolvedValueOnce([]);
-    expect(await (await ready()).loadPlan()).toBeNull();
+    expect(await (await ready()).loadPlans()).toEqual([]);
   });
 
-  it('zapis nowego planu dezaktywuje poprzedni zamiast go kasowac', async () => {
+  it('zapis nowego planu dezaktywuje poprzedni tego przedmiotu zamiast go kasowac', async () => {
     await (await ready()).savePlan({
       id: 'p-2',
       variant: 'minimum',
@@ -340,11 +359,27 @@ describe('plan i preferencje', () => {
       deadline: null,
       targets: [],
       diagnosisSnapshot: [],
+      subjectId: 'biz',
     });
-    const sqls = execute.mock.calls.map(([s]) => String(s));
-    expect(sqls[0]).toContain('UPDATE plans SET active = 0');
-    expect(sqls[1]).toContain('INSERT INTO plans');
-    expect(sqls.some((s) => s.includes('DELETE FROM plans'))).toBe(false);
+    const calls = execute.mock.calls.map(([sql, params]) => ({ sql: String(sql), params: params as unknown[] }));
+    expect(calls[0]?.sql).toContain('UPDATE plans SET active = 0 WHERE active = 1 AND subject_id = $1');
+    expect(calls[0]?.params).toEqual(['biz']);
+    expect(calls[1]?.sql).toContain('INSERT INTO plans');
+    expect(calls[1]?.params.at(-1)).toBe('biz');
+    expect(calls.some((c) => c.sql.includes('DELETE FROM plans'))).toBe(false);
+  });
+
+  it('plan bez przedmiotu (sprzed migracji 006) trafia do matematyki', async () => {
+    await (await ready()).savePlan({
+      id: 'p-3',
+      variant: 'minimum',
+      createdAt: 1,
+      deadline: null,
+      targets: [],
+      diagnosisSnapshot: [],
+    });
+    const [, params] = execute.mock.calls[0] ?? [];
+    expect(params).toEqual(['math']);
   });
 
   it('uszkodzony JSON w planie nie wywraca wczytywania profilu', async () => {
@@ -357,9 +392,10 @@ describe('plan i preferencje', () => {
         targets: 'to nie jest json',
         diagnosis_snapshot: '{}',
         active: 1,
+        subject_id: 'math',
       },
     ]);
-    const plan = await (await ready()).loadPlan();
+    const [plan] = await (await ready()).loadPlans();
     expect(plan?.targets).toEqual([]);
     expect(plan?.diagnosisSnapshot).toEqual([]);
   });

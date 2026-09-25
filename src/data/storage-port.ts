@@ -8,6 +8,7 @@ import type {
   SavedPlan,
   SkillState,
 } from './types';
+import { planSubject } from './types';
 
 /**
  * Port trwalosci.
@@ -30,8 +31,9 @@ export interface StoragePort {
   loadMissions(): Promise<Mission[]>;
   saveMission(mission: Mission): Promise<void>;
 
-  /** Aktywny plan nauki albo null, gdy diagnoza jeszcze nie przeszla. */
-  loadPlan(): Promise<SavedPlan | null>;
+  /** Aktywne plany nauki - najwyzej jeden na przedmiot; pusta lista przed diagnoza. */
+  loadPlans(): Promise<SavedPlan[]>;
+  /** Zastepuje aktywny plan tego samego przedmiotu; plany innych zostaja. */
   savePlan(plan: SavedPlan): Promise<void>;
 
   loadPreferences(): Promise<Preference[]>;
@@ -89,8 +91,11 @@ export interface RecordSelection {
   attemptIds: string[];
   missionIds: string[];
   skillIds: string[];
-  /** Plan zbudowany na usuwanych wynikach traci podstawe i znika razem z nimi. */
-  dropPlan: boolean;
+  /**
+   * Przedmioty, ktorych plan traci podstawe: plan zbudowany na usuwanych
+   * wynikach znika razem z nimi.
+   */
+  dropPlanSubjects: string[];
   /** Wyniki arkuszy - pole dopisane pozniej, brak oznacza pusta liste. */
   examResultIds?: string[];
 }
@@ -127,6 +132,12 @@ export interface SnapshotV1 {
   attempts: Attempt[];
   missions: Mission[];
   /** Pola dopisane w wersji 1 po pierwszym wydaniu - kopie bez nich sa wazne. */
+  /** Aktywne plany, po jednym na przedmiot. */
+  plans?: SavedPlan[];
+  /**
+   * Plan matematyki - pole z czasow jednego planu. Starsze kopie maja tylko
+   * je; nowe zapisuja oba, zeby starsza wersja aplikacji tez je wczytala.
+   */
   plan?: SavedPlan | null;
   preferences?: Preference[];
   lessonProgress?: LessonProgress[];
@@ -227,6 +238,8 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     }
   }
 
+  const plans = snapshotPlans(snap);
+
   const examResults = snap.examResults ?? [];
   if (!Array.isArray(examResults)) {
     throw new SnapshotValidationError('Wyniki arkuszy nie są listą.');
@@ -255,10 +268,42 @@ export function validateSnapshot(input: unknown): SnapshotV1 {
     attempts: snap.attempts as Attempt[],
     missions: snap.missions as Mission[],
     // Starsze kopie nie maja tych pol - to nie jest powod do odrzucenia.
-    plan: snap.plan ?? null,
+    plans,
+    plan: mathPlan(plans),
     preferences: Array.isArray(snap.preferences) ? snap.preferences : [],
     lessonProgress,
     cardStates,
     examResults,
   };
+}
+
+/**
+ * Plany z kopii: nowe pole `plans` albo - w starszych kopiach - pojedynczy
+ * `plan` matematyki. Z kilku planow jednego przedmiotu wygrywa najnowszy.
+ */
+function snapshotPlans(snap: Partial<SnapshotV1>): SavedPlan[] {
+  const raw: unknown = snap.plans ?? (snap.plan ? [snap.plan] : []);
+  if (!Array.isArray(raw)) {
+    throw new SnapshotValidationError('Plany nauki nie są listą.');
+  }
+  const bySubject = new Map<string, SavedPlan>();
+  for (const p of raw as SavedPlan[]) {
+    if (
+      typeof p?.id !== 'string' ||
+      typeof p.createdAt !== 'number' ||
+      !Array.isArray(p.targets) ||
+      !Array.isArray(p.diagnosisSnapshot) ||
+      !(p.subjectId === undefined || typeof p.subjectId === 'string')
+    ) {
+      throw new SnapshotValidationError('Niepełny plan nauki.');
+    }
+    const prev = bySubject.get(planSubject(p));
+    if (!prev || p.createdAt > prev.createdAt) bySubject.set(planSubject(p), p);
+  }
+  return [...bySubject.values()];
+}
+
+/** Plan matematyki do pola `plan` - czytaja je wersje sprzed planow na przedmiot. */
+export function mathPlan(plans: SavedPlan[]): SavedPlan | null {
+  return plans.find((p) => planSubject(p) === 'math') ?? null;
 }

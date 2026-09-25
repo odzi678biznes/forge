@@ -46,6 +46,21 @@ jobs:
       - run: npm run build
         env:
           FORGE_BASE: /${{ github.event.repository.name }}/
+      # Testy E2E na tym samym buildzie, który zostanie opublikowany: lekcja,
+      # diagnoza, Python w przeglądarce, układ telefonu, praca offline.
+      - name: Przeglądarka do testów E2E
+        run: npx playwright install --with-deps chromium
+      - name: Testy E2E
+        run: npx playwright test
+        env:
+          FORGE_BASE: /${{ github.event.repository.name }}/
+      - name: Ślad nieudanych testów E2E
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-slady
+          path: test-results
+          retention-days: 7
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
