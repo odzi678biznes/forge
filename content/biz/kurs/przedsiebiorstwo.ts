@@ -154,9 +154,9 @@ export const FIRM_LESSONS: Lesson[] = [
       'Czy biznes zarobi? Odpowiedź daje porównanie przychodów z kosztami. Kluczowe pojęcie to próg rentowności — liczba sprzedanych sztuk, przy której firma wychodzi na zero.',
     blocks: [
       p('Koszty stałe nie zależą od wielkości produkcji (czynsz, pensje administracji, leasing). Koszty zmienne rosną z każdą sztuką (surowiec, opakowanie, prowizja). Marża jednostkowa (na pokrycie kosztów stałych) to cena minus koszt zmienny jednej sztuki.'),
-      f('Q_{BEP} = \\frac{K_{stałe}}{c - k_{zm}} \\qquad \\text{zysk} = Q \\cdot (c - k_{zm}) - K_{stałe}', 'Próg rentowności ilościowy i zysk przy sprzedaży Q sztuk.'),
+      f('Q_{BEP} = \\frac{K_{\\text{stałe}}}{c - k_{zm}} \\qquad \\text{zysk} = Q \\cdot (c - k_{zm}) - K_{\\text{stałe}}','Próg rentowności ilościowy i zysk przy sprzedaży Q sztuk.'),
       f('\\text{rentowność sprzedaży} = \\frac{\\text{zysk}}{\\text{przychody}} \\cdot 100\\%'),
-      p('Próg rentowności wartościowy to przychód na progu: $Q_{BEP} \\cdot c$. Powyżej progu każda sprzedana sztuka dokłada do zysku marżę jednostkową. Żeby osiągnąć zakładany zysk Z, trzeba sprzedać $\\frac{K_{stałe} + Z}{c - k_{zm}}$ sztuk.'),
+      p('Próg rentowności wartościowy to przychód na progu: $Q_{BEP} \\cdot c$. Powyżej progu każda sprzedana sztuka dokłada do zysku marżę jednostkową. Żeby osiągnąć zakładany zysk Z, trzeba sprzedać $\\frac{K_{\\text{stałe}} + Z}{c - k_{zm}}$ sztuk.'),
       tip('Sprawdzaj jednostki: koszty stałe za miesiąc dają próg w sztukach na miesiąc.'),
       warn('Przy cenie niższej lub równej kosztowi zmiennemu próg rentowności nie istnieje — każda sprzedaż pogłębia stratę.'),
     ],
@@ -707,7 +707,7 @@ export const FIRM_CARDS: Flashcard[] = [
   card('c-bp-s-1', 'biz-environment-swot', 'metoda', 'SWOT — wewnętrzne czy zewnętrzne?', 'S i W: wewnętrzne. O i T: zewnętrzne.'),
   card('c-bp-s-2', 'biz-environment-swot', 'definicja', 'Co chroni znak towarowy?', 'Oznaczenia odróżniające produkty: nazwę, logo.'),
 
-  card('c-bp-r-1', 'biz-profitability', 'wzor', 'Próg rentowności ilościowy?', '$Q = \\frac{K_{stałe}}{c - k_{zm}}$'),
+  card('c-bp-r-1', 'biz-profitability', 'wzor', 'Próg rentowności ilościowy?', '$Q = \\frac{K_{\\text{stałe}}}{c - k_{zm}}$'),
   card('c-bp-r-2', 'biz-profitability', 'wzor', 'Rentowność sprzedaży?', 'zysk : przychody · 100%.'),
 
   card('c-bp-f-1', 'biz-financing-risk', 'definicja', 'Anioł biznesu?', 'Prywatny inwestor: kapitał i doradztwo w zamian za udziały.'),

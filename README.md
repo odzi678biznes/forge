@@ -35,7 +35,12 @@ sprawdzane automatycznie:
 Audyt z 25.09.2026: ręcznie sprawdzonych zostało ok. 440 zadań (wszystkie
 zamknięte, 123 liczbowe z matematyki, listingi SQL i arkusza) i 9 lekcji —
 merytorycznie poprawne poza jednym dwuznacznym dystraktorem (poprawionym).
-Lekcje są zwięzłe: to raczej ściąga z przykładami niż pełny wykład.
+
+Każda ze 163 lekcji ma wykład w trzech częściach: **„Skąd to się bierze”**
+(intuicja i sens, przykłady z życia), **„Jak to zrobić”** (przepis krok po
+kroku) i **„Sprawdź, czy rozumiesz”** (pytanie z odpowiedzią do odsłonięcia),
+a dopiero potem wzory, przykłady i pułapki. Walidator wymaga wykładu przy
+każdej lekcji. Wykłady są w `content/<przedmiot>/wyklad/`.
 
 **Arkusze CKE** nie są kopiowane do aplikacji (prawa autorskie). FORGE zna ich
 strukturę — numery zadań, punkty, wymagania — i otwiera oficjalne PDF-y

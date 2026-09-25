@@ -378,7 +378,7 @@ export function validateCorpus(label: string, corpus: Corpus): void {
       for (const [where, t] of allTexts) {
         for (const tex of mathSegments(t)) {
           expect(
-            () => katex.renderToString(tex, { throwOnError: true }),
+            () => katex.renderToString(tex, { throwOnError: true, strict: 'error' }),
             `${where}: $${tex}$`,
           ).not.toThrow();
         }
@@ -512,9 +512,8 @@ export function validateCorpus(label: string, corpus: Corpus): void {
       }
     });
 
-    it('wyklad (idea, przepis, pytanie sprawdzajace) ma pelna forme', () => {
+    it('kazda lekcja ma pelny wyklad (idea, przepis, pytanie sprawdzajace)', () => {
       for (const l of lessons) {
-        if (!l.idea && !l.method && !l.check) continue;
         expect(l.idea?.length ?? 0, `${l.skillId}: idea`).toBeGreaterThanOrEqual(2);
         expect(l.method?.length ?? 0, `${l.skillId}: przepis`).toBeGreaterThanOrEqual(3);
         expect(l.check?.question.trim() ?? '', `${l.skillId}: pytanie`).not.toBe('');

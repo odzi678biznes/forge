@@ -1,5 +1,7 @@
 import type { Question, Skill, Subject, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
+import { withExplanations } from '../wyklad';
+import { BIZ_WYKLAD } from './wyklad/index';
 import { MARKET_CARDS, MARKET_LESSONS, MARKET_QUESTIONS, MARKET_SKILLS, MARKET_TOPIC } from './kurs/rynek';
 import { MACRO_CARDS, MACRO_LESSONS, MACRO_QUESTIONS, MACRO_SKILLS, MACRO_TOPIC } from './kurs/makro';
 import { FIN_CARDS, FIN_LESSONS, FIN_QUESTIONS, FIN_SKILLS, FIN_TOPIC } from './kurs/finanse';
@@ -43,6 +45,6 @@ export const BIZ_CORPUS: Corpus = {
   topics: BIZ_TOPICS,
   skills: BIZ_SKILLS,
   questions: BIZ_QUESTIONS,
-  lessons: CHAPTERS.flatMap((c) => c.lessons),
+  lessons: withExplanations(CHAPTERS.flatMap((c) => c.lessons), BIZ_WYKLAD),
   flashcards: CHAPTERS.flatMap((c) => c.cards),
 };

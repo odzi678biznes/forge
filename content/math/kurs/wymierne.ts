@@ -147,7 +147,7 @@ export const RAT_LESSONS: Lesson[] = [
       ),
       example(
         r`Jadąc tam z prędkością $60$ km/h, a z powrotem $40$ km/h, jaką masz średnią prędkość?`,
-        [r`Droga $s$ w obie strony: czas $\frac{s}{60} + \frac{s}{40} = \frac{s}{24}$.`, r`$v_{śr} = \frac{2s}{s/24} = 48$ km/h.`],
+        [r`Droga $s$ w obie strony: czas $\frac{s}{60} + \frac{s}{40} = \frac{s}{24}$.`, r`$v_{\text{śr}} =\frac{2s}{s/24} = 48$ km/h.`],
         r`$48$ km/h`,
       ),
     ],
