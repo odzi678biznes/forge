@@ -1,5 +1,7 @@
 import type { Question, Skill, Subject, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
+import { withExplanations } from '../wyklad';
+import { CS_WYKLAD } from './wyklad/index';
 import { PY_CARDS, PY_LESSONS, PY_QUESTIONS, PY_SKILLS, PY_TOPIC } from './kurs/python-podstawy';
 import { DATA_CARDS, DATA_LESSONS, DATA_QUESTIONS, DATA_SKILLS, DATA_TOPIC } from './kurs/dane';
 import { NUM_CARDS, NUM_LESSONS, NUM_QUESTIONS, NUM_SKILLS, NUM_TOPIC } from './kurs/liczby';
@@ -47,6 +49,6 @@ export const CS_CORPUS: Corpus = {
   topics: CS_TOPICS,
   skills: CS_SKILLS,
   questions: CS_QUESTIONS,
-  lessons: CHAPTERS.flatMap((c) => c.lessons),
+  lessons: withExplanations(CHAPTERS.flatMap((c) => c.lessons), CS_WYKLAD),
   flashcards: CHAPTERS.flatMap((c) => c.cards),
 };
