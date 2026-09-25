@@ -5,6 +5,7 @@ import { MACRO_CARDS, MACRO_LESSONS, MACRO_QUESTIONS, MACRO_SKILLS, MACRO_TOPIC 
 import { FIN_CARDS, FIN_LESSONS, FIN_QUESTIONS, FIN_SKILLS, FIN_TOPIC } from './kurs/finanse';
 import { WORK_CARDS, WORK_LESSONS, WORK_QUESTIONS, WORK_SKILLS, WORK_TOPIC } from './kurs/praca';
 import { FIRM_CARDS, FIRM_LESSONS, FIRM_QUESTIONS, FIRM_SKILLS, FIRM_TOPIC } from './kurs/przedsiebiorstwo';
+import { MGMT_CARDS, MGMT_LESSONS, MGMT_QUESTIONS, MGMT_SKILLS, MGMT_TOPIC } from './kurs/zarzadzanie';
 
 /**
  * Korpus biznesu i zarządzania (matura rozszerzona, pierwsza sesja: maj 2027).
@@ -26,6 +27,7 @@ const CHAPTERS = [
   { topic: FIN_TOPIC, skills: FIN_SKILLS, questions: FIN_QUESTIONS, lessons: FIN_LESSONS, cards: FIN_CARDS },
   { topic: WORK_TOPIC, skills: WORK_SKILLS, questions: WORK_QUESTIONS, lessons: WORK_LESSONS, cards: WORK_CARDS },
   { topic: FIRM_TOPIC, skills: FIRM_SKILLS, questions: FIRM_QUESTIONS, lessons: FIRM_LESSONS, cards: FIRM_CARDS },
+  { topic: MGMT_TOPIC, skills: MGMT_SKILLS, questions: MGMT_QUESTIONS, lessons: MGMT_LESSONS, cards: MGMT_CARDS },
 ];
 
 export const BIZ_TOPICS: Topic[] = CHAPTERS.map((c) => c.topic);
