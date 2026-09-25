@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Icon, type IconName } from '@/components/Icon';
-import { SUBJECT_LABELS, type Screen, type SubjectId } from './useForge';
+import { SUBJECT_LABELS, SUBJECT_SHORT, type Screen, type SubjectId } from './useForge';
 import './shell.css';
 
 /**
@@ -78,8 +78,9 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
     );
   };
 
-  const subjects = (
-    <div className="subjects" role="radiogroup" aria-label="Przedmiot">
+  // W bocznym menu pełne nazwy jedna pod drugą, w górnym pasku telefonu — skróty.
+  const subjects = (compact: boolean) => (
+    <div className={compact ? 'subjects subjects--compact' : 'subjects'} role="radiogroup" aria-label="Przedmiot">
       {(Object.keys(SUBJECT_LABELS) as SubjectId[]).map((id) => (
         <button
           key={id}
@@ -88,8 +89,9 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
           aria-checked={subject === id}
           className={subject === id ? 'subjects__item subjects__item--on' : 'subjects__item'}
           onClick={() => onSubject(id)}
+          aria-label={SUBJECT_LABELS[id]}
         >
-          {SUBJECT_LABELS[id]}
+          {compact ? SUBJECT_SHORT[id] : SUBJECT_LABELS[id]}
         </button>
       ))}
     </div>
@@ -99,7 +101,7 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
     <div className="shell">
       <aside className="shell__side" aria-label="Nawigacja">
         <p className="shell__brand">FORGE</p>
-        {subjects}
+        {subjects(false)}
         <nav className="nav">{PRIMARY.map((n) => item(n, 'side'))}</nav>
         <nav className="nav nav--secondary" aria-label="Narzędzia">
           {SECONDARY.map((n) => item(n, 'side'))}
@@ -108,7 +110,7 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
 
       <header className="shell__top">
         <p className="shell__brand">FORGE</p>
-        {subjects}
+        {subjects(true)}
         <button
           type="button"
           className="shell__more"

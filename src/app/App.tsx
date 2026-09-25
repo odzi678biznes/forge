@@ -28,17 +28,20 @@ import type { ExamSheet } from '@content/exams/types';
 import type { Skill } from '@/data/types';
 import { MATH_CORPUS } from '@content/math/index';
 import { CS_CORPUS } from '@content/cs/index';
+import { BIZ_CORPUS } from '@content/biz/index';
 
 /** Ekran danych działa na obu przedmiotach naraz, niezależnie od wybranego. */
 const DATA_SUBJECTS: SubjectInfo[] = [
   { id: 'math', label: SUBJECT_LABELS.math, skillIds: MATH_CORPUS.skills.map((s) => s.id) },
   { id: 'cs', label: SUBJECT_LABELS.cs, skillIds: CS_CORPUS.skills.map((s) => s.id) },
+  { id: 'biz', label: SUBJECT_LABELS.biz, skillIds: BIZ_CORPUS.skills.map((s) => s.id) },
 ];
 /** Katalog oficjalnych arkuszy CKE według przedmiotu. */
-const EXAMS: Record<'math' | 'cs', ExamSheet[]> = { math: MATH_EXAMS, cs: CS_EXAMS };
+/** Biznes i zarządzanie: pierwsza matura w maju 2027, arkuszy jeszcze nie ma. */
+const EXAMS: Record<'math' | 'cs' | 'biz', ExamSheet[]> = { math: MATH_EXAMS, cs: CS_EXAMS, biz: [] };
 
-const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
-const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions];
+const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills, ...BIZ_CORPUS.skills];
+const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions, ...BIZ_CORPUS.questions];
 
 export function App() {
   const forge = useForge();

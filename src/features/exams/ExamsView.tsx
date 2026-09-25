@@ -36,6 +36,9 @@ type Mode =
   | { kind: 'entry'; exam: ExamSheet; editing?: ExamResult | undefined }
   | { kind: 'result'; exam: ExamSheet; result: ExamResult; reviews: number };
 
+/** Informator CKE o maturze z biznesu i zarządzania (od roku szkolnego 2026/2027). */
+const BIZ_INFORMATOR = 'https://cke.gov.pl/images/_EGZAMIN_MATURALNY_OD_2023/Informatory/2026/informator_BIZ.pdf';
+
 const KIND_CHIP: Record<ExamSheet['kind'], string> = {
   main: 'matura',
   diagnostic: 'diagnostyczny',
@@ -90,6 +93,7 @@ export function ExamsView(props: Props) {
 function ExamList({
   exams,
   results,
+  subjectId,
   onEnter,
   onShow,
   onDelete,
@@ -111,15 +115,22 @@ function ExamList({
     });
 
   if (exams.length === 0) {
+    const biz = subjectId === 'biz';
     return (
       <main className="page">
         <header>
           <p className="page__eyebrow">Arkusze CKE</p>
-          <h1 className="page__title">Arkusze w przygotowaniu</h1>
+          <h1 className="page__title">{biz ? 'Pierwsza matura w maju 2027' : 'Arkusze w przygotowaniu'}</h1>
           <p className="page__lead">
-            Dla tego przedmiotu katalog oficjalnych arkuszy jeszcze nie jest gotowy. Na razie arkusze są dostępne
-            z matematyki.
+            {biz
+              ? 'Biznes i zarządzanie to nowy przedmiot maturalny — CKE nie ma jeszcze arkuszy z poprzednich lat. Egzamin trwa 180 minut, można zdobyć 50 punktów, a na egzaminie przyda się kalkulator prosty. Przykładowe zadania z rozwiązaniami CKE opublikowała w informatorze.'
+              : 'Dla tego przedmiotu katalog oficjalnych arkuszy jeszcze nie jest gotowy.'}
           </p>
+          {biz && (
+            <button type="button" className="btn btn--small" onClick={() => void openExternal(BIZ_INFORMATOR)}>
+              <Icon name="external" size={15} /> Informator CKE (PDF)
+            </button>
+          )}
         </header>
       </main>
     );

@@ -131,6 +131,8 @@ export function latexToSpeech(tex: string): string {
 /** Zamienia całą treść zadania: tekst zostaje, wzory w $…$ są „czytane". */
 export function promptToSpeech(prompt: string): string {
   return prompt
+    // Luka do uzupełnienia („koszt ________”) — czytamy jako słowo.
+    .replace(/_{3,}/g, ' luka ')
     // Kod w tekście czytamy jak słowa: `suma_dodatnich(t)` -> "suma dodatnich t".
     .replace(/`([^`]*)`/g, (_m, code: string) => ` ${code.replace(/[_{}()[\]\\$^'"=:,.<>]+/g, ' ')} `)
     .replace(/\$([^$]*)\$/g, (_m, tex: string) => ` ${latexToSpeech(tex)} `)

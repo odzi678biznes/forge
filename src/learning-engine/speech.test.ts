@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { latexToSpeech, promptToSpeech } from './speech';
 import { MATH_QUESTIONS } from '@content/math/index';
 import { CS_QUESTIONS } from '@content/cs/index';
+import { BIZ_QUESTIONS } from '@content/biz/index';
 
 describe('wzory na tekst mowiony', () => {
   it('potegi maja naturalne polskie nazwy', () => {
@@ -73,8 +74,12 @@ describe('cala tresc zadania', () => {
     );
   });
 
+  it('luka w zadaniu z luka jest czytana jako slowo', () => {
+    expect(promptToSpeech('To koszt ________.')).toBe('To koszt luka.');
+  });
+
   it('zadne zadanie z korpusu nie zostawia znacznikow LaTeX do przeczytania', () => {
-    for (const q of [...MATH_QUESTIONS, ...CS_QUESTIONS]) {
+    for (const q of [...MATH_QUESTIONS, ...CS_QUESTIONS, ...BIZ_QUESTIONS]) {
       const spoken = promptToSpeech(q.prompt);
       expect(spoken, q.id).not.toMatch(/[\\${}^_]/);
       expect(spoken.trim().length, q.id).toBeGreaterThan(0);

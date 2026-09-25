@@ -20,6 +20,7 @@ import { createStorage } from '@/data/create-storage';
 import type { StoragePort } from '@/data/storage-port';
 import { MATH_CORPUS, type Corpus } from '@content/math/index';
 import { CS_CORPUS } from '@content/cs/index';
+import { BIZ_CORPUS } from '@content/biz/index';
 import { selectNextQuestion, type Selection } from '@/learning-engine/selector';
 import { applyAttempt, type MasteryTransition } from '@/learning-engine/mastery';
 import { scheduleReview } from '@/learning-engine/review';
@@ -81,21 +82,29 @@ export type Screen =
   | 'flashcards'
   | 'exams';
 
-export type SubjectId = 'math' | 'cs';
+export type SubjectId = 'math' | 'cs' | 'biz';
 
 export const SUBJECT_LABELS: Record<SubjectId, string> = {
   math: 'Matematyka',
   cs: 'Informatyka',
+  biz: 'Biznes i zarządzanie',
 };
 
-const CORPORA: Record<SubjectId, Corpus> = { math: MATH_CORPUS, cs: CS_CORPUS };
+/** Krótkie nazwy do wąskiego paska na telefonie. */
+export const SUBJECT_SHORT: Record<SubjectId, string> = {
+  math: 'Mat.',
+  cs: 'Inf.',
+  biz: 'BiZ',
+};
+
+const CORPORA: Record<SubjectId, Corpus> = { math: MATH_CORPUS, cs: CS_CORPUS, biz: BIZ_CORPUS };
 
 /**
  * Stany kompetencji trzymamy dla WSZYSTKICH przedmiotow naraz. Identyfikatory
  * nie koliduja (pilnuje tego test korpusu informatyki), wiec jedna mapa
  * obsluguje oba przedmioty, a przelaczenie przedmiotu nie gubi postepu.
  */
-const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills];
+const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills, ...BIZ_CORPUS.skills];
 
 /** Wynik uruchomienia kodu - pokazywany w feedbacku zadania programistycznego. */
 export interface CodeFeedback {
@@ -273,7 +282,7 @@ export function useForge(deps: ForgeDeps = {}) {
         : 'standard',
     );
     const savedSubject = prefs.find((x) => x.key === SUBJECT_KEY)?.value;
-    setSubjectState(savedSubject === 'math' || savedSubject === 'cs' ? savedSubject : 'math');
+    setSubjectState(savedSubject && savedSubject in SUBJECT_LABELS ? (savedSubject as SubjectId) : 'math');
 
     const deadline = prefs.find((x) => x.key === DEADLINE_KEY)?.value;
     setCourseDeadlineState(deadline && DATE_KEY.test(deadline) ? deadline : DEFAULT_COURSE_DEADLINE);

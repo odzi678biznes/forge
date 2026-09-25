@@ -33,7 +33,7 @@ export interface ExamTask {
 export interface ExamSheet {
   id: string;
   /** Brak pola = matematyka (tak powstał pierwszy katalog). */
-  subjectId?: 'math' | 'cs';
+  subjectId?: 'math' | 'cs' | 'biz';
   level: ExamLevel;
   kind: ExamKind;
   /** Rok i miesiąc: "2025-05". */

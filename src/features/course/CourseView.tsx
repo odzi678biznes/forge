@@ -40,10 +40,15 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
         <p className="page__eyebrow">Kurs</p>
         <h1 className="page__title">{subjectName}</h1>
         <p className="page__lead">
-          Przerobione: {course.summary.covered} z {course.summary.total} umiejętności. Podstawa{' '}
-          {course.summary.byLevel.PP.covered}/{course.summary.byLevel.PP.total}, rozszerzenie{' '}
-          {course.summary.byLevel.PR.covered}/{course.summary.byLevel.PR.total}. „Przerobione” znaczy: typowe
-          zadanie rozwiązane samodzielnie dwa razy z rzędu.
+          Przerobione: {course.summary.covered} z {course.summary.total} umiejętności.
+          {/* Informatyka i biznes mają tylko poziom rozszerzony — podział na poziomy nic by nie mówił. */}
+          {course.summary.byLevel.PP.total > 0 && (
+            <>
+              {' '}Podstawa {course.summary.byLevel.PP.covered}/{course.summary.byLevel.PP.total}, rozszerzenie{' '}
+              {course.summary.byLevel.PR.covered}/{course.summary.byLevel.PR.total}.
+            </>
+          )}{' '}
+          „Przerobione” znaczy: typowe zadanie rozwiązane samodzielnie dwa razy z rzędu.
         </p>
         <div className="bar course__bar" aria-hidden>
           <div className="bar__fill" style={{ width: `${course.summary.ratio * 100}%` }} />

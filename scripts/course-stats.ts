@@ -1,6 +1,7 @@
 import type { Corpus } from '../content/corpus';
 import { MATH_CORPUS } from '../content/math';
 import { CS_CORPUS } from '../content/cs';
+import { BIZ_CORPUS } from '../content/biz';
 
 function stats(label: string, c: Corpus): void {
   const pp = c.skills.filter((s) => s.level === 'PP').length;
@@ -27,3 +28,4 @@ function stats(label: string, c: Corpus): void {
 
 stats('MATEMATYKA', MATH_CORPUS);
 stats('INFORMATYKA', CS_CORPUS);
+stats('BIZNES I ZARZĄDZANIE', BIZ_CORPUS);
