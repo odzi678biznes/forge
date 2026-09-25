@@ -1,0 +1,4 @@
+# Migracje SQLite musza miec zawsze te same bajty: wtyczka SQL zapisuje w bazie
+# sume kontrolna tekstu migracji i przy innej (np. CRLF po sklonowaniu na
+# Windowsie) odmawia otwarcia bazy. Bazy uzytkownikow maja sumy z wersji LF.
+src-tauri/migrations/*.sql text eol=lf
