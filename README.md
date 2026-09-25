@@ -1,8 +1,77 @@
-# FORGE — Matura Training System
+# FORGE — kurs maturalny 2027
 
-Lokalna aplikacja treningowa do matury. Implementacja według `docs/blueprint-v2.md`.
+Aplikacja do samodzielnej nauki do matury 2027: **matematyka** (podstawa
+i rozszerzenie, cel: 100% na rozszerzeniu), **informatyka** (Python i SQL)
+oraz **biznes i zarządzanie**. Działa na komputerze (aplikacja Tauri) i na
+telefonie (aplikacja webowa z pracą offline). Dane zostają na urządzeniu —
+nie ma konta ani serwera. Założenia projektu: `docs/blueprint-v2.md`.
 
-**Stan: Etap 0, 1 i 2 ukończone.**
+Plan kursu: cały materiał do **31 stycznia 2027**, potem arkusze i szlifowanie.
+
+---
+
+## Status treści — przeczytaj przed nauką
+
+Całą treść (lekcje, zadania, podpowiedzi, fiszki) napisano na potrzeby tej
+aplikacji. **Nikt jej jeszcze nie zweryfikował jako nauczyciel ani względem
+wymagań CKE** — każde zadanie ma w kodzie `verified: false`. Co jest
+sprawdzane automatycznie:
+
+- **matematyka** — odpowiedzi liczbowe mają funkcję `verify`, która liczy wynik
+  niezależnie od wpisanej odpowiedzi; testy spójności pilnują, żeby podpowiedzi
+  nie zdradzały wyniku, a typowe błędy nie pokrywały się z odpowiedzią,
+- **informatyka** — każde zadanie z kodem ma wzorcowe rozwiązanie, które musi
+  przejść wszystkie testy (także ukryte), a kod startowy musi je oblać;
+  oczekiwane wyniki zadań SQL są generowane z wzorcowych zapytań na trzech
+  bazach testowych (`scripts/sql-expected.ts`, test pilnuje aktualności),
+- **biznes i zarządzanie** — materiał ułożony według informatora CKE; pierwsza
+  matura z tego przedmiotu jest w maju 2027, więc **nie ma jeszcze arkuszy
+  ani zasad oceniania z prawdziwego egzaminu**. Zadania rachunkowe (np.
+  wynagrodzenia) podają stawki w treści, więc nie zależą od aktualnych przepisów.
+
+**Arkusze CKE** nie są kopiowane do aplikacji (prawa autorskie). FORGE zna ich
+strukturę — numery zadań, punkty, wymagania — i otwiera oficjalne PDF-y
+z `cke.gov.pl`. Przypisanie zadań arkusza do umiejętności kursu jest
+automatyczne (matematyka: kody wymagań, informatyka: słowa kluczowe), więc
+bywa przybliżone.
+
+---
+
+## Co jest w środku
+
+| | Matematyka | Informatyka | Biznes i zarządzanie |
+|---|---|---|---|
+| Działy | 16 | 10 | 8 |
+| Umiejętności | 95 (62 PP, 33 PR) | 34 | 34 |
+| Zadania | 761 | 238, w tym 118 w Pythonie i 19 w SQL | 227 |
+| Lekcje | 95 | 34 | 34 |
+| Fiszki | 223 | 68 | 68 |
+| Arkusze CKE | 13 (8 PP, 5 PR, 2022–2026) | 5 (2023–2026) | — (pierwszy egzamin 2027) |
+
+`npx vite-node scripts/course-stats.ts` wypisuje aktualne liczby z podziałem na działy.
+
+### Ekrany
+
+- **Dziś** — jeden następny krok, plan dnia (lekcje, powtórki, fiszki), skrót
+  pozostałych przedmiotów i uczciwa informacja, czy tempo wystarcza do terminu.
+- **Kurs** — działy i lekcje w kolejności; po lekcji ćwiczenia od łatwych do
+  maturalnych, z drabiną podpowiedzi i nazwaną przyczyną błędu.
+- **Fiszki** — powtórki w odstępach, nowe karty tylko z przerobionych tematów.
+- **Kalendarz** — materiał rozłożony równo do 31.01.2027, niedziele wolne od
+  nowego materiału. Trzy przedmioty dzielą **jeden budżet dnia** (tryb
+  Minimum / Standard / Mocny).
+- **Postęp**, **Mapa umiejętności**, **Raport tygodnia**, **Laboratorium
+  błędów** (błędy zgrupowane po przyczynie, z naprawą).
+- **Arkusze CKE** — arkusz w PDF, wpisywanie punktów, analiza: które
+  umiejętności kosztowały najwięcej punktów i co powtórzyć.
+- **Zadania z kodem** — edytor, testy widoczne i ukryte, Python uruchamiany
+  lokalnie (Pyodide), zapytania SQL na bazach SQLite z podglądem tabel.
+- **Nauczyciel AI** (opcjonalny, tylko na komputerze) — podpowiedzi i ocena
+  odpowiedzi opisowych z jawnym kontekstem. Klucz API trzymany wyłącznie
+  w pamięci aplikacji, znika po zamknięciu.
+- **Czytanie na głos** — treść zadania razem ze wzorami (głosy systemu).
+- **Twoje dane** — eksport JSON/CSV, import, synchronizacja z drugim
+  urządzeniem, kopie bezpieczeństwa, usuwanie, praca offline na telefonie.
 
 ---
 
@@ -16,30 +85,57 @@ npm run tauri:dev
 | Polecenie | Działanie |
 |---|---|
 | `npm run tauri:dev` | aplikacja desktopowa (Tauri + SQLite) |
-| `npm run tauri:build` | instalator Windows (NSIS) |
-| `npm run dev` | sam interfejs w przeglądarce (IndexedDB) |
-| `npm test` | testy jednostkowe (Vitest) |
+| `npm run tauri:build` | instalator Windows (NSIS) w `src-tauri/target/release/bundle/nsis` |
+| `npm run dev` | sam interfejs w przeglądarce (IndexedDB), port 1420 |
+| `npm run build` | wersja webowa w `dist/` (także na telefon) |
+| `npm test` | testy (Vitest), w tym wzorcowe rozwiązania w Pythonie i SQL |
 | `npm run typecheck` | kontrola typów |
 
-Wymagania: Node 20+, Rust stable, VS Build Tools z workloadem C++.
+Wymagania: Node 20+, Rust stable, Visual Studio Build Tools z workloadem C++
+(tylko dla aplikacji desktopowej).
 
 ---
 
-## Co działa
+## Wersja na telefon
 
-**Etap 0 — fundament.** Powłoka Tauri 2, SQLite z migracjami po stronie Rusta,
-minimalne capabilities, CSP bez `unsafe-eval`, instalator NSIS.
+To ta sama aplikacja zbudowana jako strona z pracą offline (PWA). Żeby
+zainstalować ją na telefonie, musi być dostępna pod adresem **https** —
+przeglądarki nie pozwalają inaczej na pracę offline ani instalację.
 
-**Etap 1 — pętla nauki.** Centrum dowodzenia z jedną rekomendowaną misją →
-arena pełnoekranowa z LaTeX-em → drabina podpowiedzi → feedback nazywający
-przyczynę błędu → podsumowanie ze zmianami kompetencji.
+**Publikacja (jednorazowo).** Najprościej przez GitHub Pages: repozytorium na
+GitHubie, w nim Settings → Pages → Source: *GitHub Actions*. Workflow
+`.github/workflows/pages.yml` przy każdym wypchnięciu na `main` uruchamia
+testy, buduje aplikację pod adres `https://<użytkownik>.github.io/<repozytorium>/`
+i ją publikuje. Na darmowym planie GitHub Pages wymaga publicznego
+repozytorium. Każdy inny hosting plików statycznych też wystarczy:
+`npm run build` i wysłanie folderu `dist` (w podkatalogu:
+`FORGE_BASE=/sciezka/ npm run build`).
 
-**Etap 2 — mapa i dziennik błędów.** Graf zależności kompetencji z klikalnymi
-węzłami, laboratorium błędów grupujące po przyczynie, misje celowane.
+**Na telefonie.**
 
-Zweryfikowane ręcznie: pełny przebieg misji klawiaturą, restart z odzyskaniem
-danych, brak przewijania poziomego przy powiększeniu 200%, „Napraw teraz"
-startujące od zadania fundamentalnego.
+1. Otwórz adres aplikacji.
+2. Zainstaluj: Android (Chrome) — menu ⋮ → *Zainstaluj aplikację*;
+   iPhone (Safari) — *Udostępnij* → *Do ekranu początkowego*.
+3. W *Twoje dane → Telefon i praca offline* pobierz Pythona (ok. 13 MB,
+   najlepiej przez Wi-Fi) i włącz trwałe przechowywanie danych.
+
+**Postęp między urządzeniami.** Nie ma chmury: na jednym urządzeniu *Pobierz
+kopię JSON*, prześlij plik na drugie (mail do siebie, dysk) i tam *Połącz*.
+Łączenie niczego nie usuwa — dodaje odpowiedzi, lekcje i arkusze, a przy
+umiejętnościach i fiszkach zostawia nowszy stan. Potem w drugą stronę.
+
+**Nowa wersja** pobiera się sama, ale włącza dopiero po kliknięciu
+*Odśwież* na pasku u góry — nie przerywa nauki.
+
+**Różnice względem komputera.** Dane są w przeglądarce (IndexedDB), a nie
+w pliku SQLite. Nauczyciel AI jest niedostępny: w przeglądarce klucz API
+musiałby być w JavaScripcie. Safari na iPhonie potrafi usunąć dane strony po
+tygodniu bez wizyty, jeśli nie jest dodana do ekranu początkowego — dlatego
+instalacja i kopia JSON od czasu do czasu.
+
+**Próba w sieci domowej bez publikacji:** `npm run build`, potem
+`npm run preview -- --host` i adres `http://<ip-komputera>:4173` na telefonie.
+Działa, ale bez pracy offline i instalacji (to nie jest https).
 
 ---
 
@@ -51,11 +147,11 @@ startujące od zadania fundamentalnego.
 
 | Adapter | Kiedy |
 |---|---|
-| `SqliteStorage` | powłoka Tauri — baza w katalogu danych aplikacji |
-| `IndexedDbStorage` | `npm run dev` i testy — praca nad UI bez budowania Rusta |
+| `SqliteStorage` | aplikacja desktopowa — baza w katalogu danych aplikacji, migracje po stronie Rusta |
+| `IndexedDbStorage` | przeglądarka i telefon, `npm run dev`, testy |
 
-`create-storage.ts` wybiera jedną z nich w czasie startu. Silnik nauki nie wie,
-która działa. Import SQLite jest dynamiczny, więc build webowy nie wymaga IPC.
+`create-storage.ts` wybiera jedną z nich przy starcie. Silnik nauki nie wie,
+która działa.
 
 ### Awans kompetencji ma warunki, nie progi punktowe
 
@@ -71,77 +167,72 @@ rodzaju, nie liczby prób:
 | 4 → 5 | poprawnie bez pomocy po ≥ 7 dniach |
 
 Cofnięcie: wyłącznie po błędzie **bez pomocy** na zadaniu w zakresie danego
-poziomu, o jeden poziom, z podłogą na poziomie 1. Nieudany transfer nie zbija
-poziomu 3 — transfer ma prawo się nie udać, dopóki fundament działa.
+poziomu, o jeden poziom, z podłogą na poziomie 1.
 
 ### Priorytet jest jawną heurystyką, nie modelem
 
-`src/learning-engine/priority.ts` implementuje wagi wprost z sekcji 6
-(0,35 / 0,25 / 0,20 / 0,10 / 0,10). Każdy składnik jest znormalizowany do 0..1
-i rozkładalny na czynniki — stąd działający przycisk „Dlaczego to pytanie?".
-Wymóg z sekcji 17 jest spełniony po stronie kodu, nie deklaracji.
+`src/learning-engine/priority.ts` implementuje wagi z sekcji 6 blueprintu.
+Każdy składnik jest znormalizowany do 0..1 i rozkładalny na czynniki — stąd
+działający przycisk „Dlaczego to pytanie?”.
 
 ### Kolejka powtórek: 1 / 7 / 21 / 45 dni
 
-Świadomie **nie** SM-2 ani FSRS. Blueprint nazywa silnik heurystyką wersji 1,
-a drabina stałych odstępów jest w całości wytłumaczalna użytkownikowi.
-Podstawa dowodowa dla rozłożonej praktyki jest umiarkowana — traktujemy te
-odstępy jako hipotezę do weryfikacji na danych, nie jako pewnik.
+Świadomie **nie** SM-2 ani FSRS: drabina stałych odstępów jest w całości
+wytłumaczalna uczniowi. Odstępy to hipoteza do sprawdzenia na danych.
 
-### Błędy grupują się po przyczynie, nie po zadaniu
+### Jeden budżet dnia dla trzech przedmiotów
 
-`src/learning-engine/error-lab.ts`. Ten sam zgubiony znak w dwóch różnych
-zadaniach to jeden wpis do naprawy. Zamknięcie wpisu wymaga **trzech**
-poprawnych prób z rzędu na tej samej kompetencji; pomyłka w środku zeruje
-serię, a ponowne wystąpienie błędu otwiera wpis na nowo.
+`src/learning-engine/schedule.ts`. Każdy przedmiot rozkłada swój materiał
+równo do terminu, ale tryb dnia dzielą proporcjonalnie do tego, ile im
+zostało. Status „zdążysz” i podpowiedź trybu liczą się dla sumy. Przy pełnym
+kursie od końca września to ok. 56 min nowego materiału dziennie (plus
+powtórki): mieści się w trybie *Mocny*, w *Standard* koniec wypada w marcu —
+i aplikacja mówi to wprost.
 
-### Czego kod pilnuje, żeby nie złamać sekcji 14
+### Kod ucznia w piaskownicy
+
+Python działa w Pyodide w osobnym workerze. Po załadowaniu interpretera worker
+odbiera sobie sieć, magazyny i kanały komunikacji (`lockdown.ts`), a dopiero
+potem przyjmuje kod. Oczekiwane wyniki nigdy nie trafiają do workera —
+ocenia główny wątek. SQL korzysta z modułu `sqlite3` tego samego
+interpretera, bez dodatkowej zależności.
+
+### Synchronizacja bez chmury
+
+`src/learning-engine/sync-merge.ts` — czyste łączenie dwóch kopii: suma po
+identyfikatorach, przy konfliktach nowszy stan. Przed zapisem zawsze kopia
+bezpieczeństwa; łączenie tego samego pliku drugi raz nic nie zmienia.
+
+### Czego kod pilnuje, żeby nie złamać sekcji 14 (bez dark patterns)
 
 - Kolejna misja nigdy nie startuje automatycznie — jest tylko przycisk.
 - Po 2 misjach neutralny punkt zatrzymania, po 4 rekomendacja przerwy.
-- Protokół powrotu po ≥ 3 dniach przerwy nie każe nadrabiać zaległości.
-- Test `mission.test.ts` blokuje słownictwo zawstydzające w komunikatach.
-- Brak koloru „porażki" w palecie — błąd jest informacją, nie alarmem.
-- Koszt podpowiedzi podany **przed** jej wzięciem, bez ukrytych kar.
+- Powrót po ≥ 3 dniach przerwy nie każe nadrabiać zaległości; opuszczone dni
+  nie przechodzą na jutro — plan liczy się od nowa.
+- Brak liczników serii, brak koloru „porażki”, test blokuje zawstydzające słownictwo.
+- Koszt podpowiedzi podany **przed** jej wzięciem.
+- Aktualizacja wersji na telefon czeka na zgodę, pobranie Pythona na kliknięcie.
 
 ### Bezpieczeństwo powłoki
 
-`src-tauri/capabilities/default.json` nadaje dokładnie tyle, ile trzeba: okno
-i cztery operacje SQL na jednej bazie. Brak dostępu do systemu plików, sieci
-i powłoki. CSP nie dopuszcza `unsafe-eval`; czcionki KaTeX są bundlowane
-lokalnie, więc aplikacja działa offline. Wszystkie zapytania są
-parametryzowane — test sprawdza, że odpowiedź ucznia trafia do bazy jako
-wartość wiązana.
+`src-tauri/capabilities/default.json` nadaje tylko: okno, cztery operacje SQL
+na jednej bazie, komendy nauczyciela AI i otwieranie adresów
+`https://cke.gov.pl/*`. Brak dostępu do systemu plików i powłoki. CSP nie
+dopuszcza `unsafe-eval` — jedynie `wasm-unsafe-eval`, którego wymaga Python.
+Czcionki KaTeX i interpreter są lokalne, więc aplikacja działa offline.
+Zapytania do bazy są parametryzowane.
 
 ---
 
-## Status treści — przeczytaj przed użyciem do nauki
+## Ograniczenia i czego jeszcze nie ma
 
-`content/math/funkcja-kwadratowa.ts` zawiera 11 zadań autorskich z trzech
-kompetencji. **Wszystkie mają `verified: false`.** Matematyka jest sprawdzona
-rachunkowo i pokryta testami spójności, ale materiał **nie został
-zweryfikowany względem informatora CKE**. To wycinek do domknięcia pętli
-produktowej, nie materiał egzaminacyjny.
-
-Testy treści pilnują m.in., żeby:
-
-- żaden zadeklarowany typowy błąd nie pokrywał się z poprawną odpowiedzią,
-- podpowiedzi poziomów 1–4 nie zdradzały gotowego wyniku,
-- każda kompetencja miała zadanie fundamentalne, typowe i transferowe —
-  bez tego poziom 4 byłby nieosiągalny, a naprawa błędu nie miałaby co podać.
-
----
-
-## Czego jeszcze nie ma
-
-- Etap 3: diagnoza matematyczna i plan na jej podstawie.
-- Etap 4: moduł informatyki (edytor kodu, uruchamianie testów).
-- Etap 5: kalendarz, tryby dnia, raport tygodniowy, próby czasowe.
-- Etap 6: warstwa AI i głos.
-- Arkusze i tryb egzaminacyjny.
-- Testy Playwright (sekcja 16 ich wymaga; są tylko testy jednostkowe).
-- Eksport/import do pliku z poziomu interfejsu — logika i walidacja są
-  gotowe i przetestowane, brakuje przycisku.
+- Treść nie przeszła weryfikacji nauczyciela (patrz wyżej).
+- Brak automatycznej synchronizacji — celowo, bo wymagałaby serwera i konta.
+- Nauczyciel AI tylko w aplikacji desktopowej.
+- Diagnoza przekrojowa tylko z matematyki.
+- Przebiegi w przeglądarce (lekcja, zadanie z Pythonem i SQL, arkusz, telefon
+  390 px, praca offline) sprawdzane ręcznie; w repozytorium są tylko testy
+  jednostkowe i integracyjne (Vitest), bez zestawu E2E.
 
 ---
 
@@ -149,18 +240,23 @@ Testy treści pilnują m.in., żeby:
 
 ```text
 src/
-  app/              kompozycja: stan, ekrany, powłoka
-  components/       renderer LaTeX
+  app/              kompozycja: stan, ekrany, powłoka, plan dnia
+  components/       LaTeX, rysunki, ikony, pierścienie postępu
   data/             typy, port trwałości, adaptery SQLite i IndexedDB
-  design-system/    tokens
-  features/         missions, questions, mastery-map, error-lab
-  learning-engine/  mastery, review, priority, selector, grading,
-                    mission, error-lab
-content/math/       zadania + testy spójności treści
-src-tauri/          powłoka natywna, migracje SQL, capabilities
+  design-system/    tokeny
+  features/         course, questions, code, flashcards, exams, data,
+                    error-lab, mastery-map, weekly-review, ai, ...
+  learning-engine/  mastery, review, priority, schedule, grading,
+                    code/sql-grading, sync-merge, speech, ...
+  platform/         otwieranie linków, PWA
+content/
+  math/ cs/ biz/    kurs: lekcje, zadania, fiszki + testy spójności
+  exams/            katalog arkuszy CKE (struktura i linki)
+  authoring.ts      język opisu zadań, validate.ts - walidator
+scripts/            generatory katalogów CKE, wyników SQL, ikon, statystyki
+src-tauri/          powłoka natywna, migracje SQL, capabilities, AI
 docs/               blueprint
 ```
 
-Cała logika decyzyjna siedzi w `learning-engine` i w `features/*/layout.ts`:
-funkcje czyste, bez Reacta i bez trwałości, pokryte testami. `app/` tylko
-łączy silnik z bazą i widokiem.
+Logika decyzyjna siedzi w `learning-engine`: funkcje czyste, bez Reacta
+i bez trwałości, pokryte testami. `app/` tylko łączy silnik z bazą i widokiem.
