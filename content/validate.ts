@@ -100,6 +100,14 @@ export function validateCorpus(label: string, corpus: Corpus): void {
         ]),
       ]),
       ...l.pitfalls.map((t): [string, string] => [`pulapka ${l.skillId}`, t]),
+      ...(l.idea ?? []).map((t): [string, string] => [`wyklad ${l.skillId}`, t]),
+      ...(l.method ?? []).map((t): [string, string] => [`przepis ${l.skillId}`, t]),
+      ...(l.check
+        ? ([
+            [`sprawdz ${l.skillId}`, l.check.question],
+            [`sprawdz ${l.skillId}`, l.check.answer],
+          ] as Array<[string, string]>)
+        : []),
     ]),
     ...flashcards.flatMap((c): Array<[string, string]> => [
       [c.id, c.front],
@@ -501,6 +509,16 @@ export function validateCorpus(label: string, corpus: Corpus): void {
         expect(l.pitfalls.length, l.skillId).toBeGreaterThanOrEqual(1);
         expect(l.minutes, l.skillId).toBeGreaterThanOrEqual(3);
         expect(l.minutes, l.skillId).toBeLessThanOrEqual(30);
+      }
+    });
+
+    it('wyklad (idea, przepis, pytanie sprawdzajace) ma pelna forme', () => {
+      for (const l of lessons) {
+        if (!l.idea && !l.method && !l.check) continue;
+        expect(l.idea?.length ?? 0, `${l.skillId}: idea`).toBeGreaterThanOrEqual(2);
+        expect(l.method?.length ?? 0, `${l.skillId}: przepis`).toBeGreaterThanOrEqual(3);
+        expect(l.check?.question.trim() ?? '', `${l.skillId}: pytanie`).not.toBe('');
+        expect(l.check?.answer.trim() ?? '', `${l.skillId}: odpowiedz`).not.toBe('');
       }
     });
 

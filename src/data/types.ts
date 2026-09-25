@@ -431,6 +431,22 @@ export interface Lesson {
   pitfalls: string[];
   /** Szacowany czas samej lekcji w minutach. */
   minutes: number;
+  /**
+   * „Skąd to się bierze” - idea prostym językiem, zanim padną wzory: dlaczego
+   * to działa, a nie tylko jak. Akapity mogą zawierać wzory w $...$.
+   */
+  idea?: string[];
+  /** „Jak to zrobić” - przepis w krokach, do powtórzenia na każdym zadaniu. */
+  method?: string[];
+  /** Pytanie sprawdzające zrozumienie przed przykładami; odpowiedź odsłania uczeń. */
+  check?: { question: string; answer: string };
+}
+
+/** Część „nauczycielska” lekcji, pisana osobno i dołączana przy budowie kursu. */
+export interface LessonExplanation {
+  idea: string[];
+  method: string[];
+  check: { question: string; answer: string };
 }
 
 export type FlashcardKind = 'wzor' | 'definicja' | 'metoda' | 'pulapka';

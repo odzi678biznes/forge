@@ -35,6 +35,7 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
   const readAloud = () => {
     const text = [
       lesson.intro,
+      ...(lesson.idea ?? []),
       ...lesson.blocks.map((b) =>
         b.kind === 'formula'
           ? `$${b.tex}$`
@@ -44,6 +45,7 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
               ? `Przykład kodu${b.caption ? `: ${b.caption}` : ''}.`
               : b.body,
       ),
+      ...(lesson.method ? ['Jak to zrobić.', ...lesson.method.map((m, i) => `Krok ${i + 1}. ${m}`)] : []),
     ].join(' ');
     return speech.speaking ? speech.stop() : speech.speak(text);
   };
@@ -76,11 +78,42 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
         </button>
       </header>
 
-      <section className="lesson__body" aria-label="Wyjaśnienie">
+      {lesson.idea && (
+        <section className="lesson__body lesson__idea" aria-labelledby="lesson-idea">
+          <h2 className="lesson__h2" id="lesson-idea">
+            Skąd to się bierze
+          </h2>
+          {lesson.idea.map((p, i) => (
+            <p key={i} className="lesson__p">
+              <Tex>{p}</Tex>
+            </p>
+          ))}
+        </section>
+      )}
+
+      <section className="lesson__body" aria-label="Wzory i zasady">
+        {lesson.idea && <h2 className="lesson__h2">Najważniejsze wzory i zasady</h2>}
         {lesson.blocks.map((b, i) => (
           <Block key={i} block={b} />
         ))}
       </section>
+
+      {lesson.method && (
+        <section className="lesson__body" aria-labelledby="lesson-method">
+          <h2 className="lesson__h2" id="lesson-method">
+            Jak to zrobić
+          </h2>
+          <ol className="lesson__method">
+            {lesson.method.map((m, i) => (
+              <li key={i}>
+                <Tex>{m}</Tex>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {lesson.check && <Check key={lesson.skillId} check={lesson.check} />}
 
       <section aria-label="Przykłady rozwiązane krok po kroku" className="lesson__examples">
         <h2 className="lesson__h2">Rozwiązujemy razem</h2>
@@ -163,6 +196,33 @@ function Block({ block }: { block: LessonBlock }) {
         </figure>
       );
   }
+}
+
+/**
+ * Pytanie sprawdzające: najpierw myślisz sam, potem odsłaniasz odpowiedź.
+ * Nie jest oceniane - to przypomnienie z pamięci, a nie sprawdzian.
+ */
+function Check({ check }: { check: { question: string; answer: string } }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="lesson__check card" aria-labelledby="lesson-check">
+      <h2 className="lesson__h2" id="lesson-check">
+        Sprawdź, czy rozumiesz
+      </h2>
+      <p className="lesson__p">
+        <Tex>{check.question}</Tex>
+      </p>
+      {open ? (
+        <p className="lesson__check-answer">
+          <Tex>{check.answer}</Tex>
+        </p>
+      ) : (
+        <button type="button" className="btn btn--small" onClick={() => setOpen(true)}>
+          Pokaż odpowiedź
+        </button>
+      )}
+    </section>
+  );
 }
 
 function Example({ example, index }: { example: WorkedExample; index: number }) {

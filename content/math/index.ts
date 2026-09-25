@@ -2,6 +2,8 @@ import type { Question, Skill, Topic } from '@/data/types';
 import type { Corpus } from '../corpus';
 import { MATH } from './funkcja-kwadratowa';
 import './weryfikacja-starych';
+import { withExplanations } from '../wyklad';
+import { MATH_WYKLAD } from './wyklad/index';
 import { QUAD_CARDS, QUAD_LESSONS, QUAD_QUESTIONS, QUAD_SKILLS, QUAD_TOPIC } from './kurs/kwadratowa';
 import {
   POLY_CARDS,
@@ -175,7 +177,7 @@ export const MATH_CORPUS: Corpus = {
   topics: MATH_TOPICS,
   skills: MATH_SKILLS,
   questions: MATH_QUESTIONS,
-  lessons: [
+  lessons: withExplanations([
     ...NUMBERS_LESSONS,
     ...ALGEBRA_LESSONS,
     ...EQUATIONS_LESSONS,
@@ -193,7 +195,7 @@ export const MATH_CORPUS: Corpus = {
     ...PROB_LESSONS,
     ...DERIV_LESSONS,
     ...EXTRA_LESSONS,
-  ],
+  ], MATH_WYKLAD),
   flashcards: [
     ...NUMBERS_CARDS,
     ...ALGEBRA_CARDS,

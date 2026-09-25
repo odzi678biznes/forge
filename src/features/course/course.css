@@ -1057,3 +1057,41 @@
   letter-spacing: 0.12em;
   color: var(--text-faint);
 }
+
+/* --- Wykład: idea, przepis, pytanie sprawdzające -------------------------- */
+
+.lesson__method {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  line-height: 1.7;
+}
+
+.lesson__method li::marker {
+  color: var(--progress);
+  font-weight: 700;
+}
+
+.lesson__check {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.lesson__check .lesson__h2 {
+  margin: 0;
+  font-size: var(--t-body);
+}
+
+.lesson__check-answer {
+  margin: 0;
+  align-self: stretch;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--progress) 10%, var(--bg-deep));
+  border-left: 3px solid var(--progress);
+  line-height: 1.7;
+}
