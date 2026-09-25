@@ -32,7 +32,17 @@ jobs:
       - run: npm ci
       # Nie publikujemy wersji, której testy nie przechodzą. Reporter
       # github-actions pokazuje nieudane testy jako adnotacje przy commicie.
-      - run: npx vitest run --reporter=default --reporter=github-actions
+      - name: Testy
+        run: |
+          set -o pipefail
+          npx vitest run --reporter=default --reporter=github-actions 2>&1 | tee vitest.log
+      # Błąd spoza testów (np. przy starcie) nie daje adnotacji - pokazujemy
+      # koniec wyjścia w podsumowaniu przebiegu, bez szukania w logach.
+      - name: Powód nieudanych testów
+        if: failure()
+        run: |
+          msg=$(sed 's/\x1b\[[0-9;]*m//g' vitest.log | grep -v '^[[:space:]]*$' | tail -40 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          echo "::error title=Testy nie przeszły::$msg"
       - run: npm run build
         env:
           FORGE_BASE: /${{ github.event.repository.name }}/
