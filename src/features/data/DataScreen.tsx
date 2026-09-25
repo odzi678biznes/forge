@@ -16,9 +16,12 @@ import {
   downloadText,
   importSnapshot,
   parseImportFile,
+  previewSync,
   restoreBackup,
+  syncFromSnapshot,
   toDataSnapshot,
 } from './operations';
+import type { MergeReport } from '@/learning-engine/sync-merge';
 import { ATTEMPTS, MISSIONS, SKILLS, count } from '@/learning-engine/polish';
 import './data.css';
 
@@ -62,6 +65,7 @@ type Pending =
   | { key: string; kind: 'delete'; plan: DeletionPlan; reason: string; everything: boolean }
   | { key: string; kind: 'restore'; backup: BackupInfo }
   | { key: 'import'; kind: 'import'; snapshot: SnapshotV1; fileName: string }
+  | { key: 'sync'; kind: 'sync'; snapshot: SnapshotV1; fileName: string; report: MergeReport }
   | { key: 'backups'; kind: 'delete-backups' };
 
 type Message = { tone: 'ok' | 'error'; text: string };
@@ -118,23 +122,36 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
     setMessage({ tone: 'ok', text: `Zapisano ${name} w folderze pobranych plików.` });
   };
 
-  const pickImport = async (event: ChangeEvent<HTMLInputElement>) => {
+  /** Wczytuje i sprawdza plik kopii; błąd kończy się komunikatem, a nie zmianą danych. */
+  const readSnapshotFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
     // Czyszczenie pola pozwala wybrać ten sam plik jeszcze raz po poprawce.
     input.value = '';
-    if (!file) return;
+    if (!file) return null;
     setMessage(null);
     if (file.size > MAX_IMPORT_BYTES) {
       setMessage({ tone: 'error', text: 'Plik jest za duży jak na kopię FORGE.' });
-      return;
+      return null;
     }
     try {
-      const parsed = parseImportFile(await file.text());
-      setPending({ key: 'import', kind: 'import', snapshot: parsed, fileName: file.name });
+      return { snapshot: parseImportFile(await file.text()), fileName: file.name };
     } catch (err) {
       setMessage({ tone: 'error', text: err instanceof Error ? err.message : 'Nie udało się odczytać pliku.' });
+      return null;
     }
+  };
+
+  const pickImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const read = await readSnapshotFile(event);
+    if (read) setPending({ key: 'import', kind: 'import', ...read });
+  };
+
+  const pickSync = async (event: ChangeEvent<HTMLInputElement>) => {
+    const read = await readSnapshotFile(event);
+    if (!read) return;
+    const report = await previewSync(storage(), read.snapshot);
+    setPending({ key: 'sync', kind: 'sync', ...read, report });
   };
 
   const askDelete = (key: string, plan: DeletionPlan, reason: string, everything = false) => {
@@ -151,6 +168,12 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
         void change(async () => {
           await importSnapshot(port, pending.snapshot);
           return 'Dane zastąpione kopią z pliku. Poprzedni stan jest w kopiach bezpieczeństwa.';
+        });
+        return;
+      case 'sync':
+        void change(async () => {
+          const report = await syncFromSnapshot(port, pending.snapshot);
+          return `Połączono: ${syncSummary(report)}. Poprzedni stan jest w kopiach bezpieczeństwa.`;
         });
         return;
       case 'restore':
@@ -202,7 +225,7 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
         <button type="button" className="data__back" onClick={onBack}>
           &larr; Plan dnia
         </button>
-        <p className="data__eyebrow">Tylko na tym komputerze</p>
+        <p className="data__eyebrow">Tylko na tym urządzeniu</p>
         <h1 className="data__title">Twoje dane</h1>
         <p className="data__lead">
           Wszystko jest zapisane lokalnie. Aplikacja niczego nie wysyła w tle i nie ma konta w
@@ -238,6 +261,26 @@ export function DataScreen({ storage, subjects, skills, questions, onChanged, on
             Pobierz próby jako CSV
           </button>
         </div>
+      </section>
+
+      <section className="data__box">
+        <h2>Synchronizacja z drugim urządzeniem</h2>
+        <p>
+          Uczysz się na komputerze i na telefonie? Pobierz kopię JSON na jednym urządzeniu, prześlij plik na
+          drugie (np. mailem do siebie albo przez dysk) i tutaj go połącz. Łączenie niczego nie usuwa: dodaje
+          odpowiedzi, arkusze i lekcje z drugiego urządzenia, a przy umiejętnościach i fiszkach zostawia
+          nowszy stan. Potem zrób to samo w drugą stronę.
+        </p>
+        <label className="data__file">
+          <span>Połącz z plikiem z drugiego urządzenia (.json)</span>
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={(e) => void pickSync(e)}
+            disabled={busy}
+          />
+        </label>
+        {confirmBox('sync')}
       </section>
 
       <section className="data__box">
@@ -402,6 +445,22 @@ function ConfirmBox({ pending, current, backups, keepBackup, onKeepBackup, busy,
   let danger = true;
 
   switch (pending.kind) {
+    case 'sync':
+      body = (
+        <>
+          <p>
+            Plik <strong>{pending.fileName}</strong> z {dateTime(pending.snapshot.exportedAt)}.
+          </p>
+          <p>
+            {totalChanges(pending.report) === 0
+              ? 'Ten plik nie wnosi nic nowego — dane na obu urządzeniach są już zgodne.'
+              : `Po połączeniu: ${syncSummary(pending.report)}. Nic nie zostanie usunięte; obecny stan trafi najpierw do kopii bezpieczeństwa.`}
+          </p>
+        </>
+      );
+      action = 'Połącz dane';
+      danger = false;
+      break;
     case 'import':
       body = (
         <>
@@ -486,4 +545,21 @@ function ConfirmBox({ pending, current, backups, keepBackup, onKeepBackup, busy,
       </div>
     </div>
   );
+}
+
+function totalChanges(r: MergeReport): number {
+  return r.attemptsAdded + r.missionsAdded + r.examResultsAdded + r.lessonsAdded + r.skillsUpdated + r.cardsUpdated;
+}
+
+/** „nowe odpowiedzi: 12, nowe wyniki arkuszy: 1” — tylko niezerowe pozycje. */
+function syncSummary(r: MergeReport): string {
+  const parts = [
+    r.attemptsAdded > 0 ? `nowe odpowiedzi: ${r.attemptsAdded}` : '',
+    r.missionsAdded > 0 ? `nowe sesje: ${r.missionsAdded}` : '',
+    r.examResultsAdded > 0 ? `nowe wyniki arkuszy: ${r.examResultsAdded}` : '',
+    r.lessonsAdded > 0 ? `ukończone lekcje: ${r.lessonsAdded}` : '',
+    r.skillsUpdated > 0 ? `zaktualizowane umiejętności: ${r.skillsUpdated}` : '',
+    r.cardsUpdated > 0 ? `zaktualizowane fiszki: ${r.cardsUpdated}` : '',
+  ].filter((x) => x !== '');
+  return parts.length > 0 ? parts.join(', ') : 'bez zmian';
 }

@@ -9,7 +9,9 @@ import {
   deleteSelection,
   importSnapshot,
   parseImportFile,
+  previewSync,
   restoreBackup,
+  syncFromSnapshot,
   toDataSnapshot,
 } from './operations';
 
@@ -128,5 +130,30 @@ describe('usuwanie', () => {
     expect(after.missions).toEqual([]);
     expect(after.skillStates).toEqual([]);
     expect(await port.listBackups()).toEqual([]);
+  });
+});
+
+describe('synchronizacja dwoch urzadzen', () => {
+  it('laczy dane z pliku zamiast je zastepowac i najpierw robi kopie', async () => {
+    const komputer = await seeded();
+    counter += 1;
+    const telefon = new IndexedDbStorage(`forge-ops-${counter}`);
+    await telefon.init();
+    await telefon.appendAttempt(attempt('a-tel', 'm-tel', 'math-1'));
+    await telefon.saveMission(mission('m-tel'));
+
+    const plik = parseImportFile(JSON.stringify(await telefon.exportAll()));
+    const podglad = await previewSync(komputer, plik);
+    expect(podglad).toMatchObject({ attemptsAdded: 1, missionsAdded: 1 });
+    // Podglad niczego nie zapisuje.
+    expect(await komputer.loadAttempts()).toHaveLength(2);
+
+    await syncFromSnapshot(komputer, plik);
+    expect((await komputer.loadAttempts()).map((a) => a.id).sort()).toEqual(['a-1', 'a-2', 'a-tel']);
+    expect((await komputer.listBackups())[0]?.reason).toBe('przed synchronizacją');
+
+    // W druga strone: telefon dostaje wszystko z komputera.
+    await syncFromSnapshot(telefon, parseImportFile(JSON.stringify(await komputer.exportAll())));
+    expect(await telefon.loadAttempts()).toHaveLength(3);
   });
 });

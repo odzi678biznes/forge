@@ -6,6 +6,7 @@ import {
   type StoragePort,
 } from '@/data/storage-port';
 import type { DataSnapshot, DeletionPlan } from '@/learning-engine/data-control';
+import { mergeSnapshots, type MergeReport } from '@/learning-engine/sync-merge';
 
 /**
  * Operacje zmieniajace dane uzytkownika - Blueprint sek. 12.
@@ -32,6 +33,22 @@ export async function importSnapshot(port: StoragePort, snapshot: SnapshotV1): P
   const backup = await port.saveBackup('przed importem');
   await port.importAll(snapshot);
   return backup;
+}
+
+/** Co da połączenie z plikiem z drugiego urządzenia — bez zapisywania czegokolwiek. */
+export async function previewSync(port: StoragePort, incoming: SnapshotV1): Promise<MergeReport> {
+  return mergeSnapshots(await port.exportAll(), incoming, Date.now()).report;
+}
+
+/**
+ * Synchronizacja z plikiem z drugiego urządzenia: łączy dane zamiast je
+ * zastępować. Jak każda zmiana — najpierw kopia bezpieczeństwa.
+ */
+export async function syncFromSnapshot(port: StoragePort, incoming: SnapshotV1): Promise<MergeReport> {
+  await port.saveBackup('przed synchronizacją');
+  const { merged, report } = mergeSnapshots(await port.exportAll(), incoming, Date.now());
+  await port.importAll(merged);
+  return report;
 }
 
 /** Przywrocenie tez jest zmiana - bez kopii nie daloby sie go cofnac. */
