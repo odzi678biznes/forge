@@ -24,10 +24,18 @@ sprawdzane automatycznie:
   przejść wszystkie testy (także ukryte), a kod startowy musi je oblać;
   oczekiwane wyniki zadań SQL są generowane z wzorcowych zapytań na trzech
   bazach testowych (`scripts/sql-expected.ts`, test pilnuje aktualności),
+  a zadania „Co wypisze ten program?” są uruchamiane w prawdziwym Pythonie,
 - **biznes i zarządzanie** — materiał ułożony według informatora CKE; pierwsza
   matura z tego przedmiotu jest w maju 2027, więc **nie ma jeszcze arkuszy
   ani zasad oceniania z prawdziwego egzaminu**. Zadania rachunkowe (np.
-  wynagrodzenia) podają stawki w treści, więc nie zależą od aktualnych przepisów.
+  wynagrodzenia) podają stawki w treści, więc nie zależą od aktualnych przepisów,
+- **zadania zamknięte** — kolejność odpowiedzi A–D jest mieszana (stała dla
+  zadania), a walidator pilnuje, żeby żadna litera nie przeważała.
+
+Audyt z 25.09.2026: ręcznie sprawdzonych zostało ok. 440 zadań (wszystkie
+zamknięte, 123 liczbowe z matematyki, listingi SQL i arkusza) i 9 lekcji —
+merytorycznie poprawne poza jednym dwuznacznym dystraktorem (poprawionym).
+Lekcje są zwięzłe: to raczej ściąga z przykładami niż pełny wykład.
 
 **Arkusze CKE** nie są kopiowane do aplikacji (prawa autorskie). FORGE zna ich
 strukturę — numery zadań, punkty, wymagania — i otwiera oficjalne PDF-y
