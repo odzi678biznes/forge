@@ -6,7 +6,7 @@ import {
   type OdpowiedzNauczyciela,
   type StatusNauczyciela,
   type ZapytanieNauczyciela,
-} from '../src/nauka/nauczyciel-kontekst';
+} from '../src/nauka/nauczyciel-kontekst.js';
 
 /**
  * Nauczyciel AI po stronie serwera (dev i preview Vite).

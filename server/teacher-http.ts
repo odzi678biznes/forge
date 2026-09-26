@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { status, waliduj, zapytaj } from './nauczyciel';
+import { status, waliduj, zapytaj } from './nauczyciel.js';
 
 /** Public endpoint: provider credentials stay on the server. Access code is private. */
 export async function handleTeacherRequest(request: Request): Promise<Response> {
