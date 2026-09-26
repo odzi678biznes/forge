@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useNativeBack } from '@/platform/back-navigation';
 import { Math as Tex } from '@/components/Math';
 import { ETAP_NAZWA, type Karta, type Lekcja } from './typy';
 import { karta as kartaLekcji, LEKCJE } from './lekcje';
@@ -157,6 +158,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
     }
     if (!biez || ekran !== 'karta') return;
     if (!biez.wynik) {
+      setHistoria(h => [...h, biez]);
       // Pominięcie: dalej, ale bez postępu.
       if (tryb === 'nauka') {
         const s = pomin(stan, l, biez.id);
@@ -206,6 +208,12 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
     setKierunek('dol');
     setLicznik((n) => n + 1);
   };
+
+  useNativeBack(() => {
+    const previous = podglad !== null ? podglad - 1 : biez?.wynik ? historia.length - 2 : historia.length - 1;
+    if (previous >= 0) wstecz();
+    else onWyjdz();
+  }, 10);
 
   const kontekstAI = useMemo((): KontekstNauczyciela | null => {
     if (!k) return null;

@@ -1,0 +1,31 @@
+import { expect, test } from '@playwright/test';
+import { open, otworzPlan } from './helpers';
+
+test('systemowe wstecz zamyka panel, wraca o kartę i potem do mapy', async ({ page }) => {
+  await open(page);
+  await otworzPlan(page);
+  await page.getByRole('button', { name: 'Mapa', exact: true }).click();
+  await page.getByRole('button', { name: /^Trenuj: Ułamki i kolejność działań/ }).click();
+  const first = await page.locator('.karta__pytanie').innerText();
+  await page.getByRole('button', { name: 'Pomiń', exact: true }).click();
+  await expect(page.locator('.karta__pytanie')).not.toHaveText(first);
+  await page.getByRole('button', { name: 'Wykład', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Wykład' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('dialog', { name: 'Wykład' })).toHaveCount(0);
+  await expect(page.locator('.karta__pytanie')).not.toHaveText(first);
+  await page.goBack();
+  await expect(page.locator('.karta__pytanie')).toHaveText(first);
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Mapa umiejętności' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Plan i postęp' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Dziś · Matematyka' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Dziś · Matematyka' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Dziś · Matematyka' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Dziś · Matematyka' })).toBeVisible();
+});

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNativeBack } from '@/platform/back-navigation';
 import {
   MasteryLevel,
   emptySkillState,
@@ -223,7 +224,20 @@ export function useForge(deps: ForgeDeps = {}) {
   };
 
   const [ready, setReady] = useState(false);
-  const [screen, setScreen] = useState<Screen>('loading');
+  const [screen, updateScreen] = useState<Screen>('loading');
+  const screenTrail = useRef<Screen[]>([]);
+  const setScreen = useCallback((next: Screen) => {
+    const trail = screenTrail.current;
+    const previous = trail.lastIndexOf(next);
+    if (previous >= 0) trail.splice(previous + 1);
+    else if (next !== 'loading') trail.push(next);
+    updateScreen(next);
+  }, []);
+  useNativeBack(() => {
+    const trail = screenTrail.current;
+    if (trail.length > 1) trail.pop();
+    updateScreen(trail[trail.length - 1] ?? 'command-center');
+  }, 0);
   const [subject, setSubjectState] = useState<SubjectId>('math');
   const [skillStates, setSkillStates] = useState<Map<string, SkillState>>(new Map());
   const [mission, setMission] = useState<Mission | null>(null);

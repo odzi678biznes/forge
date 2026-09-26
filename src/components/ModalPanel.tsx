@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useNativeBack } from '@/platform/back-navigation';
 
 /** Native top layer supplies inert background, focus containment and Escape. */
 export function ModalPanel({ label, className = '', onClose, children }: {
@@ -8,6 +9,7 @@ export function ModalPanel({ label, className = '', onClose, children }: {
   const dialog = useRef<HTMLDialogElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
+  useNativeBack(() => close.current(), 20);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const element = dialog.current!;

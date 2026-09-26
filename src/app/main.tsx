@@ -4,11 +4,13 @@ import '@/design-system/tokens.css';
 import './app.css';
 import { App } from './App';
 import { registerServiceWorker } from '@/platform/pwa';
+import { installBackNavigation } from '@/platform/back-navigation';
 import '@/design-system/demo-ui.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Brak elementu #root w dokumencie.');
 
+installBackNavigation();
 createRoot(root).render(
   <StrictMode>
     <App />
