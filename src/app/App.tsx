@@ -121,7 +121,7 @@ export function App() {
   );
 
   // --- Prototyp nauki: feed kart dla sześciu lekcji próbki -------------------
-  const [feed, setFeed] = useState<{ skillId: string; tryb: Tryb } | null>(null);
+  const [feed, setFeed] = useState<{ skillId: string; tryb: Tryb; returnToMap: boolean } | null>(null);
   const otworzFeed = (skillId: string, tryb: Tryb) => {
     const cel = tryb === 'trening' && stanNauki
       ? wybierzTrening(stanNauki, LEKCJE.filter((l) => l.przedmiot === state.subject), Date.now())
@@ -132,7 +132,9 @@ export function App() {
       else toCommandCenter();
       return;
     }
-    setFeed({ skillId: cel?.skillId ?? skillId, tryb });
+    setFeed(previous => ({ skillId: cel?.skillId ?? skillId, tryb,
+      returnToMap: state.screen === 'mastery-map' || (state.screen === 'nauka' && Boolean(previous?.returnToMap)),
+    }));
     goTo('nauka');
   };
   /** Sześć lekcji próbki otwiera feed; pozostałe — dotychczasowy widok lekcji. */
@@ -168,7 +170,7 @@ export function App() {
           stan={stanNauki}
           zmien={zmienNauke}
           przedmiot={SUBJECT_LABELS[l.przedmiot]}
-          onWyjdz={toCommandCenter}
+          onWyjdz={() => feed.returnToMap ? goTo('mastery-map') : toCommandCenter()}
           wyklad={(onBack) => {
             const lesson = corpus.lessons.find((x) => x.skillId === l.skillId);
             const skill = skills.find((x) => x.id === l.skillId);

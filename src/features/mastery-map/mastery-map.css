@@ -31,6 +31,12 @@
   max-width: 60ch;
 }
 
+.map__heading { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.map__help { position: relative; }
+.map__help-button { min-width: 44px; min-height: 44px; background: none; border: 0; color: var(--text-muted); display: grid; place-items: center; }
+.map__help-button span { border: 1px solid currentColor; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; }
+.map__help-text { width: min(280px, 75vw); padding: 1rem; margin: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-deep); color: var(--text-muted); }
+
 /* --- Działy ---------------------------------------------------------------- */
 
 .map__topics {

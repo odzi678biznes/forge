@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MASTERY_LABELS, MasteryLevel, type Skill, type SkillState, type Topic } from '@/data/types';
 import { COVERED_LEVEL } from '@/learning-engine/course';
 import { count } from '@/learning-engine/polish';
@@ -77,10 +77,12 @@ export function MasteryMap({ skills, topics, states, onSelect, onBack }: Props) 
         <button type="button" className="map__back" onClick={onBack}>
           &larr; Plan dnia
         </button>
-        <h1 className="map__title">Mapa umiejętności</h1>
+        <div className="map__heading">
+          <h1 className="map__title">Mapa umiejętności</h1>
+          <MapHelp />
+        </div>
         <p className="map__hint">
-          {totalCovered} z {skills.length} umiejętności opanowanych samodzielnie. Kliknij umiejętność, żeby ją
-          trenować. „Najpierw” wskazuje, czego warto nauczyć się wcześniej.
+          {totalCovered} z {skills.length} umiejętności opanowanych samodzielnie.
         </p>
       </header>
 
@@ -132,6 +134,19 @@ export function MasteryMap({ skills, topics, states, onSelect, onBack }: Props) 
       <Legend total={skills.length} />
     </main>
   );
+}
+
+function MapHelp() {
+  const [open, setOpen] = useState(false);
+  return <div className="map__help">
+    <button type="button" className="map__help-button" aria-label="Jak korzystać z mapy"
+      aria-expanded={open} aria-controls="map-help" onClick={() => setOpen(!open)}>
+      <span aria-hidden="true">?</span>
+    </button>
+    {open && <p id="map-help" className="map__help-text">
+      Kliknij umiejętność, żeby ją trenować. „Najpierw” wskazuje, czego warto nauczyć się wcześniej.
+    </p>}
+  </div>;
 }
 
 const R = 17;
