@@ -74,6 +74,38 @@ export class PythonCodeRunner implements CodeRunner {
     return this.exec('python', source, functionName, tests, timeoutMs, (raw) => gradeRun(tests, raw, describePython));
   }
 
+  /**
+   * Cały program ucznia z plikami danych (prototyp nauki: zadanie z pliku CKE).
+   * Zwraca tekst wypisany przez print() albo komunikat błędu.
+   */
+  async runScript(
+    source: string,
+    files: Record<string, string>,
+    timeoutMs = PYTHON_RUN_TIMEOUT_MS,
+  ): Promise<{ status: 'ok' | 'error' | 'timeout'; output: string; message: string | null }> {
+    try {
+      await this.ensure();
+    } catch (err) {
+      return { status: 'error', output: '', message: `Python nie wystartował: ${err instanceof Error ? err.message : String(err)}` };
+    }
+    const worker = this.worker;
+    if (!worker) return { status: 'error', output: '', message: 'Python nie wystartował.' };
+    const nonce = crypto.randomUUID();
+    return new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        this.pending.delete(nonce);
+        this.reset();
+        resolve({ status: 'timeout', output: '', message: `Przekroczono limit ${timeoutMs / 1000} s — sprawdź, czy pętla się kończy.` });
+      }, timeoutMs);
+      this.pending.set(nonce, (raw) => {
+        window.clearTimeout(timer);
+        this.pending.delete(nonce);
+        resolve(raw as { status: 'ok' | 'error'; output: string; message: string | null });
+      });
+      worker.postMessage({ nonce, language: 'script', source, functionName: '', inputs: [], files });
+    });
+  }
+
   /** Zapytanie SQL ucznia na bazach z testów — ten sam, już załadowany interpreter. */
   runSql(source: string, tests: CodeTest[], timeoutMs = PYTHON_RUN_TIMEOUT_MS): Promise<RunResult> {
     return this.exec('sql', source, 'zapytanie', tests, timeoutMs, (raw) => gradeSqlRun(tests, raw));

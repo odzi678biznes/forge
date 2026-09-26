@@ -1,0 +1,3 @@
+dane3.txt: plik danych do zadania 3 z "Informatora o egzaminie maturalnym z informatyki
+od roku szkolnego 2022/2023" (CKE), z archiwum:
+https://cke.gov.pl/images/_EGZAMIN_MATURALNY_OD_2023/Informatory/2024/Pliki.zip (DANE/dane3.txt)

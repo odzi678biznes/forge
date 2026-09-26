@@ -18,15 +18,17 @@ interface NavItem {
   icon: IconName;
 }
 
+// Prototyp nauki: na dole tylko to, co codzienne. Statystyki i narzędzia — pod „Więcej”.
 const PRIMARY: NavItem[] = [
   { screen: 'command-center', label: 'Dziś', icon: 'today' },
   { screen: 'course', label: 'Kurs', icon: 'course' },
-  { screen: 'flashcards', label: 'Fiszki', icon: 'cards' },
-  { screen: 'calendar', label: 'Kalendarz', icon: 'calendar' },
-  { screen: 'progress', label: 'Postęp', icon: 'progress' },
 ];
 
 const SECONDARY: NavItem[] = [
+  { screen: 'plan', label: 'Plan dnia i statystyki', icon: 'report' },
+  { screen: 'flashcards', label: 'Fiszki', icon: 'cards' },
+  { screen: 'calendar', label: 'Kalendarz', icon: 'calendar' },
+  { screen: 'progress', label: 'Postęp', icon: 'progress' },
   { screen: 'exams', label: 'Arkusze CKE', icon: 'exam' },
   { screen: 'error-lab', label: 'Laboratorium błędów', icon: 'errors' },
   { screen: 'mastery-map', label: 'Mapa umiejętności', icon: 'map' },
@@ -106,7 +108,8 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
         <p className="shell__brand">FORGE</p>
         {subjects(false)}
         <nav className="nav">{PRIMARY.map((n) => item(n, 'side'))}</nav>
-        <nav className="nav nav--secondary" aria-label="Narzędzia">
+        <nav className="nav nav--secondary" aria-label="Więcej">
+          <p className="nav__naglowek">Więcej</p>
           {SECONDARY.map((n) => item(n, 'side'))}
         </nav>
       </aside>
@@ -148,6 +151,15 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
 
       <nav className="shell__tabs" aria-label="Nawigacja">
         {PRIMARY.map((n) => item(n, 'tab'))}
+        <button
+          type="button"
+          className={`nav__item nav__item--tab${moreOpen ? ' nav__item--on' : ''}`}
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen((o) => !o)}
+        >
+          <Icon name={moreOpen ? 'close' : 'more'} size={22} />
+          <span className="nav__label">Więcej</span>
+        </button>
       </nav>
     </div>
   );

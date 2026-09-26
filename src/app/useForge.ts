@@ -81,7 +81,11 @@ export type Screen =
   | 'calendar'
   | 'progress'
   | 'flashcards'
-  | 'exams';
+  | 'exams'
+  /** Prototyp nauki: dotychczasowy „Dziś” (plan dnia i statystyki) — teraz pod „Więcej”. */
+  | 'plan'
+  /** Prototyp nauki: pionowy feed kart. */
+  | 'nauka';
 
 export type SubjectId = 'math' | 'cs' | 'biz';
 

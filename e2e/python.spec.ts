@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { chooseSubject, open } from './helpers';
+import { chooseSubject, open, otworzPlan } from './helpers';
 
 const SOLUTION = `def suma_cyfr(n):
     suma = 0
@@ -12,6 +12,7 @@ const SOLUTION = `def suma_cyfr(n):
 test('kod w Pythonie uruchamia się w przeglądarce i przechodzi testy', async ({ page }) => {
   await open(page);
   await chooseSubject(page, 'Informatyka');
+  await otworzPlan(page);
   await page.getByRole('button', { name: /Diagnoza przekrojowa/ }).click();
   await page.getByRole('button', { name: 'Zacznij diagnozę' }).click();
 

@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { DzisView } from '@/nauka/DzisView';
+import { FeedView, type Tryb } from '@/nauka/FeedView';
+import { useNauka } from '@/nauka/useNauka';
+import { lekcja as lekcjaNauki } from '@/nauka/lekcje';
+import { postep as postepNauki } from '@/nauka/silnik';
 import { CORPORA, SUBJECT_LABELS, useForge, type Screen, type SubjectId } from './useForge';
 import { remainingMinutes, subjectGlance, useCourse } from './useCourse';
 import { dayKey } from '@/learning-engine/schedule';
@@ -107,11 +112,53 @@ export function App() {
 
   const practice = (skill: Skill) => beginMission(practiceFor(skill));
 
+  // --- Prototyp nauki: feed kart dla sześciu lekcji próbki -------------------
+  const portRef = useRef(forge.storage);
+  portRef.current = forge.storage;
+  const port = useCallback(() => portRef.current(), []);
+  const { stan: stanNauki, zmien: zmienNauke } = useNauka(port, state.screen !== 'loading');
+  const [feed, setFeed] = useState<{ skillId: string; tryb: Tryb } | null>(null);
+  const otworzFeed = (skillId: string, tryb: Tryb) => {
+    setFeed({ skillId, tryb });
+    goTo('nauka');
+  };
+  /** Sześć lekcji próbki otwiera feed; pozostałe — dotychczasowy widok lekcji. */
+  const otworzLekcje = (skillId: string) => {
+    const l = lekcjaNauki(skillId);
+    if (!l || !stanNauki) {
+      forge.openLesson(skillId);
+      return;
+    }
+    const s = postepNauki(stanNauki, l).status;
+    otworzFeed(skillId, s === 'nowa' || s === 'w trakcie' ? 'nauka' : 'trening');
+  };
+
   if (state.screen === 'loading') {
     return <p className="boot">Wczytywanie profilu…</p>;
   }
 
   // --- Ekrany skupienia: bez nawigacji wokół (sek. 7.2) -----------------------
+
+  if (state.screen === 'nauka' && feed && stanNauki) {
+    const l = lekcjaNauki(feed.skillId);
+    if (l) {
+      return (
+        <ErrorBoundary onHome={toCommandCenter}>
+        <FeedView
+          key={`${feed.skillId}-${feed.tryb}`}
+          lekcja={l}
+          tryb={feed.tryb}
+          stan={stanNauki}
+          zmien={zmienNauke}
+          przedmiot={SUBJECT_LABELS[l.przedmiot]}
+          onWyjdz={toCommandCenter}
+          onWyklad={() => forge.openLesson(l.skillId)}
+          onInna={otworzFeed}
+        />
+        </ErrorBoundary>
+      );
+    }
+  }
 
   if (state.screen === 'arena' && state.current && state.plan) {
     return (
@@ -172,7 +219,7 @@ export function App() {
           topics={topics}
           skills={skills}
           states={state.skillStates}
-          onOpenLesson={forge.openLesson}
+          onOpenLesson={otworzLekcje}
           onPractice={practice}
         />
       );
@@ -188,9 +235,10 @@ export function App() {
             skill={skill}
             topic={topics.find((t) => t.id === skill.topicId)}
             onPractice={() => {
-              void forge.finishLesson(skill.id);
+              if (lekcjaNauki(skill.id)) otworzFeed(skill.id, 'nauka');
+              else void forge.finishLesson(skill.id);
             }}
-            onBack={() => goTo('course')}
+            onBack={() => (lekcjaNauki(skill.id) && feed?.skillId === skill.id ? goTo('nauka') : goTo('course'))}
           />
         ) : (
           <p className="page">Tej lekcji nie ma w wybranym przedmiocie.</p>
@@ -212,7 +260,7 @@ export function App() {
           onExamDate={(k) => {
             void forge.setExamDate(k);
           }}
-          onOpenLesson={forge.openLesson}
+          onOpenLesson={otworzLekcje}
         />
       );
       break;
@@ -320,7 +368,7 @@ export function App() {
           onSave={forge.saveExam}
           onDelete={forge.deleteExam}
           onPractice={practice}
-          onOpenLesson={forge.openLesson}
+          onOpenLesson={otworzLekcje}
         />
       );
       break;
@@ -332,6 +380,19 @@ export function App() {
           skills={skills}
           onRepair={(skill, cause) => beginMission(repairFor(skill, cause))}
           onBack={toCommandCenter}
+        />
+      );
+      break;
+
+    case 'command-center':
+      page = (
+        <DzisView
+          przedmiot={state.subject}
+          przedmiotNazwa={SUBJECT_LABELS[state.subject]}
+          stan={stanNauki}
+          onStart={otworzFeed}
+          onWiecej={() => goTo('plan')}
+          onKurs={() => goTo('course')}
         />
       );
       break;
@@ -352,7 +413,7 @@ export function App() {
             void forge.setDayMode(mode);
           }}
           onStartMission={beginMission}
-          onOpenLesson={forge.openLesson}
+          onOpenLesson={otworzLekcje}
           onPractice={practice}
           onOpenFlashcards={() => goTo('flashcards')}
           onOpenCalendar={() => goTo('calendar')}

@@ -4,12 +4,34 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
+import { middleware as nauczyciel } from './server/nauczyciel';
 
 /**
  * Pliki interpretera Pythona (Pyodide) kopiowane do public/pyodide, skad
  * aplikacja laduje je lokalnie - bez internetu (Blueprint sek. 12).
  * Katalog jest w .gitignore: zrodlem prawdy jest wersja z package-lock.
  */
+/**
+ * Nauczyciel AI (prototyp nauki) — endpoint po stronie serwera dev/preview.
+ * Klucz API zostaje w procesie Node (zmienna ANTHROPIC_API_KEY).
+ */
+function nauczycielApi(): Plugin {
+  // Hook nie może niczego zwracać: zwrócona funkcja byłaby dla Vite „post-hookiem”.
+  return {
+    name: 'forge-nauczyciel-api',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        void nauczyciel(req, res, next);
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        void nauczyciel(req, res, next);
+      });
+    },
+  };
+}
+
 function pyodideAssets(): Plugin {
   const files = ['pyodide.asm.mjs', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json'];
   const copy = () => {
@@ -100,7 +122,7 @@ const pwa = VitePWA({
 export default defineConfig({
   base,
   define: { __PYODIDE_CACHE__: JSON.stringify(PYODIDE_CACHE) },
-  plugins: [react(), pyodideAssets(), pwa],
+  plugins: [react(), pyodideAssets(), nauczycielApi(), pwa],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

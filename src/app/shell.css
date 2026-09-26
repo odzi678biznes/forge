@@ -430,3 +430,30 @@
   font-size: 0.92em;
   white-space: nowrap;
 }
+
+/* Prototyp nauki: trzy zakładki (Dziś, Kurs, Więcej); arkusz „Więcej” otwiera się od dołu. */
+.nav__naglowek {
+  margin: var(--space-4) 0 var(--space-1);
+  padding: 0 var(--space-3);
+  color: var(--text-faint);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 860px) {
+  .shell__tabs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .shell__more {
+    display: none;
+  }
+
+  .shell__sheet {
+    top: auto;
+    bottom: calc(4.4rem + env(safe-area-inset-bottom));
+    max-height: 70dvh;
+    overflow-y: auto;
+  }
+}

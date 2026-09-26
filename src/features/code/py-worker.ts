@@ -2,6 +2,7 @@ import { loadPyodide } from 'pyodide';
 import { lockDown } from './lockdown';
 import { runPythonTests, type PythonRun } from './python-harness';
 import { runSqlTests } from './sql-harness';
+import { runPythonScript } from './script-harness';
 
 /**
  * Worker uruchamiający Pythona (Pyodide) - offline, z plików aplikacji.
@@ -24,8 +25,10 @@ type Message =
 
 interface RunMessage {
   nonce: string;
-  /** 'sql' = zapytanie do bazy SQLite zamiast funkcji w Pythonie. */
-  language?: 'python' | 'sql';
+  /** 'sql' = zapytanie do bazy SQLite zamiast funkcji w Pythonie; 'script' = cały program z plikami. */
+  language?: 'python' | 'sql' | 'script';
+  /** Pliki danych dla 'script' (nazwa → treść). */
+  files?: Record<string, string>;
   source: string;
   functionName: string;
   /** Wyłącznie argumenty. Oczekiwane wyniki nigdy tu nie trafiają. */
@@ -52,7 +55,7 @@ ready.then(
 );
 
 self.onmessage = async (e: MessageEvent<RunMessage>) => {
-  const { nonce, source, functionName, inputs, language } = e.data;
+  const { nonce, source, functionName, inputs, language, files } = e.data;
   let py;
   try {
     py = await ready;
@@ -62,6 +65,10 @@ self.onmessage = async (e: MessageEvent<RunMessage>) => {
       nonce,
       raw: { status: 'compile-error', values: [], message: err instanceof Error ? err.message : String(err), output: '' },
     });
+    return;
+  }
+  if (language === 'script') {
+    post({ type: 'result', nonce, raw: runPythonScript(py, source, files ?? {}) as never });
     return;
   }
   const raw = language === 'sql' ? runSqlTests(py, source, inputs) : runPythonTests(py, source, functionName, inputs);

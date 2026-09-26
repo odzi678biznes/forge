@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { chooseSubject, expectNoSideScroll, open } from './helpers';
+import { chooseSubject, expectNoSideScroll, open, otworzWiecej } from './helpers';
 
 test.skip(({ isMobile }) => !isMobile, 'Układ telefonu sprawdzamy tylko na wąskim ekranie.');
 
@@ -11,14 +11,17 @@ test('każdy ekran mieści się w szerokości telefonu', async ({ page }) => {
     await nav.getByRole('button', { name: 'Dziś' }).click();
     await chooseSubject(page, subject);
     await expectNoSideScroll(page, `${subject}: Dziś`);
-    for (const screen of ['Kurs', /^Fiszki/, 'Kalendarz', 'Postęp']) {
-      await nav.getByRole('button', { name: screen }).click();
+    await nav.getByRole('button', { name: 'Kurs' }).click();
+    await expectNoSideScroll(page, `${subject}: Kurs`);
+    for (const screen of ['Plan dnia i statystyki', /^Fiszki/, 'Kalendarz', 'Postęp']) {
+      await otworzWiecej(page, screen);
       await expectNoSideScroll(page, `${subject}: ${String(screen)}`);
     }
   }
 
+  // Feed kart na całym ekranie.
   await nav.getByRole('button', { name: 'Dziś' }).click();
-  await page.getByRole('button', { name: 'Zacznij lekcję' }).click();
-  await expect(page.getByRole('heading', { name: 'Jak to zrobić' })).toBeVisible();
-  await expectNoSideScroll(page, 'lekcja');
+  await page.getByRole('button', { name: /Kontynuuj/ }).click();
+  await expect(page.locator('.karta__pytanie')).toBeVisible();
+  await expectNoSideScroll(page, 'feed');
 });

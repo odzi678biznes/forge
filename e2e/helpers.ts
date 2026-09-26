@@ -31,3 +31,18 @@ export async function expectNoSideScroll(page: Page, where: string): Promise<voi
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow, `${where}: strona szersza od ekranu o ${overflow}px`).toBeLessThanOrEqual(0);
 }
+
+/**
+ * Ekran spod „Więcej” (prototyp nauki): na komputerze pozycja w bocznym menu,
+ * na telefonie — zakładka „Więcej” i arkusz z listą.
+ */
+export async function otworzWiecej(page: Page, nazwa: string | RegExp): Promise<void> {
+  const pozycja = page.getByRole('button', { name: nazwa }).first();
+  if (!(await pozycja.isVisible())) {
+    await page.getByRole('navigation', { name: 'Nawigacja' }).getByRole('button', { name: 'Więcej' }).click();
+  }
+  await page.getByRole('button', { name: nazwa }).first().click();
+}
+
+/** Dotychczasowy „Dziś” (plan dnia, diagnoza) jest teraz pod „Więcej”. */
+export const otworzPlan = (page: Page) => otworzWiecej(page, 'Plan dnia i statystyki');
