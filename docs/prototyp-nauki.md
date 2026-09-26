@@ -18,7 +18,7 @@ do przeglądarki:
 $env:ANTHROPIC_API_KEY = "…"; npm run dev
 ```
 
-Model: `claude-opus-5` (zmiana: `FORGE_NAUCZYCIEL_MODEL`). Na GitHub Pages i w
+Model: `claude-sonnet-5` (zmiana: `FORGE_NAUCZYCIEL_MODEL`). Na GitHub Pages i w
 aplikacji Tauri nie ma serwera — tam działa tryb demonstracyjny, wyraźnie
 oznaczony.
 
@@ -90,7 +90,7 @@ widać w tekście, a o wyniku decyduje samoocena wobec przykładów z klucza.
 ## Nauczyciel AI — co naprawdę działa
 
 - Endpoint `server/nauczyciel.ts` (dev/preview Vite): SDK Anthropic,
-  `claude-opus-5`, adaptive thinking, zapasowy model przy odmowie
+  `claude-sonnet-5`, adaptive thinking, zapasowy model przy odmowie
   (`fallbacks: "default"`). Kontekst: zadanie CKE, źródło, oficjalna
   odpowiedź i zasady oceniania, bieżący krok, odpowiedź ucznia i ocena
   regułami, wcześniejsze trudności w lekcji.

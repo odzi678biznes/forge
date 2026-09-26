@@ -19,7 +19,7 @@ import {
  * nauczyciel dostaje ten wynik w kontekście i ma go nie podważać.
  */
 
-export const MODEL = process.env.FORGE_NAUCZYCIEL_MODEL ?? 'claude-opus-5';
+export const MODEL = process.env.FORGE_NAUCZYCIEL_MODEL ?? 'claude-sonnet-5';
 const MAX_BODY = 40_000;
 const MAX_HISTORIA = 12;
 
@@ -96,9 +96,8 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     max_tokens: 8000,
     thinking: { type: 'adaptive' },
     output_config: { effort: 'medium' },
-    // Przy odmowie klasyfikatora API samo ponawia na modelu zapasowym.
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
+    // Model zapasowy przy odmowie — tylko dla modeli, które go obsługują (Opus 5 / Fable).
+    ...(/opus-5|fable/.test(MODEL) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
     system: `${SYSTEM}\n\n--- KONTEKST ---\n${opisKontekstu(z.kontekst)}`,
     messages: [...historia, { role: 'user', content: tekstProsby }],
   });
