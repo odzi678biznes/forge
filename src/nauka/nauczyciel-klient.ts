@@ -13,7 +13,17 @@ import type {
  * z podpowiedzi, wyjaśnień i oficjalnego rozwiązania zapisanych przy karcie.
  */
 
-const API = `${import.meta.env.BASE_URL}api/nauczyciel`;
+// Public server address only. Provider API keys must never use a VITE_ variable.
+const API = (import.meta.env.VITE_NAUCZYCIEL_API_URL?.trim() || `${import.meta.env.BASE_URL}api/nauczyciel`).replace(/\/$/, '');
+let accessCode = '';
+try { accessCode = sessionStorage.getItem('forge.teacher.access') ?? ''; } catch { /* optional storage */ }
+function authorization(): Record<string, string> { return accessCode ? { Authorization: `Bearer ${accessCode}` } : {}; }
+export function ustawKodNauczyciela(code: string): void {
+  accessCode = code.trim();
+  try { sessionStorage.setItem('forge.teacher.access', accessCode); } catch { /* keep in memory */ }
+  statusCache = null;
+  statusExpires = 0;
+}
 
 export interface Odpowiedz {
   tekst: string;
@@ -25,21 +35,31 @@ export interface Odpowiedz {
 }
 
 let statusCache: Promise<StatusNauczyciela> | null = null;
+let statusExpires = 0;
 
 export function statusNauczyciela(): Promise<StatusNauczyciela> {
-  statusCache ??= fetch(`${API}/status`, { headers: { Accept: 'application/json' } })
+  if (Date.now() >= statusExpires) statusCache = null;
+  if (!statusCache) statusExpires = Date.now() + 30_000;
+  statusCache ??= fetch(`${API}/status`, { headers: { Accept: 'application/json', ...authorization() }, signal: AbortSignal.timeout(10_000), cache: 'no-store' })
     .then(async (r) => {
-      if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) throw new Error(String(r.status));
-      return (await r.json()) as StatusNauczyciela;
+      if ((!r.ok && r.status !== 401) || !(r.headers.get('content-type') ?? '').includes('json')) throw new Error(String(r.status));
+      const body = await r.json() as StatusNauczyciela;
+      if (typeof body.dostepny !== 'boolean') throw new Error('Nieprawidłowy status serwera');
+      return body;
     })
     .catch(
       (): StatusNauczyciela => ({
         dostepny: false,
         model: null,
-        powod: 'Ta wersja aplikacji działa bez serwera (np. GitHub Pages lub aplikacja na komputerze), więc nie ma gdzie bezpiecznie trzymać klucza API.',
+        powod: 'Nie udało się połączyć z serwerem nauczyciela. Sprawdź internet i spróbuj ponownie.',
       }),
     );
   return statusCache;
+}
+
+export function odswiezStatusNauczyciela(): Promise<StatusNauczyciela> {
+  statusExpires = 0;
+  return statusNauczyciela();
 }
 
 export async function zapytajNauczyciela(
@@ -53,7 +73,8 @@ export async function zapytajNauczyciela(
   try {
     const r = await fetch(API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authorization() },
+      signal: AbortSignal.timeout(60_000),
       body: JSON.stringify({ kontekst, prosba, historia, ...(pytanie ? { pytanie } : {}) }),
     });
     if (!r.ok) {
@@ -61,6 +82,7 @@ export async function zapytajNauczyciela(
       return { ...demo(kontekst, prosba), powod: `Nauczyciel AI nie odpowiedział: ${blad}` };
     }
     const o = (await r.json()) as OdpowiedzNauczyciela;
+    if (typeof o.tekst !== 'string' || !o.tekst.trim() || typeof o.model !== 'string') throw new Error('Nieprawidłowa odpowiedź serwera');
     return { tekst: o.tekst, tryb: 'ai', model: o.model };
   } catch {
     return { ...demo(kontekst, prosba), powod: 'Brak połączenia z serwerem nauczyciela.' };

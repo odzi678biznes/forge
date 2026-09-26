@@ -46,6 +46,7 @@ jobs:
       - run: npm run build
         env:
           FORGE_BASE: /${{ github.event.repository.name }}/
+          VITE_NAUCZYCIEL_API_URL: ${{ vars.VITE_NAUCZYCIEL_API_URL || 'https://forge-teacher.vercel.app/api/nauczyciel' }}
       # Testy E2E na tym samym buildzie, który zostanie opublikowany: lekcja,
       # diagnoza, Python w przeglądarce, układ telefonu, praca offline.
       - name: Przeglądarka do testów E2E

@@ -65,6 +65,7 @@ export interface OdpowiedzNauczyciela {
 }
 
 export interface StatusNauczyciela {
+  wymagaKodu?: boolean;
   dostepny: boolean;
   model: string | null;
   /** Dlaczego niedostępny — pokazywane w trybie demonstracyjnym. */

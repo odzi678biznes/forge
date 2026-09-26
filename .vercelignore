@@ -1,0 +1,11 @@
+.git
+.env*
+docs
+e2e
+src-tauri
+test-results
+playwright-report
+dist
+*.log
+start-z-nauczycielem.ps1
+START Z NAUCZYCIELEM.bat

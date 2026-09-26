@@ -1,4 +1,8 @@
 node_modules/
+.vercel/
+.env
+.env.*
+!.env.example
 dist/
 target/
 *.local
@@ -19,3 +23,5 @@ scripts/.icon-1024.png
 test-results/
 playwright-report/
 .playwright-mcp/
+.vercel
+.env*

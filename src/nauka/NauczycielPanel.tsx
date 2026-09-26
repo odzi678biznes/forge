@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Math as Tex } from '@/components/Math';
 import type { KontekstNauczyciela, Prosba, StatusNauczyciela, WiadomoscCzatu } from './nauczyciel-kontekst';
 import { PROSBA_TEKST } from './nauczyciel-kontekst';
-import { statusNauczyciela, zapytajNauczyciela } from './nauczyciel-klient';
+import { odswiezStatusNauczyciela, statusNauczyciela, ustawKodNauczyciela, zapytajNauczyciela } from './nauczyciel-klient';
 import { ModalPanel } from '@/components/ModalPanel';
 
 /**
@@ -28,6 +28,7 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
   const [pytanie, setPytanie] = useState('');
   const [czeka, setCzeka] = useState(false);
   const [powod, setPowod] = useState<string | null>(null);
+  const [kod, setKod] = useState('');
   const koniec = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +45,9 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
     setCzeka(true);
     const o = await zapytajNauczyciela(kontekst, prosba, historia, wlasne);
     setCzeka(false);
-    if (o.powod) setPowod(o.powod);
+    setPowod(o.powod ?? null);
+    if (o.tryb === 'ai') setStatus({dostepny:true,model:o.model,powod:null});
+    else if (o.powod) setStatus({dostepny:false,model:null,powod:o.powod});
     setCzat((c) => [...c, { rola: 'nauczyciel', tekst: o.tekst, tryb: o.tryb }]);
   };
 
@@ -67,6 +70,18 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
       {status && !ai && (
         <div className="nauczyciel__demo">
           <p>AI jest niedostępne. Możesz korzystać z podpowiedzi i rozwiązania zapisanych przy tej karcie.</p>
+          {status.wymagaKodu && <form onSubmit={async e => {
+            e.preventDefault(); ustawKodNauczyciela(kod); setKod('');
+            setStatus(null); setStatus(await odswiezStatusNauczyciela());
+          }}>
+            <label htmlFor="teacher-code">Twój kod dostępu do nauczyciela</label>
+            <input id="teacher-code" type="password" autoComplete="current-password" value={kod} onChange={e => setKod(e.target.value)} />
+            <button type="submit" className="btn btn--primary" disabled={!kod.trim()}>Połącz z nauczycielem</button>
+            <p>Kod dostępu otrzymasz przy uruchomieniu nauczyciela. Nie wpisuj tutaj klucza API Anthropic.</p>
+          </form>}
+          <button type="button" className="btn btn--small" disabled={czeka} onClick={async()=>{
+            setStatus(null); setPowod(null); setStatus(await odswiezStatusNauczyciela());
+          }}>Sprawdź połączenie ponownie</button>
           <details><summary>Konfiguracja i szczegóły techniczne</summary>
             <p>{powod ?? status.powod}</p>
             <p>Nauczyciel AI wymaga serwera z kluczem <code>ANTHROPIC_API_KEY</code> (<code>npm run dev</code>).</p>

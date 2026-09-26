@@ -75,17 +75,31 @@ function opisKontekstu(k: KontekstNauczyciela): string {
   return linie.filter(Boolean).join('\n');
 }
 
-function waliduj(body: unknown): ZapytanieNauczyciela | null {
+export function waliduj(body: unknown): ZapytanieNauczyciela | null {
   const b = body as Partial<ZapytanieNauczyciela> | null;
   if (!b || typeof b !== 'object' || !b.kontekst || typeof b.prosba !== 'string') return null;
   if (!['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie'].includes(b.prosba)) return null;
   if (!Array.isArray(b.historia)) return null;
+  const text = (v: unknown): v is string => typeof v === 'string';
+  const texts = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
+  const k = b.kontekst;
+  if (typeof k !== 'object' || !text(k.przedmiot) || !text(k.lekcja) || !k.krok || !texts(k.trudnosci)) return null;
+  if (!text(k.krok.etap) || !text(k.krok.pytanie) || !text(k.krok.wyjasnienie) || !Number.isInteger(k.krok.numer) || !Number.isInteger(k.krok.z)) return null;
+  if (k.krok.kontekst !== undefined && !text(k.krok.kontekst)) return null;
+  if (k.odpowiedzUcznia !== null && !text(k.odpowiedzUcznia)) return null;
+  if (k.czyPoprawna !== null && typeof k.czyPoprawna !== 'boolean') return null;
+  if (k.zadanie !== null) {
+    const z = k.zadanie;
+    if (!z || typeof z !== 'object' || ![z.zrodlo,z.dokument,z.numer,z.poziom,z.url,z.tresc,z.oficjalnaOdpowiedz,z.zasadyOceniania].every(text) || !texts(z.rozwiazanie)) return null;
+    if (z.odpowiedzi !== undefined && !texts(z.odpowiedzi)) return null;
+  }
+  if (!b.historia.every(w => w && (w.rola === 'uczen' || w.rola === 'nauczyciel') && text(w.tekst))) return null;
   if (b.prosba === 'pytanie' && (typeof b.pytanie !== 'string' || b.pytanie.trim() === '')) return null;
   return b as ZapytanieNauczyciela;
 }
 
 export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyciela> {
-  const client = new Anthropic();
+  const client = new Anthropic({ timeout: 45_000, maxRetries: 0 });
   const historia: Anthropic.Beta.BetaMessageParam[] = z.historia.slice(-MAX_HISTORIA).map((w) => ({
     role: w.rola === 'uczen' ? 'user' : 'assistant',
     content: w.tekst.slice(0, 2000),
