@@ -14,25 +14,20 @@ const M1_WYRAZENIE = 'Zadanie: $(1 + 3 \\cdot 2^{-1})^{-2}$';
 
 const ULAMKI: Karta[] = [
   {
+    podpowiedz: "Wewnątrz nawiasu wykonujemy kolejno potęgowanie, mnożenie, dodawanie. Potęgę całego nawiasu liczymy na końcu.",
     id: 'm1-polecenie',
     zadanieId: M1,
     etap: 'polecenie',
     rodzaj: 'wybor',
     kontekst: M1_WYRAZENIE,
-    pytanie: 'Co trzeba zrobić w tym zadaniu?',
-    opcje: [
-      'Obliczyć wartość wyrażenia i wybrać ją spośród A–D',
-      'Rozwiązać równanie z niewiadomą x',
-      'Udowodnić, że wyrażenie jest dodatnie',
-    ],
+    pytanie: "Który fragment tego wyrażenia obliczysz jako pierwszy?",
+    opcje: ["Potęgę $2^{-1}$ w nawiasie","Sumę $1 + 3$","Potęgę $3^{-2}$"],
     poprawna: 0,
-    dlaczegoNie: {
-      1: 'W wyrażeniu nie ma niewiadomej — to same liczby.',
-      2: 'Polecenie to „jest równa” i cztery odpowiedzi — trzeba policzyć i wybrać.',
-    },
-    wyjasnienie: 'Zadanie zamknięte: liczysz jedną liczbę i szukasz jej wśród A–D.',
+    dlaczegoNie: {"1":"W nawiasie potęgowanie i mnożenie mają pierwszeństwo przed dodawaniem.","2":"Wykładnik −2 dotyczy całego nawiasu, a nie samej liczby 3."},
+    wyjasnienie: "Najpierw oblicz $2^{-1} = \\frac12$. Następnie pomnóż przez 3, dodaj 1 i dopiero podnieś cały wynik do potęgi −2.",
   },
   {
+    podpowiedz: "W nawiasie: potęga, potem mnożenie, potem dodawanie. Na końcu potęga całego nawiasu.",
     id: 'm1-kolejnosc',
     zadanieId: M1,
     etap: 'zasada',
@@ -69,7 +64,7 @@ const ULAMKI: Karta[] = [
     etap: 'fragment',
     rodzaj: 'wpis',
     kontekst: 'Pierwszy krok zadania',
-    pytanie: 'Ile to $2^{-1}$? Wpisz ułamek (np. 3/4) albo liczbę.',
+    pytanie: "Zapisz $2^{-1}$ jako ułamek, np. 1/3, albo liczbę dziesiętną.",
     oczekiwane: { typ: 'liczba', wartosc: 0.5 },
     klawiatura: 'mat',
     typoweBledy: {
@@ -93,16 +88,19 @@ const ULAMKI: Karta[] = [
     wyjasnienie: '$a^{-1} = \\frac1a$. Na przykład $2^{-1} = \\frac12$, $5^{-1} = \\frac15$.',
   },
   {
+    podpowiedz: "Porównuj każdy wiersz z poprzednim. Szukasz pierwszej zmiany, która nie zachowuje wartości wyrażenia.",
+    kontekst: "$2^{-1}=\\frac12$. Mnożenie wykonujemy przed dodawaniem.",
     id: 'm1-blad',
     zadanieId: M1,
     etap: 'fragment',
     rodzaj: 'blad',
-    pytanie: 'Kasia liczy nawias z zadania. W której linijce jest błąd?',
+    pytanie: "W którym wierszu po raz pierwszy pojawia się błąd?",
     linie: ['$1 + 3 \\cdot 2^{-1}$', '$= 4 \\cdot 2^{-1}$', '$= 4 \\cdot \\frac{1}{2} = 2$'],
     bledna: 1,
-    wyjasnienie: 'Kasia dodała $1 + 3$ przed mnożeniem. Poprawnie: $1 + 3 \\cdot \\frac12 = 1 + \\frac32 = \\frac52$.',
+    wyjasnienie: "Błąd pojawia się w wierszu 2: dodano 1 + 3, choć najpierw trzeba pomnożyć $3\\cdot\\frac12$. Wiersz 3 poprawnie oblicza błędnie otrzymane wyrażenie — nie jest pierwszym błędem. Poprawnie: $1+\\frac32=\\frac52$.",
   },
   {
+    podpowiedz: "Najpierw $3\\cdot\\frac12$. Potem dodaj 1, zapisując ją jako $\\frac22$.",
     id: 'm1-nawias',
     zadanieId: M1,
     etap: 'fragment',
@@ -116,6 +114,8 @@ const ULAMKI: Karta[] = [
     wyjasnienie: '$3 \\cdot \\frac12 = \\frac32$, a $1 + \\frac32 = \\frac52$.',
   },
   {
+    podpowiedz: "Odwrotność ułamka otrzymasz, zamieniając licznik z mianownikiem.",
+    kontekst: "Nawias ma wartość $\\frac52$. Teraz przygotowujemy się do potęgi o ujemnym wykładniku.",
     id: 'm1-odwrotnosc',
     zadanieId: M1,
     etap: 'fragment',
@@ -127,6 +127,7 @@ const ULAMKI: Karta[] = [
     wyjasnienie: 'Odwrotność ułamka: zamieniamy licznik z mianownikiem — $\\frac25$.',
   },
   {
+    kontekst: "Nawias ma wartość $\\frac52$. Reguła: $a^{-2}=(\\frac1a)^2$ dla $a\\ne0$.",
     id: 'm1-kwadrat',
     zadanieId: M1,
     etap: 'fragment',
@@ -144,18 +145,15 @@ const ULAMKI: Karta[] = [
     wyjasnienie: '$\\left(\\frac52\\right)^{-2} = \\left(\\frac25\\right)^{2} = \\frac{4}{25}$.',
   },
   {
+    kontekst: "Po odwróceniu ułamka otrzymaliśmy $\\frac25$. Pozostaje obliczyć $(\\frac25)^2$.",
     id: 'm1-sprawdz',
     zadanieId: M1,
     etap: 'sprawdzenie',
     rodzaj: 'wybor',
-    pytanie: 'Wynik $\\frac{4}{25}$ jest mniejszy od 1. Czy to ma sens?',
-    opcje: [
-      'Tak — liczba większa od 1 podniesiona do potęgi ujemnej daje liczbę mniejszą od 1',
-      'Nie — w nawiasie jest dodawanie, więc wynik musi być duży',
-      'Nie da się tego sprawdzić bez kalkulatora',
-    ],
+    pytanie: "Który zapis poprawnie podnosi ten ułamek do kwadratu?",
+    opcje: ["$\\frac{2^2}{5^2}=\\frac4{25}$","$\\frac{2\\cdot2}{5\\cdot2}=\\frac4{10}$","$\\frac{2^2}{5}=\\frac45$"],
     poprawna: 0,
-    wyjasnienie: 'Szybkie sprawdzenie sensu: $\\frac52 > 1$, więc $\\left(\\frac52\\right)^{-2} < 1$. Pasuje tylko B.',
+    wyjasnienie: "Do kwadratu podnosimy osobno licznik i mianownik. Mnożenie obu przez 2 tylko rozszerza ułamek, a nie podnosi go do kwadratu.",
   },
   {
     id: 'm1-zadanie',
@@ -163,12 +161,13 @@ const ULAMKI: Karta[] = [
     etap: 'zadanie',
     rodzaj: 'zadanie',
     zPamieci: true,
-    pytanie: 'Rozwiąż całe zadanie samodzielnie i wybierz odpowiedź.',
+    pytanie: "Wybierz wynik całego wyrażenia. Jeśli potrzebujesz, rozwiń rozwiązanie poniżej.",
     koniec: { typ: 'abcd', poprawna: 1 },
     wyjasnienie: 'Odpowiedź B: $\\frac{4}{25}$ — zgodnie z kluczem CKE.',
   },
   // --- powtórka: inne zadanie CKE (maj 2026, zad. 1)
   {
+    podpowiedz: "Potęgowanie i mnożenie wykonujemy przed dodawaniem.",
     id: 'm1-p1',
     zadanieId: 'mat-2605-pp-1',
     etap: 'zasada',
@@ -192,6 +191,7 @@ const ULAMKI: Karta[] = [
     wyjasnienie: '$\\sqrt{\\frac{25}{8} \\cdot 2} = \\sqrt{\\frac{25}{4}} = \\frac52$.',
   },
   {
+    podpowiedz: "Połącz pierwiastki w jeden iloczyn, a $2^{-1}$ zastąp przez $\\frac12$. Na końcu dodaj wyniki.",
     id: 'm1-p3',
     zadanieId: 'mat-2605-pp-1',
     etap: 'zadanie',
@@ -208,6 +208,7 @@ const M2_WYRAZENIE = 'Zadanie: $\\left(\\frac{1}{16}\\right)^{8} \\cdot 8^{16}$,
 
 const POTEGI: Karta[] = [
   {
+    podpowiedz: "$16=2^4$ i $8=2^3$. Zapis z tą samą podstawą pozwala działać na małych wykładnikach.",
     id: 'm2-polecenie',
     zadanieId: M2,
     etap: 'polecenie',
@@ -224,9 +225,10 @@ const POTEGI: Karta[] = [
       1: 'Kalkulator prosty nie pokaże dokładnie tak dużej liczby, a odpowiedzi i tak są potęgami 2.',
       2: 'Liczby i wykładnika nie wolno „skracać” — to zupełnie różne miejsca w zapisie.',
     },
-    wyjasnienie: 'Gdy odpowiedzi są potęgami 2, wszystko zapisujemy jako potęgi 2 i działamy na wykładnikach.',
+    wyjasnienie: "Jednakowa podstawa pozwala mnożyć i dodawać wykładniki. Dzięki temu nie trzeba obliczać wielkich liczb.",
   },
   {
+    podpowiedz: "Wykładnik mówi, ile dwójek mnożymy. Sprawdź 2 · 2 · 2.",
     id: 'm2-dane',
     zadanieId: M2,
     etap: 'dane',
@@ -238,6 +240,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$2 \\cdot 2 \\cdot 2 = 8$, więc $8 = 2^{3}$.',
   },
   {
+    podpowiedz: "Mnóż kolejne dwójki: 2, 4, 8, 16. Policz użyte czynniki.",
     id: 'm2-dane2',
     zadanieId: M2,
     etap: 'dane',
@@ -249,6 +252,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$2^{4} = 16$.',
   },
   {
+    kontekst: "$16=2^4$. Ujemny wykładnik oznacza odwrotność: $a^{-n}=\\frac1{a^n}$ dla $a\\ne0$.",
     id: 'm2-ujemna',
     zadanieId: M2,
     etap: 'zasada',
@@ -265,6 +269,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$\\frac{1}{16} = \\frac{1}{2^{4}} = 2^{-4}$ — odwrotność to ujemny wykładnik.',
   },
   {
+    podpowiedz: "$a^{-1}=\\frac1a$, czyli wykładnik −1 oznacza odwrotność.",
     id: 'm2-ujemna-l',
     zadanieId: M2,
     etap: 'zasada',
@@ -275,20 +280,22 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$\\frac12 = 2^{-1}$. Tak samo $\\frac{1}{2^4} = 2^{-4}$.',
   },
   {
+    kontekst: "Potęga potęgi: $(a^m)^n=a^{m\\cdot n}$. Przy takiej operacji mnożymy wykładniki.",
     id: 'm2-blad',
     zadanieId: M2,
     etap: 'zasada',
     rodzaj: 'blad',
-    pytanie: 'Ola przekształca pierwszy czynnik. W której linijce jest błąd?',
+    pytanie: "W którym wierszu po raz pierwszy źle zastosowano regułę potęgi potęgi?",
     linie: [
       '$\\left(\\frac{1}{16}\\right)^{8} = \\left(2^{-4}\\right)^{8}$',
       '$= 2^{-4 + 8}$',
       '$= 2^{4}$',
     ],
     bledna: 1,
-    wyjasnienie: 'Potęga potęgi: wykładniki MNOŻYMY — $\\left(2^{-4}\\right)^{8} = 2^{-4 \\cdot 8} = 2^{-32}$.',
+    wyjasnienie: "Wiersz 2: zamiast dodać −4 + 8, trzeba pomnożyć $-4\\cdot8=-32$. Wiersz 3 poprawnie liczy sumę z błędnego wiersza 2. Poprawny wynik: $2^{-32}$.",
   },
   {
+    podpowiedz: "W potędze potęgi mnożymy wykładniki. Liczba ujemna razy dodatnia daje liczbę ujemną.",
     id: 'm2-f1',
     zadanieId: M2,
     etap: 'fragment',
@@ -304,6 +311,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$-4 \\cdot 8 = -32$.',
   },
   {
+    podpowiedz: "Pomnóż wykładniki: 3 · 16. To wykładnik wyniku, a nie jego podstawa.",
     id: 'm2-f2',
     zadanieId: M2,
     etap: 'fragment',
@@ -331,19 +339,16 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$-32 + 48 = 16$, więc wynik to $2^{16}$.',
   },
   {
+    kontekst: "Po przekształceniu obu czynników mamy $2^{-32}\\cdot2^{48}$.",
     id: 'm2-sprawdz',
     zadanieId: M2,
     etap: 'sprawdzenie',
     rodzaj: 'wybor',
     pytanie:
-      'Sprawdzenie na małych liczbach: $\\left(\\frac{1}{16}\\right)^{1} \\cdot 8^{2} = \\frac{64}{16} = 4$. Czy reguła „wykładniki” daje to samo?',
-    opcje: [
-      'Tak: $2^{-4 \\cdot 1} \\cdot 2^{3 \\cdot 2} = 2^{2} = 4$',
-      'Nie: reguła daje $2^{6}$',
-      'Nie da się porównać',
-    ],
+      "Który zapis poprawnie łączy potęgi o tej samej podstawie?",
+    opcje: ["$2^{-32+48}=2^{16}$","$2^{(-32)\\cdot48}=2^{-1536}$","$2^{32+48}=2^{80}$"],
     poprawna: 0,
-    wyjasnienie: 'Test na małych liczbach potwierdza metodę — możesz jej ufać w zadaniu.',
+    wyjasnienie: "Mnożąc potęgi o tej samej podstawie, dodajemy wykładniki ze znakami: −32 + 48 = 16. Wykładniki mnoży się przy potędze potęgi.",
   },
   {
     id: 'm2-zadanie',
@@ -351,12 +356,13 @@ const POTEGI: Karta[] = [
     etap: 'zadanie',
     rodzaj: 'zadanie',
     zPamieci: true,
-    pytanie: 'Rozwiąż całe zadanie samodzielnie i wybierz odpowiedź.',
+    pytanie: "Wybierz wynik całego wyrażenia. Możesz przypomnieć sobie obliczenia poniżej.",
     koniec: { typ: 'abcd', poprawna: 1 },
     wyjasnienie: 'Odpowiedź B: $2^{16}$ — zgodnie z kluczem CKE (wersja A).',
   },
   // --- powtórki: inne zadania CKE
   {
+    podpowiedz: "Dzieląc potęgi o tej samej podstawie, odejmujemy wykładniki: $a^m/a^n=a^{m-n}$.",
     id: 'm2-p1',
     zadanieId: 'mat-2505-pp-2',
     etap: 'fragment',
@@ -369,6 +375,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$5^{13 - 12} = 5$.',
   },
   {
+    podpowiedz: "Podziel każdy składnik licznika przez $5^{12}$. Dostaniesz $5^0+5^1+5^2$. Pamiętaj: $5^0=1$.",
     id: 'm2-p2',
     zadanieId: 'mat-2505-pp-2',
     etap: 'zadanie',
@@ -379,6 +386,7 @@ const POTEGI: Karta[] = [
     wyjasnienie: '$1 + 5 + 25 = 31$ — odpowiedź B (klucz CKE, wersja A).',
   },
   {
+    podpowiedz: "Zapisz $4^{12}=2^{24}$ i połącz z $5^{24}$ w $(2\\cdot5)^{24}$. Liczba $10^n$ ma jedynkę i n zer.",
     id: 'm2-p3',
     zadanieId: 'mat-2605-pp-5',
     etap: 'zadanie',
@@ -407,7 +415,7 @@ const ZMIENNE: Karta[] = [
     zadanieId: C1,
     etap: 'polecenie',
     rodzaj: 'wybor',
-    kontekst: 'Algorytm „Cyfry” (arkusz 2024, zad. 2) i tabela do uzupełnienia dla n = 542102.',
+    kontekst: "Polecenie: dla n = 542102 podaj końcową wartość c oraz liczbę wykonań instrukcji `c ← c + b`. To dwa osobne pola tabeli.",
     pytanie: 'Co trzeba wpisać w tabeli dla n = 542102?',
     opcje: [
       'Wartość c po wykonaniu algorytmu i liczbę wykonań instrukcji `c ← c + b`',
@@ -418,6 +426,7 @@ const ZMIENNE: Karta[] = [
     wyjasnienie: 'Dwie liczby w wierszu: końcowe c i to, ile razy wykonała się `c ← c + b`.',
   },
   {
+    podpowiedz: "`mod` oznacza resztę z dzielenia, a `div` — iloraz całkowity. Python używa odpowiednio operatorów `%` i `//`.",
     id: 'c1-zasada',
     zadanieId: C1,
     etap: 'zasada',
@@ -453,21 +462,23 @@ const ZMIENNE: Karta[] = [
     wyjasnienie: 'Reszta z dzielenia przez 10 to zawsze ostatnia cyfra liczby.',
   },
   {
+    kontekst: "Dla n = 542102 chcemy odczytać ostatnią cyfrę i usunąć ją, pozostawiając liczbę całkowitą. W Pythonie `/` dzieli zwyczajnie, a `//` całkowicie.",
     id: 'c1-blad',
     zadanieId: C1,
     etap: 'zasada',
     rodzaj: 'blad',
-    pytanie: 'Kuba przepisał początek pętli do Pythona. Która linijka psuje wynik?',
+    pytanie: "Który wiersz trzeba poprawić, aby n pozostało liczbą całkowitą po usunięciu ostatniej cyfry?",
     linie: ['a = n % 10', 'n = n / 10', 'b = b * 10'],
     bledna: 1,
     wyjasnienie: '`n / 10` daje 54210.2 (typ float). Algorytm wymaga dzielenia całkowitego: `n = n // 10`.',
   },
   {
+    kontekst: "W tym algorytmie najpierw odczytujemy cyfrę, potem usuwamy ją z n, aktualizujemy wynik c i dopiero zwiększamy mnożnik b dla następnej cyfry.",
     id: 'c1-kolejnosc',
     zadanieId: C1,
     etap: 'zasada',
     rodzaj: 'kolejnosc',
-    pytanie: 'Ułóż instrukcje jednego obrotu pętli w kolejności z arkusza.',
+    pytanie: "Ułóż instrukcje zgodnie z opisem jednego obrotu pętli.",
     elementy: [
       '`a ← n mod 10` — ostatnia cyfra',
       '`n ← n div 10` — obcięcie cyfry',
@@ -478,6 +489,7 @@ const ZMIENNE: Karta[] = [
     wyjasnienie: 'Bierzemy cyfrę, obcinamy ją, dopisujemy do c, przesuwamy mnożnik b o jedno miejsce.',
   },
   {
+    podpowiedz: "Najpierw policz a // 2, potem pomnóż wynik przez b i dodaj dotychczasowe c. Wszystkie wartości masz w kodzie.",
     id: 'c1-kod2',
     zadanieId: C1,
     etap: 'fragment',
@@ -499,6 +511,7 @@ const ZMIENNE: Karta[] = [
     wyjasnienie: '`//` to dzielenie całkowite: 4 // 2 = 2.',
   },
   {
+    kontekst: "Start: c = 0. Czytamy cyfry od prawej: 2, 0, 1; mnożniki b: 1, 10, 100. Dla parzystej cyfry a dodajemy b · (a // 2), dla nieparzystej dodajemy b.",
     id: 'c1-slad',
     zadanieId: C1,
     etap: 'fragment',
@@ -523,11 +536,12 @@ const ZMIENNE: Karta[] = [
     wyjasnienie: '0 + 1 · (2 // 2) = 1.',
   },
   {
+    kontekst: "Algorytm przegląda wszystkie cyfry. Instrukcja `c ← c + b` wykonuje się tylko dla cyfry nieparzystej.",
     id: 'c1-sprawdz',
     zadanieId: C1,
     etap: 'sprawdzenie',
     rodzaj: 'wybor',
-    pytanie: 'Wiersz przykładowy w arkuszu: 33658 → c = 11314 i 3 wykonania `c ← c + b`. Skąd 3?',
+    pytanie: "Liczba 33658 ma cyfry 3, 3, 6, 5, 8. Dlaczego instrukcja `c ← c + b` wykona się trzy razy?",
     opcje: ['33658 ma trzy cyfry nieparzyste (3, 3, 5)', 'Pętla obraca się 3 razy', 'c zaczyna się od cyfry 1'],
     poprawna: 0,
     wyjasnienie: '`c ← c + b` jest w gałęzi „w przeciwnym razie”, czyli dla cyfr nieparzystych.',
@@ -574,10 +588,10 @@ const ZMIENNE: Karta[] = [
     etap: 'fragment',
     rodzaj: 'kod',
     zPamieci: true,
-    pytanie: 'Ten sam fragment dla n = 154005710. Co wypisze program?',
+    pytanie: "Dla n = 154005710 odczytujemy dwie ostatnie cyfry. Co wypisze program?",
     kod: 'n = 154005710\nr = n % 100\na = r // 10\nb = r % 10\nprint(r, a, b)',
     wynik: ['10 1 0'],
-    wyjasnienie: 'Dwie ostatnie cyfry to 10: a = 1, b = 0. (Cały wynik z klucza CKE: przestaw(154005710) = 145007501.)',
+    wyjasnienie: "Reszta z dzielenia przez 100 to 10, a jej cyfry to 1 i 0. Program wypisze: 10 1 0.",
   },
 ];
 
@@ -591,22 +605,18 @@ const WARUNKI: Karta[] = [
     etap: 'polecenie',
     rodzaj: 'wybor',
     kontekst: 'Zadanie 3.1: podaj dwie najmniejsze (różne) liczby, które są długościami przedziałów z pliku dane3.txt.',
-    pytanie: 'Czego dotyczy odpowiedź?',
-    opcje: [
-      'Dwóch najmniejszych różnych DŁUGOŚCI przedziałów',
-      'Dwóch najkrótszych przedziałów [a, b]',
-      'Liczby przedziałów w pliku',
-    ],
+    pytanie: "Długości to 4, 4, 7. Która para spełnia warunek „dwie najmniejsze różne długości”?",
+    opcje: ["4 i 7","4 i 4","7 i 7"],
     poprawna: 0,
-    dlaczegoNie: { 1: 'Pytają o długości (liczby), a nie o same przedziały.' },
-    wyjasnienie: 'Odpowiedź to dwie liczby — najmniejsze różne długości.',
+    dlaczegoNie: {"1":"Dwie czwórki mają tę samą wartość. Szukamy dwóch różnych wartości.","2":"Pomijasz najmniejszą długość 4 i powtarzasz 7."},
+    wyjasnienie: "Powtórzenia pomijamy. Różne długości to 4 i 7, więc to szukana para.",
   },
   {
     id: 'c2-dane',
     zadanieId: C2,
     etap: 'dane',
     rodzaj: 'wpis',
-    kontekst: C2_DANE,
+    kontekst: "W tym zadaniu „długość” oznacza liczbę liczb całkowitych od a do b, z oboma końcami: b − a + 1. To inna definicja niż długość odcinka na osi.",
     pytanie: 'Jaka jest długość przedziału A = [−2, 4]? (długość = b − a + 1)',
     oczekiwane: { typ: 'liczba', wartosc: 7 },
     klawiatura: 'mat',
@@ -618,6 +628,7 @@ const WARUNKI: Karta[] = [
     wyjasnienie: '$4 - (-2) + 1 = 7$ — tak jak w informatorze: „przedział A ma długość 7”.',
   },
   {
+    kontekst: "Liczymy liczby całkowite należące do przedziału, razem z końcami.",
     id: 'c2-dane-l',
     zadanieId: C2,
     etap: 'dane',
@@ -638,6 +649,7 @@ const WARUNKI: Karta[] = [
     wyjasnienie: '0 leży między −2 a 4 (True), a 5 jest za prawym końcem (False).',
   },
   {
+    podpowiedz: "Lewy koniec P musi leżeć na prawo od lewego końca Q (lub na nim), a prawy koniec P — na lewo od prawego końca Q. Oba warunki naraz.",
     id: 'c2-warunek',
     zadanieId: C2,
     etap: 'zasada',
@@ -650,7 +662,7 @@ const WARUNKI: Karta[] = [
       2: 'Przy `or` wystarczy jeden warunek — a P musi mieścić się w Q z obu stron.',
     },
     latwiejsza: 'c2-kod1',
-    wyjasnienie: 'Tak samo sprawdza to program z informatora: `e2.pocz <= e1.pocz && e1.kon <= e2.kon`.',
+    wyjasnienie: "`q1 <= p1` sprawdza lewą stronę, `p2 <= q2` prawą. Łączymy je przez `and`, bo cały przedział P musi mieścić się w Q.",
   },
   {
     id: 'c2-kod2',
@@ -664,17 +676,20 @@ const WARUNKI: Karta[] = [
     wyjasnienie: '−3 ≤ −2 i 4 ≤ 6 — oba warunki prawdziwe. Informator potwierdza: „C zawiera A”.',
   },
   {
+    podpowiedz: "Instrukcje wykonują się od góry. Po przypisaniu min1 = dlug zmienna min1 nie pamięta już liczby 4.",
+    kontekst: "Przed fragmentem: min1 = 4, min2 = 7, dlug = 2. Po dodaniu nowej długości chcemy zachować dwie najmniejsze różne wartości: 2 i 4.",
     id: 'c2-blad',
     zadanieId: C2,
     etap: 'zasada',
     rodzaj: 'blad',
-    pytanie: 'Fragment szukający dwóch najmniejszych długości. Która linijka (w tej kolejności) niszczy wynik?',
+    pytanie: "W którym wierszu min2 dostanie już nową wartość min1 zamiast poprzedniej?",
     linie: ['if dlug < min1:', '    min1 = dlug', '    min2 = min1'],
     bledna: 2,
     wyjasnienie:
       '`min2 = min1` kopiuje już NOWĄ wartość i stara najmniejsza ginie. Najpierw `min2 = min1`, dopiero potem `min1 = dlug` — tak jak w programie z informatora.',
   },
   {
+    podpowiedz: "Nie musisz przepisywać całej pętli. Znajdź w pokazanej liście najmniejszą wartość, a potem najmniejszą wartość od niej większą.",
     id: 'c2-kod3',
     zadanieId: C2,
     etap: 'fragment',
@@ -688,6 +703,7 @@ const WARUNKI: Karta[] = [
     wyjasnienie: 'Najmniejsza długość to 1 (E), druga — 3 (F).',
   },
   {
+    podpowiedz: "Po 7 najmniejsze jest 7. Gdy pojawia się 4, dotychczasowe 7 trzeba zachować jako drugą wartość.",
     id: 'c2-kod3-l',
     zadanieId: C2,
     etap: 'fragment',
@@ -699,6 +715,7 @@ const WARUNKI: Karta[] = [
     wyjasnienie: 'Po 7: min1 = 7. Po 4: stara najmniejsza (7) przechodzi do min2, a min1 = 4.',
   },
   {
+    kontekst: "Szukamy dwóch różnych długości. Aktualizacja drugiej to: `elif min1 < dlug < min2: min2 = dlug`.",
     id: 'c2-sprawdz',
     zadanieId: C2,
     etap: 'sprawdzenie',
@@ -718,7 +735,7 @@ const WARUNKI: Karta[] = [
     etap: 'zadanie',
     rodzaj: 'zadanie',
     zPamieci: true,
-    pytanie: 'Napisz program dla pliku dane3.txt i wpisz odpowiedź do zadania 3.1.',
+    pytanie: "To zadanie wymaga przetworzenia pliku z 2023 parami liczb. Uruchom program albo rozwiń rozwiązanie poniżej — wyniku nie da się ustalić z samego przykładu A–F.",
     koniec: {
       typ: 'wpis',
       oczekiwane: [{ typ: 'tekst', warianty: ['3 4', '3,4', '3;4'] }],
@@ -746,13 +763,14 @@ const WARUNKI: Karta[] = [
     wyjasnienie: '7 % 2 = 1, warunek fałszywy — wykonuje się `else`.',
   },
   {
+    kontekst: "W każdym obrocie pętli przeglądamy jedną cyfrę. Dla nieparzystej wykonujemy `c ← c + b`, a dla parzystej inną instrukcję.",
     id: 'c2-p2',
     zadanieId: 'inf-2405-2.1',
     etap: 'fragment',
     rodzaj: 'wpis',
     zPamieci: true,
     pytanie:
-      'W algorytmie „Cyfry” instrukcja `c ← c + b` jest w gałęzi „w przeciwnym razie”. Ile razy wykona się dla n = 87654321012345678?',
+      "Cyfry liczby to: 8 7 6 5 4 3 2 1 0 1 2 3 4 5 6 7 8. Ile razy wykona się instrukcja dla cyfry nieparzystej?",
     oczekiwane: { typ: 'liczba', wartosc: 8 },
     klawiatura: 'mat',
     podpowiedz: 'Gałąź „w przeciwnym razie” = cyfra nieparzysta. Policz cyfry nieparzyste.',
@@ -766,11 +784,12 @@ const B1 = 'biz-2604-1';
 
 const PRZEDSIEBIORCZOSC: Karta[] = [
   {
+    kontekst: "Polecenie: nazwij cechę osoby przedsiębiorczej i uzasadnij ją przykładem działania Agnieszki z opisu.",
     id: 'b1-polecenie',
     zadanieId: B1,
     etap: 'polecenie',
     rodzaj: 'wybor',
-    pytanie: 'Za co dostaje się punkt w zadaniu 1.1?',
+    pytanie: "Która forma odpowiedzi spełnia oba wymagania polecenia?",
     opcje: [
       'Za cechę osoby przedsiębiorczej RAZEM z przykładem działania Agnieszki z tekstu',
       'Za samą nazwę cechy',
@@ -785,7 +804,7 @@ const PRZEDSIEBIORCZOSC: Karta[] = [
     zadanieId: B1,
     etap: 'dane',
     rodzaj: 'wybor',
-    pytanie: 'Które zdanie z opisu to DZIAŁANIE Agnieszki, a nie opis sytuacji?',
+    pytanie: "Które z poniższych zdań opisuje podjęte działanie Agnieszki?",
     opcje: [
       'Po namyśle i rozmowach z bliskimi zdecydowała się wyjechać i studiować w innym mieście',
       'Lokalna uczelnia oferuje przeciętny poziom nauczania',
@@ -804,12 +823,13 @@ const PRZEDSIEBIORCZOSC: Karta[] = [
     zadanieId: B1,
     etap: 'dane',
     rodzaj: 'wybor',
-    pytanie: 'Co z tego jest czymś, co ktoś ZROBIŁ?',
+    pytanie: "Które zdanie opisuje działanie, a nie cechę miejsca?",
     opcje: ['Wyjechała na studia', 'Uczelnia jest prestiżowa', 'Klub jest duży'],
     poprawna: 0,
     wyjasnienie: 'Działanie to czasownik o Agnieszce: zdecydowała, wyjechała, podjęła pracę.',
   },
   {
+    kontekst: "Agnieszka sama zdecydowała o wyjeździe na lepszą uczelnię. Wiedziała, że oznacza to większe koszty, stres i rozłąkę z rodziną.",
     id: 'b1-zasada',
     zadanieId: B1,
     etap: 'zasada',
@@ -824,12 +844,13 @@ const PRZEDSIEBIORCZOSC: Karta[] = [
     wyjasnienie: 'Klucz CKE podaje m.in. odwagę, zdolność podejmowania decyzji, ambicję i pracowitość.',
   },
   {
+    kontekst: "Pozostanie w domu oznacza niższe koszty i bliskość rodziny. Wyjazd daje prestiżową uczelnię i lepsze kluby sportowe, ale większe wydatki.",
     id: 'b1-decyzja',
     zadanieId: B1,
     etap: 'fragment',
     rodzaj: 'wybor',
     wariant: 'decyzja',
-    pytanie: 'Oceń decyzję Agnieszki jak przedsiębiorca. Który argument przemawia ZA wyjazdem?',
+    pytanie: "Która korzyść przemawia za wyjazdem Agnieszki?",
     opcje: [
       'Większe perspektywy zawodowe i rozwój kariery sportowej',
       'Niższe koszty życia',
@@ -839,11 +860,12 @@ const PRZEDSIEBIORCZOSC: Karta[] = [
     wyjasnienie: 'Niższe koszty i bliskość rodziny to argumenty ZA zostaniem. Przedsiębiorczy wybór waży korzyści i ryzyko.',
   },
   {
+    kontekst: "Odpowiedź powinna łączyć cechę z konkretną decyzją, która ją pokazuje. Agnieszka wybrała prestiżową uczelnię i lepsze kluby mimo trudności.",
     id: 'b1-blad',
     zadanieId: B1,
     etap: 'sprawdzenie',
     rodzaj: 'blad',
-    pytanie: 'Odpowiedź ucznia do 1.1. Która część nie spełnia zasad oceniania?',
+    pytanie: "Który wiersz trzeba doprecyzować, aby wskazywał działanie świadczące o ambicji?",
     linie: ['Cecha: ambicja.', 'Przykład: Agnieszka jest aktywną sportsmenką.'],
     bledna: 1,
     wyjasnienie:
@@ -873,6 +895,7 @@ const PRZEDSIEBIORCZOSC: Karta[] = [
     wyjasnienie: 'Porównaj z przykładami z klucza CKE i oceń: czy masz cechę I działanie z tekstu?',
   },
   {
+    podpowiedz: "Innowacja produktowa zmienia ofertę; procesowa — sposób wytwarzania; marketingowa — sposób promowania lub sprzedaży.",
     id: 'b1-pomoc',
     zadanieId: null,
     etap: 'pomocnicze',
@@ -923,8 +946,8 @@ const KOMUNIKACJA: Karta[] = [
     zadanieId: B2,
     etap: 'polecenie',
     rodzaj: 'wybor',
-    kontekst: 'Zasada z tekstu: „chwalenie publiczne, a krytykowanie w cztery oczy”.',
-    pytanie: 'Ile rzeczy trzeba wyjaśnić w 5.1, żeby dostać punkt?',
+    kontekst: "Polecenie: wyjaśnij, dlaczego warto chwalić publicznie oraz dlaczego warto przekazywać poważną krytykę w cztery oczy.",
+    pytanie: "Które elementy powinna zawierać pełna odpowiedź?",
     opcje: [
       'Dwie: dlaczego chwalić publicznie ORAZ dlaczego krytykować w cztery oczy',
       'Jedną — wystarczy wyjaśnić krytykę',
@@ -935,6 +958,7 @@ const KOMUNIKACJA: Karta[] = [
     wyjasnienie: 'Klucz CKE: 1 pkt za wyjaśnienie DWÓCH aspektów zasady.',
   },
   {
+    kontekst: "Według tekstu poważną krytykę przekazujemy prywatnie. Drobne poprawki, np. literówkę, można wskazać na spotkaniu.",
     id: 'b2-dane',
     zadanieId: B2,
     etap: 'dane',
@@ -962,15 +986,15 @@ const KOMUNIKACJA: Karta[] = [
     ],
     poprawna: 0,
     latwiejsza: 'b2-zasada-l',
-    wyjasnienie: 'To wyjaśnienie z klucza CKE do 5.1.',
+    wyjasnienie: "Rozmowa prywatna pozwala skupić się na problemie bez presji widowni. Krytyka przy innych może wywołać obronę i utrudnić spokojne przyjęcie uwagi.",
   },
   {
     id: 'b2-zasada-l',
     zadanieId: B2,
     etap: 'zasada',
     rodzaj: 'wybor',
-    pytanie: 'Jak zwykle reaguje człowiek skrytykowany przy wszystkich?',
-    opcje: ['Broni się i trudniej mu przyznać do błędu', 'Od razu przyznaje rację', 'Nie zwraca na to uwagi'],
+    pytanie: "Jaki skutek może mieć publiczne krytykowanie pracownika?",
+    opcje: ["Może wywołać reakcję obronną i utrudnić przyjęcie uwagi","Zawsze powoduje natychmiastową poprawę","Zawsze motywuje bardziej niż rozmowa prywatna"],
     poprawna: 0,
     wyjasnienie: 'Reakcja obronna utrudnia wyciągnięcie wniosków — dlatego krytyka w cztery oczy.',
   },
@@ -980,7 +1004,7 @@ const KOMUNIKACJA: Karta[] = [
     etap: 'zasada',
     rodzaj: 'wybor',
     zPamieci: true,
-    pytanie: 'A dlaczego chwalić publicznie?',
+    pytanie: "Jaką korzyść może przynieść publiczna pochwała pracownika, który dobrze ją przyjmuje?",
     opcje: [
       'Pochwała jest doceniana i zachęca innych do naśladowania',
       'Żeby zebranie trwało krócej',
@@ -990,6 +1014,7 @@ const KOMUNIKACJA: Karta[] = [
     wyjasnienie: 'Klucz CKE: pochwały publiczne są doceniane i zachęcają innych do naśladowania.',
   },
   {
+    kontekst: "Tekst zaleca uwzględniać preferencje: nie wszyscy lubią publiczne pochwały.",
     id: 'b2-decyzja',
     zadanieId: B2,
     etap: 'fragment',
@@ -1005,11 +1030,12 @@ const KOMUNIKACJA: Karta[] = [
     wyjasnienie: 'To drugi wyjątek z tekstu: nie wszyscy lubią publiczne pochwały.',
   },
   {
+    kontekst: "Trzeba wyjaśnić skutek obu sposobów komunikacji: publicznego chwalenia i prywatnego przekazywania krytyki.",
     id: 'b2-blad',
     zadanieId: B2,
     etap: 'sprawdzenie',
     rodzaj: 'blad',
-    pytanie: 'Odpowiedź ucznia do 5.1. Która część nie wystarczy na punkt?',
+    pytanie: "Który wiersz nie wyjaśnia, jak ten sposób komunikacji wpływa na pracownika?",
     linie: [
       'Chwalenie publiczne: pracownik czuje się doceniony, a inni widzą dobry przykład.',
       'Krytykowanie w cztery oczy: bo tak jest grzeczniej.',
@@ -1039,6 +1065,7 @@ const KOMUNIKACJA: Karta[] = [
     wyjasnienie: 'Klucz CKE: 1 pkt za poprawne wskazanie dwóch wyjątków.',
   },
   {
+    podpowiedz: "W macierzy Eisenhowera ważność oznacza wpływ na cele, a pilność — presję czasu. Ważne, niepilne działania wymagają zaplanowania czasu.",
     id: 'b2-pomoc',
     zadanieId: null,
     etap: 'pomocnicze',
@@ -1050,6 +1077,7 @@ const KOMUNIKACJA: Karta[] = [
   },
   // --- powtórka: inne zadanie CKE (zad. 2 z tego arkusza — praca zespołowa)
   {
+    podpowiedz: "Porównaj wynik współpracy z sumą wyników, jakie te same osoby uzyskałyby pracując osobno.",
     id: 'b2-p1',
     zadanieId: 'biz-2604-2',
     etap: 'zasada',

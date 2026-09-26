@@ -15,7 +15,7 @@ test('błąd prowadzi do łatwiejszego kroku tego samego zadania CKE', async ({ 
 
   const relacja = page.locator('.feed__relacja');
   await expect(relacja).toContainText('krok 1 z 9 zadania 1 (zadanie z arkusza CKE, 2022)');
-  await page.getByRole('button', { name: /Obliczyć wartość/ }).click();
+  await page.getByRole('button', { name: /Potęgę.*w nawiasie/ }).click();
   await expect(page.getByText('Dobrze', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Dalej/ }).click();
 

@@ -412,6 +412,42 @@
   gap: var(--space-2);
 }
 
+.linie--zapis {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.linie--zapis .linie__linia {
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: 0;
+  border-left: 2px solid var(--line-strong);
+}
+
+.opcje--wiersze {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.opcje--wiersze .opcja { padding: var(--space-2); }
+
+.karta__pomoc {
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+.karta__pomoc summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+}
+
+.karta__pomoc li + li { margin-top: var(--space-3); }
+
 .linie__linia {
   display: flex;
   align-items: center;

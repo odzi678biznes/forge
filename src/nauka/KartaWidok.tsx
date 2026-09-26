@@ -55,8 +55,27 @@ export function KartaWidok({ karta, zadanie, wynik, komputer, onWynik }: Props) 
       <h2 className="karta__pytanie">
         <Tex>{karta.pytanie}</Tex>
       </h2>
+      {karta.podpowiedz && karta.rodzaj !== 'wpis' && (
+        <details className="karta__pomoc">
+          <summary>Przypomnij zasadę</summary>
+          <p><Tex>{karta.podpowiedz}</Tex></p>
+        </details>
+      )}
       <Interakcja karta={karta} zadanie={zadanie} zablokowana={zablokowana} komputer={komputer} onWynik={onWynik} />
       {wynik && <Informacja karta={karta} wynik={wynik} />}
+      {zadanie && karta.rodzaj !== 'zadanie' && (
+        <details className="karta__pomoc">
+          <summary>Treść całego zadania</summary>
+          <PelneZadanie zadanie={zadanie} />
+        </details>
+      )}
+      {zadanie && karta.rodzaj === 'zadanie' && !wynik && (
+        <details className="karta__pomoc">
+          <summary>Nie mam jak liczyć — pokaż rozwiązanie</summary>
+          <p>Prześledź kroki. Samo odsłonięcie rozwiązania nie zalicza zadania. Możesz wrócić do niego później.</p>
+          <ol>{zadanie.rozwiazanie.map((krok, i) => <li key={i}><Tex>{krok}</Tex></li>)}</ol>
+        </details>
+      )}
     </div>
   );
 }
@@ -132,20 +151,21 @@ function Interakcja({ karta, zadanie, zablokowana, komputer, onWynik }: Interakc
       );
     case 'blad':
       return (
-        <div className="linie" role="group" aria-label="Linijki rozwiązania">
+        <>
+        <ol className="linie linie--zapis" aria-label="Zapis do sprawdzenia">
           {karta.linie.map((l, i) => (
-            <button
-              key={i}
-              type="button"
-              className="linie__linia"
-              disabled={zablokowana}
-              onClick={() => onWynik({ poprawna: i === karta.bledna, tekst: `linijka ${i + 1}` })}
-            >
+            <li key={i} className="linie__linia">
               <span className="linie__nr">{i + 1}</span>
               <Tex>{l}</Tex>
-            </button>
+            </li>
           ))}
-        </div>
+        </ol>
+        <Wybor id={karta.id} opcje={karta.linie.map((_, i) => `Wiersz ${i + 1}`)}
+          wiersze
+          poprawna={karta.bledna} decyzja={false} zablokowana={zablokowana}
+          onWynik={(i) => onWynik({ poprawna: i === karta.bledna, tekst: `wiersz ${i + 1}`,
+            przyczyna: `Sprawdź wiersz ${karta.bledna + 1}.` })} />
+        </>
       );
     case 'kod':
       return (
@@ -177,6 +197,7 @@ function Wybor({
   decyzja,
   zablokowana,
   onWynik,
+  wiersze = false,
 }: {
   id: string;
   opcje: string[];
@@ -184,12 +205,13 @@ function Wybor({
   decyzja: boolean;
   zablokowana: boolean;
   onWynik: (i: number) => void;
+  wiersze?: boolean;
 }) {
-  const kolejnosc = useMemo(() => tasuj(opcje, id), [opcje, id]);
+  const kolejnosc = useMemo(() => wiersze ? opcje.map((_, i) => i) : tasuj(opcje, id), [opcje, id, wiersze]);
   const [wybrana, setWybrana] = useState<number | null>(null);
   return (
-    <div className={`opcje${decyzja ? ' opcje--decyzja' : ''}`} role="group" aria-label="Odpowiedzi">
-      {kolejnosc.map((i) => (
+    <div className={`opcje${decyzja ? ' opcje--decyzja' : ''}${wiersze ? ' opcje--wiersze' : ''}`} role="group" aria-label="Odpowiedzi">
+      {kolejnosc.map((i, n) => (
         <button
           key={i}
           type="button"
@@ -200,7 +222,7 @@ function Wybor({
             onWynik(i);
           }}
         >
-          <Tex>{opcje[i] ?? ''}</Tex>
+          <span className="opcja__litera">{LITERY[n]}.</span> <Tex>{opcje[i] ?? ''}</Tex>
         </button>
       ))}
     </div>

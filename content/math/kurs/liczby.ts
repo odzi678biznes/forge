@@ -1490,8 +1490,8 @@ export const NUMBERS_QUESTIONS: Question[] = [
 export const NUMBERS_CARDS: Flashcard[] = [
   card('c-num-order-1', 'num-order', 'metoda', 'Kolejność działań?', 'Nawiasy → potęgi i pierwiastki → mnożenie i dzielenie (od lewej) → dodawanie i odejmowanie (od lewej).'),
   card('c-num-order-2', 'num-order', 'wzor', r`Jak dodać $\frac{a}{b} + \frac{c}{d}$?`, r`$\frac{ad + bc}{bd}$ — najpierw wspólny mianownik.`),
-  card('c-num-order-3', 'num-order', 'wzor', r`Jak podzielić przez ułamek $\frac{c}{d}$?`, r`Pomnożyć przez odwrotność: $\frac{a}{b} : \frac{c}{d} = \frac{a}{b} \cdot \frac{d}{c}$.`),
-  card('c-num-order-4', 'num-order', 'pulapka', r`Ile to $2\frac{1}{3}$?`, r`$2 + \frac{1}{3} = \frac{7}{3}$ — liczba mieszana to suma, nie iloczyn.`),
+  card('c-num-order-3', 'num-order', 'wzor', r`Jak obliczyć $\frac{a}{b} : \frac{c}{d}$, gdy $b$, $c$ i $d$ są różne od zera?`, r`Pierwszy ułamek pomnóż przez odwrotność drugiego: $\frac{a}{b} : \frac{c}{d} = \frac{a}{b} \cdot \frac{d}{c}$.`),
+  card('c-num-order-4', 'num-order', 'pulapka', r`Zamień liczbę mieszaną $2\frac{1}{3}$ na ułamek niewłaściwy.`, r`$2\frac{1}{3} = 2 + \frac{1}{3} = \frac{6}{3}+\frac{1}{3}=\frac{7}{3}$. Liczba mieszana oznacza sumę części całkowitej i ułamka.`),
 
   card('c-num-pow-1', 'num-powers', 'wzor', r`$a^m \cdot a^n = \;?$`, r`$a^{m+n}$ — przy mnożeniu wykładniki się dodaje.`),
   card('c-num-pow-2', 'num-powers', 'wzor', r`$(a^m)^n = \;?$`, r`$a^{m \cdot n}$ — potęga potęgi: wykładniki się mnoży.`),
@@ -1513,7 +1513,7 @@ export const NUMBERS_CARDS: Flashcard[] = [
   card('c-num-abs-3', 'num-abs', 'wzor', r`$|x - a| > r \iff \;?$`, r`$x \in (-\infty,\ a - r) \cup (a + r,\ +\infty)$`),
   card('c-num-abs-4', 'num-abs', 'pulapka', r`$|x + 2|$ to odległość od której liczby?`, r`Od $-2$, bo $|x + 2| = |x - (-2)|$.`),
 
-  card('c-num-apx-1', 'num-approx', 'wzor', 'Błąd względny?', r`$\delta = \frac{|x - x_0|}{|x|} \cdot 100\%$ — dzielisz przez wartość dokładną $x$.`),
+  card('c-num-apx-1', 'num-approx', 'wzor', r`Wartość dokładna to $x\ne0$, a przybliżenie to $x_0$. Jak obliczyć błąd względny w procentach?`, r`$\delta = \frac{|x - x_0|}{|x|} \cdot 100\%$ — błąd bezwzględny dzielimy przez wartość bezwzględną wartości dokładnej.`),
   card('c-num-apx-2', 'num-approx', 'definicja', 'Notacja wykładnicza?', r`$a \cdot 10^k$, gdzie $1 \le a < 10$, $k$ całkowite. Np. $45\,000 = 4{,}5 \cdot 10^4$.`),
   card('c-num-apx-3', 'num-approx', 'pulapka', r`$2{,}449$ do części dziesiątych?`, r`$2{,}4$ — decyduje tylko cyfra setnych, bez zaokrąglania łańcuchowego.`),
 ];
