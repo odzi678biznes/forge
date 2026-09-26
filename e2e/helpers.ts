@@ -45,4 +45,4 @@ export async function otworzWiecej(page: Page, nazwa: string | RegExp): Promise<
 }
 
 /** Dotychczasowy „Dziś” (plan dnia, diagnoza) jest teraz pod „Więcej”. */
-export const otworzPlan = (page: Page) => otworzWiecej(page, 'Plan dnia i statystyki');
+export const otworzPlan = (page: Page) => otworzWiecej(page, 'Statystyki');

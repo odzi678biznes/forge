@@ -11,6 +11,8 @@ import {
   odpowiedzPowtorka,
   pomin,
   postep,
+  kartyTreningu,
+  zapiszTrening,
   terminPowtorki,
   trudnosci,
   type StanNauki,
@@ -33,6 +35,8 @@ interface Props {
   onWyjdz: () => void;
   onWyklad: () => void;
   onInna: (skillId: string, tryb: Tryb) => void;
+  onNastepna: () => void;
+  treningDostepny: boolean;
 }
 
 interface Pozycja {
@@ -57,17 +61,19 @@ const piszeTeraz = () => {
   return a instanceof HTMLInputElement || a instanceof HTMLTextAreaElement;
 };
 
-export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onWyklad, onInna }: Props) {
+export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onWyklad, onInna, onNastepna, treningDostepny }: Props) {
   const komputer = useKomputer();
   const [trening, setTrening] = useState(0);
+  const [kolejkaTreningu] = useState(() => kartyTreningu(stan, l, Date.now()));
+  const [dobrzeTrening, setDobrzeTrening] = useState(0);
   const obecna = useCallback(
     (s: StanNauki, t = trening): Karta | null => {
       if (tryb === 'nauka') return biezaca(s, l);
       if (tryb === 'powtorka') return biezacaPowtorka(s, l);
-      const id = l.powtorka[t];
+      const id = kolejkaTreningu[t];
       return id ? kartaLekcji(l, id) : null;
     },
-    [tryb, l, trening],
+    [tryb, l, trening, kolejkaTreningu],
   );
 
   const [biez, setBiez] = useState<Pozycja | null>(() => {
@@ -88,6 +94,9 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
   const k = widoczna ? kartaLekcji(l, widoczna.id) : null;
   const z = k?.zadanieId ? zadanieCke(k.zadanieId) : undefined;
   const p = postep(stan, l);
+  const pasekRazem = tryb === 'trening' ? kolejkaTreningu.length : tryb === 'powtorka' ? l.powtorka.length : p.razem;
+  const pasekZrobione = tryb === 'trening' ? trening + (biez?.wynik ? 1 : 0)
+    : tryb === 'powtorka' ? stan.powtorki[l.skillId]?.sesja?.pozycja ?? 0 : p.zrobione;
 
   const pokazKomunikat = (t: string | null) => {
     setKomunikat(t);
@@ -117,7 +126,9 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
       zdarzenie.current = r.zdarzenie;
       pokazKomunikat(r.zdarzenie.komunikat);
     } else {
-      zdarzenie.current = { komunikat: null, stop: false, koniecSerii: trening + 1 >= l.powtorka.length };
+      zmien(zapiszTrening(stan, biez.id, teraz));
+      if (w.poprawna) setDobrzeTrening((n) => n + 1);
+      zdarzenie.current = { komunikat: null, stop: false, koniecSerii: trening + 1 >= kolejkaTreningu.length };
     }
   };
 
@@ -162,6 +173,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
         if (r.zdarzenie.koniecSerii) setEkran('koniec');
         else doNastepnej(r.stan);
       } else {
+        zmien(zapiszTrening(stan, biez.id, Date.now()));
         const t = trening + 1;
         setTrening(t);
         doNastepnej(stan, t);
@@ -282,7 +294,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
       return `${ETAP_NAZWA[k.etap]} · krok ${nr.krok} z ${nr.z} ${zrodlo}`;
     }
     if (tryb === 'nauka') return `${ETAP_NAZWA[k.etap]} · łatwiejszy krok ${zrodlo}`;
-    return `Powtórka · ${ETAP_NAZWA[k.etap]} ${zrodlo}`;
+    return `${tryb === 'trening' ? 'Trening dodatkowy' : 'Powtórka'} · ${ETAP_NAZWA[k.etap]} ${zrodlo}`;
   })();
 
   const odpowiedziano = Boolean(widoczna?.wynik);
@@ -295,16 +307,16 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
           ✕ <span>Wyjdź</span>
         </button>
         <div className="feed__tytul">
-          <p>{tryb === 'nauka' ? l.tytul : tryb === 'powtorka' ? `Powtórka: ${l.tytul}` : `Trening: ${l.tytul}`}</p>
+          <p>{tryb === 'nauka' ? l.tytul : tryb === 'powtorka' ? `Powtórka: ${l.tytul}` : `Trening dodatkowy: ${l.tytul}`}</p>
           <div
             className="feed__pasek"
             role="progressbar"
-            aria-label="Postęp serii (pominięte się nie liczą)"
+            aria-label={tryb === 'nauka' ? 'Postęp serii (pominięte się nie liczą)' : 'Postęp sesji'}
             aria-valuemin={0}
-            aria-valuemax={p.razem}
-            aria-valuenow={p.zrobione}
+            aria-valuemax={pasekRazem}
+            aria-valuenow={pasekZrobione}
           >
-            <span style={{ width: `${(100 * p.zrobione) / p.razem}%` }} />
+            <span style={{ width: `${pasekRazem ? (100 * pasekZrobione) / pasekRazem : 0}%` }} />
           </div>
         </div>
         <button type="button" className="btn btn--small feed__wyklad" onClick={onWyklad}>
@@ -319,6 +331,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
               {komunikat}
             </p>
           )}
+          {tryb === 'trening' && ekran === 'karta' && <p className="karta__uwaga">Trening dodatkowy — nie zmienia terminu powtórki.</p>}
 
           {ekran === 'karta' && k && widoczna && (
             <section key={`${widoczna.id}-${licznik}`} className={`feed__karta feed__karta--${kierunek}`} aria-label={relacja}>
@@ -357,6 +370,10 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
               {...(inna ? { inna } : {})}
               onWyjdz={onWyjdz}
               onInna={onInna}
+              onNastepna={onNastepna}
+              treningDostepny={treningDostepny}
+              dobrzeTrening={dobrzeTrening}
+              razemTrening={kolejkaTreningu.length}
             />
           )}
         </main>
@@ -411,15 +428,11 @@ function Zrodlo({ zadanie: z }: { zadanie: NonNullable<ReturnType<typeof zadanie
           {z.kluczOpis}
         </a>
       </p>
-      <p>
-        <strong>Oficjalna odpowiedź:</strong> {z.oficjalnaOdpowiedz}
-      </p>
+      <p><strong>Oficjalna odpowiedź:</strong> {z.oficjalnaOdpowiedz}</p>
       <p className="karta__uwaga">{z.zasadyOceniania}</p>
       <ol>
         {z.rozwiazanie.map((r, i) => (
-          <li key={i}>
-            <Tex>{r}</Tex>
-          </li>
+          <li key={i}><Tex>{r}</Tex></li>
         ))}
       </ol>
     </details>
@@ -434,6 +447,10 @@ function Koniec({
   inna,
   onWyjdz,
   onInna,
+  onNastepna,
+  treningDostepny,
+  dobrzeTrening,
+  razemTrening,
 }: {
   lekcja: Lekcja;
   tryb: Tryb;
@@ -442,6 +459,10 @@ function Koniec({
   inna?: Lekcja;
   onWyjdz: () => void;
   onInna: (skillId: string, tryb: Tryb) => void;
+  onNastepna: () => void;
+  treningDostepny: boolean;
+  dobrzeTrening: number;
+  razemTrening: number;
 }) {
   const termin = terminPowtorki(stan, l.skillId);
   const p = postep(stan, l);
@@ -463,8 +484,12 @@ function Koniec({
           <p>Udane powtórki po przerwie: {p.utrwalenie} z 2. {termin ? `Następna ${kiedy(termin)}.` : ''}</p>
         </>
       )}
-      {tryb === 'trening' && <h2>Koniec treningu</h2>}
-      {l.luki && l.luki.length > 0 && (
+      {tryb === 'trening' && <>
+        <h2>Koniec treningu</h2>
+        <p>Poprawnie: {dobrzeTrening} z {razemTrening} kart.</p>
+        <p>To wszystkie zadania CKE do tego tematu na dziś.</p>
+      </>}
+      {tryb !== 'trening' && l.luki && l.luki.length > 0 && (
         <div className="feed__luki">
           <p className="otwarta__tytul">Luki: brak autentycznych zadań CKE</p>
           <ul>
@@ -475,15 +500,15 @@ function Koniec({
         </div>
       )}
       <div className="feed__stop-akcje">
-        <button type="button" className="btn btn--primary" onClick={onWyjdz}>
-          Wróć do „Dziś”
+        <button type="button" className="btn btn--primary" onClick={tryb === 'trening' ? onNastepna : onWyjdz}>
+          {tryb === 'trening' ? 'Kontynuuj' : 'Wróć do „Dziś”'}
         </button>
-        {tryb !== 'trening' && (
+        {tryb !== 'trening' && treningDostepny && (
           <button type="button" className="btn" onClick={() => onInna(l.skillId, 'trening')}>
-            Ćwicz dalej — inne zadania CKE
+            Trening dodatkowy
           </button>
         )}
-        {inna && postep(stan, inna).status !== 'utrwalona' && (
+        {tryb !== 'trening' && inna && postep(stan, inna).status !== 'utrwalona' && (
           <button type="button" className="btn" onClick={() => onInna(inna.skillId, 'nauka')}>
             Następna lekcja: {inna.tytul}
           </button>
@@ -494,7 +519,8 @@ function Koniec({
 }
 
 function PanelZadania({ lekcja: l, stan, tryb, aktualna }: { lekcja: Lekcja; stan: StanNauki; tryb: Tryb; aktualna: string | null }) {
-  const z = zadanieCke(l.zadanieId);
+  const aktualnaKarta = aktualna ? kartaLekcji(l, aktualna) : null;
+  const z = aktualnaKarta?.zadanieId ? zadanieCke(aktualnaKarta.zadanieId) : undefined;
   const s = stan.lekcje[l.skillId];
   return (
     <aside className="panel-zadania" aria-label="Zadanie CKE, do którego prowadzi seria">
@@ -503,10 +529,10 @@ function PanelZadania({ lekcja: l, stan, tryb, aktualna }: { lekcja: Lekcja; sta
           <p className="panel-zadania__etykieta">
             {etykietaZrodla(z)} · {z.rok} · zad. {z.numer}
           </p>
-          <p className="panel-zadania__tresc">
+          {aktualnaKarta?.etap !== 'zadanie' && <p className="panel-zadania__tresc">
             <Tex>{z.tresc}</Tex>
-          </p>
-          {z.odpowiedzi && (
+          </p>}
+          {aktualnaKarta?.etap !== 'zadanie' && z.odpowiedzi && (
             <p className="panel-zadania__abcd">
               {z.odpowiedzi.map((o, i) => (
                 <span key={i}>

@@ -12,11 +12,34 @@ import {
   powtorkaNaTeraz,
   PRZERWA_MS,
   terminPowtorki,
+  kartyTreningu,
+  zapiszTrening,
+  wybierzTrening,
   type StanNauki,
 } from './silnik';
+import { spojnyPostep } from './spojny-postep';
+import { MasteryLevel } from '@/data/types';
 
 const L = lekcja('num-order')!;
 const T0 = Date.UTC(2026, 8, 26, 10);
+
+it('feed zasila postęp kursu i wybór następnej lekcji bez zmiany zapisu starego silnika', () => {
+  const stan = przejdz(nowyStan(), () => true);
+  const wspolny = spojnyPostep(stan, new Map(), []);
+  expect(wspolny.lessons).toContainEqual({ skillId: L.skillId, completedAt: T0 });
+  expect(wspolny.states.get(L.skillId)?.level).toBe(MasteryLevel.Independent);
+});
+
+it('trening rotuje karty i nie zmienia harmonogramu FSRS', () => {
+  const stan = przejdz(nowyStan(), () => true);
+  const termin = terminPowtorki(stan, L.skillId);
+  const pierwsza = kartyTreningu(stan, L, T0)[0]!;
+  const poKarcie = zapiszTrening(stan, pierwsza, T0);
+  expect(kartyTreningu(poKarcie, L, T0)[0]).not.toBe(pierwsza);
+  expect(kartyTreningu(poKarcie, L, T0)).not.toContain(pierwsza);
+  expect(terminPowtorki(poKarcie, L.skillId)).toBe(termin);
+  expect(wybierzTrening(poKarcie, [L], T0)?.skillId).toBe(L.skillId);
+});
 
 /** Odpowiada na kolejne karty serii tak, jak każe `dobrze`. */
 function przejdz(stan: StanNauki, dobrze: (id: string) => boolean, teraz = T0): StanNauki {

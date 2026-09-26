@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { DzisView } from '@/nauka/DzisView';
 import { FeedView, type Tryb } from '@/nauka/FeedView';
 import { useNauka } from '@/nauka/useNauka';
-import { lekcja as lekcjaNauki } from '@/nauka/lekcje';
-import { postep as postepNauki } from '@/nauka/silnik';
+import { LEKCJE, lekcja as lekcjaNauki } from '@/nauka/lekcje';
+import { postep as postepNauki, powtorkaNaTeraz, wybierzTrening } from '@/nauka/silnik';
+import { spojnyPostep } from '@/nauka/spojny-postep';
 import { CORPORA, SUBJECT_LABELS, useForge, type Screen, type SubjectId } from './useForge';
 import { remainingMinutes, subjectGlance, useCourse } from './useCourse';
 import { dayKey } from '@/learning-engine/schedule';
@@ -65,23 +66,32 @@ export function App() {
   }, [tutor]);
   const catalogue = useMemo(() => questions.flatMap((q) => q.commonErrors), [questions]);
 
+  const portRef = useRef(forge.storage);
+  portRef.current = forge.storage;
+  const port = useCallback(() => portRef.current(), []);
+  const { stan: stanNauki, zmien: zmienNauke } = useNauka(port, state.screen !== 'loading');
+  const spojny = useMemo(
+    () => spojnyPostep(stanNauki, state.skillStates, forge.lessonProgress),
+    [stanNauki, state.skillStates, forge.lessonProgress],
+  );
+
   // Dzień ma jeden budżet na wszystkie przedmioty: każdy kalendarz wie, ile
   // materiału zostało w pozostałych.
   const day = dayKey(Date.now());
   const loads = useMemo(() => {
     const now = Date.now();
     return Object.fromEntries(
-      SUBJECT_IDS.map((id) => [id, remainingMinutes(CORPORA[id], state.skillStates, now)]),
+      SUBJECT_IDS.map((id) => [id, remainingMinutes(CORPORA[id], spojny.states, now)]),
     ) as Record<SubjectId, number>;
     // `day`: po północy "przerobione dziś" przestaje być dzisiejsze.
-  }, [state.skillStates, day]);
+  }, [spojny.states, day]);
   const totalLoad = SUBJECT_IDS.reduce((sum, id) => sum + loads[id], 0);
 
   const course = useCourse({
     corpus,
-    states: state.skillStates,
+    states: spojny.states,
     attempts: forge.attempts,
-    lessonProgress: forge.lessonProgress,
+    lessonProgress: spojny.lessons,
     cardStates: forge.cardStates,
     dayMode: state.dayMode,
     deadline: forge.courseDeadline,
@@ -96,9 +106,9 @@ export function App() {
         glance: subjectGlance(
           {
             corpus: CORPORA[id],
-            states: state.skillStates,
+            states: spojny.states,
             attempts: forge.attempts,
-            lessonProgress: forge.lessonProgress,
+            lessonProgress: spojny.lessons,
             cardStates: forge.cardStates,
             dayMode: state.dayMode,
             deadline: forge.courseDeadline,
@@ -107,19 +117,22 @@ export function App() {
           Date.now(),
         ),
       })),
-    [state.subject, state.skillStates, state.dayMode, forge.attempts, forge.lessonProgress, forge.cardStates, forge.courseDeadline, loads, totalLoad],
+    [state.subject, spojny.states, state.dayMode, forge.attempts, spojny.lessons, forge.cardStates, forge.courseDeadline, loads, totalLoad],
   );
 
-  const practice = (skill: Skill) => beginMission(practiceFor(skill));
-
   // --- Prototyp nauki: feed kart dla sześciu lekcji próbki -------------------
-  const portRef = useRef(forge.storage);
-  portRef.current = forge.storage;
-  const port = useCallback(() => portRef.current(), []);
-  const { stan: stanNauki, zmien: zmienNauke } = useNauka(port, state.screen !== 'loading');
   const [feed, setFeed] = useState<{ skillId: string; tryb: Tryb } | null>(null);
   const otworzFeed = (skillId: string, tryb: Tryb) => {
-    setFeed({ skillId, tryb });
+    const cel = tryb === 'trening' && stanNauki
+      ? wybierzTrening(stanNauki, LEKCJE.filter((l) => l.przedmiot === state.subject), Date.now())
+      : null;
+    if (tryb === 'trening' && !cel) {
+      const next = course.ordered.find((s) => course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id));
+      if (next) forge.openLesson(next.id);
+      else toCommandCenter();
+      return;
+    }
+    setFeed({ skillId: cel?.skillId ?? skillId, tryb });
     goTo('nauka');
   };
   /** Sześć lekcji próbki otwiera feed; pozostałe — dotychczasowy widok lekcji. */
@@ -131,6 +144,10 @@ export function App() {
     }
     const s = postepNauki(stanNauki, l).status;
     otworzFeed(skillId, s === 'nowa' || s === 'w trakcie' ? 'nauka' : 'trening');
+  };
+  const practice = (skill: Skill) => {
+    if (lekcjaNauki(skill.id)) otworzLekcje(skill.id);
+    else beginMission(practiceFor(skill));
   };
 
   if (state.screen === 'loading') {
@@ -154,6 +171,12 @@ export function App() {
           onWyjdz={toCommandCenter}
           onWyklad={() => forge.openLesson(l.skillId)}
           onInna={otworzFeed}
+          treningDostepny={Boolean(wybierzTrening(stanNauki, LEKCJE.filter((x) => x.przedmiot === l.przedmiot), Date.now()))}
+          onNastepna={() => {
+            const next = course.ordered.find((s) => course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id));
+            if (next) otworzLekcje(next.id);
+            else toCommandCenter();
+          }}
         />
         </ErrorBoundary>
       );
@@ -218,7 +241,23 @@ export function App() {
           subjectName={corpus.subject.name}
           topics={topics}
           skills={skills}
-          states={state.skillStates}
+          states={spojny.states}
+          nauka={stanNauki}
+          nextSkillId={(() => {
+            const review = course.ordered.find((s) => {
+              const l = lekcjaNauki(s.id);
+              return l && stanNauki && powtorkaNaTeraz(stanNauki, l.skillId, Date.now());
+            });
+            const due = course.ordered.find((s) => {
+              const l = lekcjaNauki(s.id);
+              return l && stanNauki && postepNauki(stanNauki, l).status === 'w trakcie';
+            });
+            const fresh = course.ordered.find((s) => {
+              const l = lekcjaNauki(s.id);
+              return l && stanNauki && postepNauki(stanNauki, l).status === 'nowa';
+            });
+            return review?.id ?? due?.id ?? fresh?.id ?? course.next?.id ?? null;
+          })()}
           onOpenLesson={otworzLekcje}
           onPractice={practice}
         />
@@ -270,7 +309,7 @@ export function App() {
         <ProgressView
           course={course}
           skills={skills}
-          states={state.skillStates}
+          states={spojny.states}
           attempts={forge.attempts}
           onPractice={practice}
         />
@@ -291,6 +330,7 @@ export function App() {
             void forge.rateCard(card, rating);
           }}
           onDone={toCommandCenter}
+          nextLessonName={course.next?.name ?? null}
         />
       );
       break;
@@ -300,11 +340,11 @@ export function App() {
         <MasteryMap
           skills={skills}
           topics={topics}
-          states={state.skillStates}
+          states={spojny.states}
           // Kliknięcie w węzeł uruchamia trening, nie otwiera statystyk (sek. 7.3).
-          onSelect={(skill) =>
-            beginMission(trainingFor(skill, state.skillStates.get(skill.id)?.level ?? 0))
-          }
+          onSelect={(skill) => lekcjaNauki(skill.id)
+            ? otworzLekcje(skill.id)
+            : beginMission(trainingFor(skill, state.skillStates.get(skill.id)?.level ?? 0))}
           onBack={toCommandCenter}
         />
       );
@@ -353,7 +393,9 @@ export function App() {
       break;
 
     case 'weekly-report':
-      page = <WeeklyReportView report={state.weekly} rhythm={state.rhythm} onBack={toCommandCenter} />;
+      page = <WeeklyReportView report={state.weekly} rhythm={state.rhythm} onBack={toCommandCenter}
+        feedProgress={LEKCJE.filter((l) => l.przedmiot === state.subject && (stanNauki?.lekcje[l.skillId]?.ukonczona ?? 0) >= Date.now() - 7 * 86_400_000)
+          .map((l) => ({ skillId: l.skillId, name: l.tytul, status: postepNauki(stanNauki!, l).status }))} />;
       break;
 
     case 'exams':
@@ -393,6 +435,8 @@ export function App() {
           onStart={otworzFeed}
           onWiecej={() => goTo('plan')}
           onKurs={() => goTo('course')}
+          nextCourse={course.ordered.find((s) => !lekcjaNauki(s.id) && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id)) ?? null}
+          onCourseLesson={forge.openLesson}
         />
       );
       break;
@@ -436,6 +480,15 @@ export function App() {
     'error-lab': openErrorCount(state.errorGroups),
   };
 
+  const statTabs: { screen: Screen; label: string }[] = [
+    { screen: 'plan', label: 'Plan' },
+    { screen: 'progress', label: 'Postęp' },
+    { screen: 'mastery-map', label: 'Mapa' },
+    { screen: 'weekly-report', label: 'Raport' },
+    { screen: 'error-lab', label: 'Błędy' },
+  ];
+  const inStats = statTabs.some((t) => t.screen === state.screen);
+
   return (
     <Shell
       screen={state.screen}
@@ -447,6 +500,9 @@ export function App() {
       badges={badges}
     >
       <ErrorBoundary key={state.screen} onHome={toCommandCenter}>
+        {inStats && <nav className="tabs" aria-label="Zakładki statystyk">
+          {statTabs.map((t) => <button key={t.screen} type="button" className={state.screen === t.screen ? 'tabs__item tabs__item--on' : 'tabs__item'} aria-current={state.screen === t.screen ? 'page' : undefined} onClick={() => goTo(t.screen)}>{t.label}</button>)}
+        </nav>}
         {page}
       </ErrorBoundary>
     </Shell>

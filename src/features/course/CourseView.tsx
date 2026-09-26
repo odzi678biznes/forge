@@ -3,6 +3,8 @@ import { STATUS_LABELS, skillStatus, type SkillStatus } from '@/learning-engine/
 import { formatDay } from '@/learning-engine/schedule';
 import type { CourseView as Course } from '@/app/useCourse';
 import { Icon } from '@/components/Icon';
+import { lekcja as lekcjaNauki } from '@/nauka/lekcje';
+import { postep, type StanNauki } from '@/nauka/silnik';
 import './course.css';
 
 /**
@@ -19,6 +21,8 @@ interface Props {
   topics: Topic[];
   skills: Skill[];
   states: Map<string, SkillState>;
+  nauka: StanNauki | null;
+  nextSkillId: string | null;
   onOpenLesson: (skillId: string) => void;
   onPractice: (skill: Skill) => void;
 }
@@ -30,7 +34,7 @@ const STATUS_ICON: Record<SkillStatus, string> = {
   retained: 'course__dot course__dot--retained',
 };
 
-export function CourseView({ course, subjectName, topics, skills, states, onOpenLesson, onPractice }: Props) {
+export function CourseView({ course, subjectName, topics, skills, states, nauka, nextSkillId, onOpenLesson, onPractice }: Props) {
   const plannedOn = new Map<string, string>();
   for (const d of course.schedule.days) for (const id of d.skillIds) plannedOn.set(id, d.date);
 
@@ -48,7 +52,7 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
               {course.summary.byLevel.PR.covered}/{course.summary.byLevel.PR.total}.
             </>
           )}{' '}
-          „Przerobione” znaczy: typowe zadanie rozwiązane samodzielnie dwa razy z rzędu.
+          W lekcjach z kartami postęp pochodzi z serii i powtórek. W pozostałych — z ćwiczeń kursu.
         </p>
         <div className="bar course__bar" aria-hidden>
           <div className="bar__fill" style={{ width: `${course.summary.ratio * 100}%` }} />
@@ -59,7 +63,7 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
         {course.topics.map((tp, index) => {
           const topic = topics.find((t) => t.id === tp.topic.id) ?? tp.topic;
           const own = skills.filter((s) => s.topicId === topic.id);
-          const containsNext = own.some((s) => s.id === course.next?.id);
+          const containsNext = own.some((s) => s.id === nextSkillId);
           const hasLessons = own.some((s) => course.lessonOf.has(s.id));
           return (
             <li key={topic.id} className="chapter">
@@ -87,8 +91,10 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
                   {own.map((s) => {
                     const state = states.get(s.id);
                     const status = skillStatus(state, course.lessonsDone.has(s.id));
+                    const feedLesson = lekcjaNauki(s.id);
+                    const feedStatus = feedLesson && nauka ? postep(nauka, feedLesson).status : null;
                     const lesson = course.lessonOf.get(s.id);
-                    const isNext = course.next?.id === s.id;
+                    const isNext = nextSkillId === s.id;
                     const planned = plannedOn.get(s.id);
                     return (
                       <li key={s.id} className={isNext ? 'skill skill--next' : 'skill'}>
@@ -109,22 +115,22 @@ export function CourseView({ course, subjectName, topics, skills, states, onOpen
                                 dodatkowe
                               </span>
                             )}
-                            <span>{STATUS_LABELS[status]}</span>
-                            <span>· poziom: {MASTERY_LABELS[state?.level ?? MasteryLevel.Unknown]}</span>
+                            <span>{feedStatus ?? STATUS_LABELS[status]}</span>
+                            {!feedLesson && <span>· poziom: {MASTERY_LABELS[state?.level ?? MasteryLevel.Unknown]}</span>}
                             {planned && status !== 'covered' && status !== 'retained' && (
                               <span>· w planie: {formatDay(planned)}</span>
                             )}
                           </span>
                         </span>
                         <span className="skill__actions">
-                          {lesson && (
+                          {(lesson || feedLesson) && (
                             <button type="button" className="btn btn--small" onClick={() => onOpenLesson(s.id)}>
-                              <Icon name="book" size={15} /> Lekcja
+                              <Icon name="book" size={15} /> Ucz się
                             </button>
                           )}
-                          <button type="button" className="btn btn--small" onClick={() => onPractice(s)}>
-                            <Icon name="play" size={15} /> Ćwicz
-                          </button>
+                          {!feedLesson && <button type="button" className="btn btn--small" onClick={() => onPractice(s)}>
+                            <Icon name="play" size={15} /> Trening dodatkowy
+                          </button>}
                         </span>
                       </li>
                     );

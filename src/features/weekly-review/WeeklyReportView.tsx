@@ -15,28 +15,35 @@ import './weekly-review.css';
 interface Props {
   report: WeeklyReport;
   rhythm: WeekRhythm;
+  feedProgress: { skillId: string; name: string; status: string }[];
   onBack: () => void;
 }
 
-export function WeeklyReportView({ report, rhythm, onBack }: Props) {
+export function WeeklyReportView({ report, rhythm, feedProgress, onBack }: Props) {
   return (
     <main className="week">
       <header className="week__head">
         <button type="button" className="week__back" onClick={onBack}>
-          &larr; Plan dnia
+          &larr; Dziś
         </button>
         <p className="week__eyebrow">Ostatnie 7 dni</p>
         <h1 className="week__title">Raport tygodniowy</h1>
         <p className="week__sub">
-          {report.missionsFinished} ukończonych misji · {report.attemptsTotal} prób ·{' '}
+          {report.missionsFinished} ukończonych misji · {report.attemptsTotal} prób · {feedProgress.length} lekcji z kartami ·{' '}
           {rhythm.note}
         </p>
       </header>
+      {report.missionsFinished === 0 && feedProgress.length === 0 && <p>Kontynuuj lekcję w „Dziś”, aby zobaczyć tu postęp z tygodnia. <button type="button" className="btn btn--primary" onClick={onBack}>Kontynuuj</button></p>}
+
+      {feedProgress.length > 0 && <section className="week__section week__section--good">
+        <h2>Lekcje z kartami w tym tygodniu</h2>
+        <ul className="week__list">{feedProgress.map((l) => <li key={l.skillId}><span className="week__skill">{l.name}</span><span className="week__detail">{l.status}</span></li>)}</ul>
+      </section>}
 
       <Section
         title="Czego nauczyłem się samodzielnie"
         lines={report.learnedIndependently}
-        empty="W tym tygodniu żadna kompetencja nie doszła do samodzielności."
+        empty={feedProgress.length > 0 ? 'W misjach nie ma jeszcze samodzielnego rozwiązania. Lekcje z kartami pokazano wyżej.' : 'W tym tygodniu żadna kompetencja nie doszła do samodzielności.'}
         tone="good"
       />
 

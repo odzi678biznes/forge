@@ -17,16 +17,11 @@ interface Props {
   onStart: (skillId: string, tryb: Tryb) => void;
   onWiecej: () => void;
   onKurs: () => void;
+  nextCourse: { id: string; name: string } | null;
+  onCourseLesson: (skillId: string) => void;
 }
 
-const STATUS: Record<string, string> = {
-  nowa: 'nowa',
-  'w trakcie': 'w trakcie',
-  przerobiona: 'przerobiona — czeka na powtórkę',
-  utrwalona: 'utrwalona',
-};
-
-export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs }: Props) {
+export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson }: Props) {
   const teraz = Date.now();
   const lekcje = LEKCJE.filter((l) => l.przedmiot === przedmiot);
   const data = new Date(teraz).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -57,19 +52,12 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
       <p className="dzis__data">{data}</p>
       <h1 className="dzis__tytul">{przedmiotNazwa}</h1>
 
-      {cel ? (
-        <button type="button" className="dzis__kontynuuj" onClick={() => onStart(cel.l.skillId, cel.tryb)}>
+      {cel || nextCourse ? (
+        <button type="button" className="dzis__kontynuuj" onClick={() => cel ? onStart(cel.l.skillId, cel.tryb) : onCourseLesson(nextCourse!.id)}>
           <span className="dzis__kontynuuj-napis">Kontynuuj</span>
-          <span className="dzis__kontynuuj-opis">{opis}</span>
+          <span className="dzis__kontynuuj-opis">{opis ?? `Następna lekcja kursu: ${nextCourse!.name}`}</span>
         </button>
-      ) : (
-        <div className="dzis__gotowe">
-          <p>Obie lekcje próbki są przerobione, a powtórki czekają na swój termin.</p>
-          <button type="button" className="btn btn--primary" onClick={() => lekcje[0] && onStart(lekcje[0].skillId, 'trening')}>
-            Ćwicz dalej
-          </button>
-        </div>
-      )}
+      ) : <p>Wszystkie dostępne lekcje są przerobione. Wróć, gdy nadejdzie powtórka.</p>}
 
       <p className="dzis__powtorka">
         {najblizsza
@@ -77,29 +65,12 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
           : 'Najbliższa powtórka: pojawi się po pierwszej skończonej lekcji.'}
       </p>
 
-      <ul className="dzis__lekcje" aria-label="Lekcje w próbce">
-        {lekcje.map((l) => {
-          const p = postep(stan, l);
-          return (
-            <li key={l.skillId}>
-              <button type="button" onClick={() => onStart(l.skillId, p.status === 'nowa' || p.status === 'w trakcie' ? 'nauka' : 'trening')}>
-                <span>{l.tytul}</span>
-                <span className="dzis__status">
-                  {STATUS[p.status]}
-                  {p.utrwalenie > 0 && p.status !== 'utrwalona' ? ` · powtórki ${p.utrwalenie}/2` : ''}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
       <div className="dzis__dol">
         <button type="button" className="dzis__link" onClick={onWiecej}>
-          Więcej: plan dnia, statystyki, narzędzia →
+          Statystyki →
         </button>
         <button type="button" className="dzis__link" onClick={onKurs}>
-          Pozostałe lekcje (dotychczasowy widok) →
+          Wszystkie lekcje w Kursie →
         </button>
       </div>
     </main>

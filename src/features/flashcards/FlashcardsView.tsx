@@ -24,6 +24,7 @@ interface Props {
   unlockedSkillIds: Set<string>;
   onRate: (card: Flashcard, rating: CardRating) => void;
   onDone: () => void;
+  nextLessonName: string | null;
 }
 
 const KIND_LABELS: Record<FlashcardKind, string> = {
@@ -58,7 +59,7 @@ export function FlashcardsView(props: Props) {
   );
 }
 
-function Session({ queue, dueCount, newCount, skills, onRate, onDone }: Props) {
+function Session({ queue, dueCount, newCount, skills, onRate, onDone, nextLessonName }: Props) {
   // Kolejka zamrożona na start sesji - ocena nie może przetasować kart pod ręką.
   const [cards, setCards] = useState<Flashcard[]>(queue);
   const [index, setIndex] = useState(0);
@@ -105,7 +106,8 @@ function Session({ queue, dueCount, newCount, skills, onRate, onDone }: Props) {
       <section className="card flash__empty">
         <Icon name="check" size={28} />
         <h2>Na dziś nic nie czeka</h2>
-        <p>Nowe fiszki odblokowują się po lekcjach. Wszystkie karty możesz przejrzeć w zakładce obok.</p>
+        <p>{nextLessonName ? `Nowe fiszki po lekcji „${nextLessonName}”.` : 'Wszystkie dostępne fiszki są przejrzane.'}</p>
+        <button type="button" className="btn btn--primary" onClick={onDone}>{nextLessonName ? 'Kontynuuj' : 'Wróć do „Dziś”'}</button>
       </section>
     );
   }
@@ -120,7 +122,7 @@ function Session({ queue, dueCount, newCount, skills, onRate, onDone }: Props) {
           wtedy, kiedy zaczną się zacierać.
         </p>
         <button type="button" className="btn btn--primary" onClick={onDone}>
-          Wróć do planu dnia
+          Wróć do „Dziś”
         </button>
       </section>
     );
@@ -169,13 +171,13 @@ function Session({ queue, dueCount, newCount, skills, onRate, onDone }: Props) {
   );
 }
 
-function AllCards({ cards, states, skills, unlockedSkillIds }: Props) {
+function AllCards({ cards, states, skills, unlockedSkillIds, onDone }: Props) {
   const bySkill = skills
     .map((s) => ({ skill: s, cards: cards.filter((c) => c.skillId === s.id) }))
     .filter((g) => g.cards.length > 0);
 
   if (bySkill.length === 0) {
-    return <p className="calendar__empty">Ten przedmiot nie ma jeszcze fiszek.</p>;
+    return <div className="calendar__empty"><p>Ten przedmiot nie ma jeszcze fiszek. Kontynuuj naukę w „Dziś”.</p><button type="button" className="btn btn--primary" onClick={onDone}>Kontynuuj</button></div>;
   }
 
   return (

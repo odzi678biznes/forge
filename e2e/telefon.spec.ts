@@ -13,7 +13,7 @@ test('każdy ekran mieści się w szerokości telefonu', async ({ page }) => {
     await expectNoSideScroll(page, `${subject}: Dziś`);
     await nav.getByRole('button', { name: 'Kurs' }).click();
     await expectNoSideScroll(page, `${subject}: Kurs`);
-    for (const screen of ['Plan dnia i statystyki', /^Fiszki/, 'Kalendarz', 'Postęp']) {
+    for (const screen of ['Statystyki', 'Powtórki i fiszki', 'Arkusze CKE']) {
       await otworzWiecej(page, screen);
       await expectNoSideScroll(page, `${subject}: ${String(screen)}`);
     }

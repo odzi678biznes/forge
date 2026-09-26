@@ -55,6 +55,8 @@ export interface StanNauki {
   wersja: 1;
   lekcje: Record<string, StanLekcji>;
   powtorki: Record<string, StanPowtorki>;
+  /** Ostatnie pokazanie karty treningowej; nie wpływa na FSRS. */
+  trening?: Record<string, number>;
 }
 
 export const PRZERWA_MS = 20 * 3600_000;
@@ -65,6 +67,31 @@ const PRZYSPIESZ_PO = 3;
 const planista = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
 
 export const nowyStan = (): StanNauki => ({ wersja: 1, lekcje: {}, powtorki: {} });
+
+export const DZIEN_MS = 24 * 3600_000;
+
+/** Karty niewidziane w ostatniej dobie, najdawniej użyte jako pierwsze. */
+export function kartyTreningu(stan: StanNauki, l: Lekcja, teraz: number): string[] {
+  return l.powtorka
+    .filter((id) => teraz - (stan.trening?.[id] ?? 0) >= DZIEN_MS)
+    .sort((a, b) => (stan.trening?.[a] ?? 0) - (stan.trening?.[b] ?? 0));
+}
+
+export function zapiszTrening(stan: StanNauki, kartaId: string, teraz: number): StanNauki {
+  return { ...stan, trening: { ...stan.trening, [kartaId]: teraz } };
+}
+
+/** Najpierw najsłabszy wynik serii, potem najbliższa powtórka. */
+export function wybierzTrening(stan: StanNauki, lekcje: Lekcja[], teraz: number): Lekcja | null {
+  return lekcje
+    .filter((l) => ['przerobiona', 'utrwalona'].includes(postep(stan, l).status) && kartyTreningu(stan, l, teraz).length > 0)
+    .sort((a, b) => {
+      const pa = postep(stan, a);
+      const pb = postep(stan, b);
+      return pa.zrobione / pa.razem - pb.zrobione / pb.razem
+        || (terminPowtorki(stan, a.skillId) ?? Infinity) - (terminPowtorki(stan, b.skillId) ?? Infinity);
+    })[0] ?? null;
+}
 
 export function nowaLekcja(): StanLekcji {
   return { pozycja: 0, wstawione: [], wyniki: {}, seria: 0, samodzielnosc: 0, odStopu: 0, ukonczona: null };

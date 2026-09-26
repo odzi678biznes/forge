@@ -25,14 +25,9 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
-  { screen: 'plan', label: 'Plan dnia i statystyki', icon: 'report' },
-  { screen: 'flashcards', label: 'Fiszki', icon: 'cards' },
-  { screen: 'calendar', label: 'Kalendarz', icon: 'calendar' },
-  { screen: 'progress', label: 'Postęp', icon: 'progress' },
+  { screen: 'flashcards', label: 'Powtórki i fiszki', icon: 'cards' },
   { screen: 'exams', label: 'Arkusze CKE', icon: 'exam' },
-  { screen: 'error-lab', label: 'Laboratorium błędów', icon: 'errors' },
-  { screen: 'mastery-map', label: 'Mapa umiejętności', icon: 'map' },
-  { screen: 'weekly-report', label: 'Raport tygodnia', icon: 'report' },
+  { screen: 'plan', label: 'Statystyki', icon: 'report' },
   { screen: 'ai-settings', label: 'Nauczyciel AI', icon: 'ai' },
   { screen: 'data', label: 'Twoje dane', icon: 'data' },
 ];
@@ -43,6 +38,11 @@ const PARENT: Partial<Record<Screen, Screen>> = {
   summary: 'command-center',
   'diagnostic-intro': 'command-center',
   'diagnostic-report': 'command-center',
+  progress: 'plan',
+  'mastery-map': 'plan',
+  'weekly-report': 'plan',
+  'error-lab': 'plan',
+  calendar: 'plan',
 };
 
 interface Props {

@@ -30,15 +30,17 @@ export function ErrorLab({ groups, skills, onRepair, onBack }: Props) {
     <main className="lab">
       <header className="lab__head">
         <button type="button" className="lab__back" onClick={onBack}>
-          &larr; Plan dnia
+          &larr; Dziś
         </button>
         <h1 className="lab__title">Laboratorium błędów</h1>
         <p className="lab__lead">
           {groups.length === 0
-            ? 'Dziennik jest pusty. Błędy trafiają tu automatycznie, gdy system rozpozna ich przyczynę.'
+            ? 'Dziennik jest pusty. Kontynuuj lekcję — błędy pojawią się tu, gdy system rozpozna ich przyczynę.'
             : 'Błędy zgrupowane według przyczyny, nie według zadania. Każdy wpis znika po trzech poprawnych próbach z rzędu.'}
         </p>
       </header>
+
+      {groups.length === 0 && <button type="button" className="btn btn--primary" onClick={onBack}>Kontynuuj</button>}
 
       {open.length > 0 && (
         <section aria-labelledby="lab-open">
