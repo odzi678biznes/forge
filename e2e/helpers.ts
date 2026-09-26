@@ -28,7 +28,9 @@ export async function answerAnything(page: Page): Promise<void> {
 
 /** Strona nie przewija się w bok - na telefonie to znak rozjechanego układu. */
 export async function expectNoSideScroll(page: Page, where: string): Promise<void> {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  const width = page.viewportSize()?.width;
+  const overflow = await page.evaluate((viewportWidth) =>
+    document.documentElement.scrollWidth - (viewportWidth ?? document.documentElement.clientWidth), width);
   expect(overflow, `${where}: strona szersza od ekranu o ${overflow}px`).toBeLessThanOrEqual(0);
 }
 
@@ -39,9 +41,7 @@ export async function expectNoSideScroll(page: Page, where: string): Promise<voi
 export async function otworzWiecej(page: Page, nazwa: string | RegExp): Promise<void> {
   const pozycja = page.getByRole('button', { name: nazwa }).first();
   if (!(await pozycja.isVisible())) {
-    // Ten test sprawdza zawartość ekranów. Aktywacja klawiaturą omija błędne
-    // wyznaczanie punktu dotyku dla paska fixed w headless Chromium na CI.
-    await page.getByRole('navigation', { name: 'Nawigacja' }).getByRole('button', { name: 'Więcej' }).press('Enter');
+    await page.getByRole('navigation', { name: 'Nawigacja' }).getByRole('button', { name: 'Więcej' }).click();
   }
   await page.getByRole('button', { name: nazwa }).first().click();
 }
