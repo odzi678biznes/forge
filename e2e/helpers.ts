@@ -39,7 +39,9 @@ export async function expectNoSideScroll(page: Page, where: string): Promise<voi
 export async function otworzWiecej(page: Page, nazwa: string | RegExp): Promise<void> {
   const pozycja = page.getByRole('button', { name: nazwa }).first();
   if (!(await pozycja.isVisible())) {
-    await page.getByRole('navigation', { name: 'Nawigacja' }).getByRole('button', { name: 'Więcej' }).click();
+    // Ten test sprawdza zawartość ekranów. Aktywacja klawiaturą omija błędne
+    // wyznaczanie punktu dotyku dla paska fixed w headless Chromium na CI.
+    await page.getByRole('navigation', { name: 'Nawigacja' }).getByRole('button', { name: 'Więcej' }).press('Enter');
   }
   await page.getByRole('button', { name: nazwa }).first().click();
 }
