@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon, type IconName } from '@/components/Icon';
 import { installUpdate, subscribePwa, updateReady } from '@/platform/pwa';
 import { SUBJECT_LABELS, SUBJECT_SHORT, type Screen, type SubjectId } from './useForge';
@@ -149,7 +150,7 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
         {children}
       </div>
 
-      <nav className="shell__tabs" aria-label="Nawigacja">
+      {createPortal(<nav className="shell__tabs" aria-label="Nawigacja">
         {PRIMARY.map((n) => item(n, 'tab'))}
         <button
           type="button"
@@ -160,7 +161,7 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
           <Icon name={moreOpen ? 'close' : 'more'} size={22} />
           <span className="nav__label">Więcej</span>
         </button>
-      </nav>
+      </nav>, document.body)}
     </div>
   );
 }
