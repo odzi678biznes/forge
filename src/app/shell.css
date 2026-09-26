@@ -199,7 +199,7 @@
 
   .shell__sheet {
     position: fixed;
-    z-index: 30;
+    z-index: 110;
     top: 3.9rem;
     right: var(--space-3);
     left: var(--space-3);
@@ -215,7 +215,7 @@
 
   .shell__tabs {
     position: fixed;
-    z-index: 20;
+    z-index: 100;
     right: 0;
     bottom: 0;
     left: 0;
