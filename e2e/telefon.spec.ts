@@ -13,7 +13,7 @@ test('każdy ekran mieści się w szerokości telefonu', async ({ page }) => {
     await expectNoSideScroll(page, `${subject}: Dziś`);
     await nav.getByRole('button', { name: 'Kurs' }).click();
     await expectNoSideScroll(page, `${subject}: Kurs`);
-    for (const screen of ['Statystyki', 'Powtórki i fiszki', 'Arkusze CKE']) {
+    for (const screen of ['Statystyki', 'Powtórki i fiszki', 'Arkusze CKE', 'Nauczyciel AI', 'Twoje dane']) {
       await otworzWiecej(page, screen);
       await expectNoSideScroll(page, `${subject}: ${String(screen)}`);
     }
@@ -21,7 +21,7 @@ test('każdy ekran mieści się w szerokości telefonu', async ({ page }) => {
 
   // Feed kart na całym ekranie.
   await nav.getByRole('button', { name: 'Dziś' }).click();
-  await page.getByRole('button', { name: /Kontynuuj/ }).click();
+  await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
   await expect(page.locator('.karta__pytanie')).toBeVisible();
   await expectNoSideScroll(page, 'feed');
 });

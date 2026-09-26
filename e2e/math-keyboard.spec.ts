@@ -1,0 +1,51 @@
+import {test,expect} from '@playwright/test';
+import {open} from './helpers';
+
+test('klawiatura matematyczna wpisuje ułamek i nie otwiera trybu tekstowego',async({page},info)=>{
+  await page.setViewportSize({width:390,height:844});
+  await open(page);
+  await page.getByRole('button',{name:'Rozpocznij lekcję',exact:true}).click();
+  for(let i=0;i<2;i++)await page.getByRole('button',{name:'Pomiń',exact:true}).click();
+  const input=page.getByRole('textbox',{name:'Twoja odpowiedź',exact:true});
+  const pad=page.getByRole('group',{name:'Klawiatura matematyczna',exact:true});
+  await expect(input).toHaveAttribute('inputmode','none');
+  for(const name of ['1','Ułamek /','2'])await pad.getByRole('button',{name,exact:true}).click();
+  await expect(input).toHaveValue('1/2');
+  await page.screenshot({path:info.outputPath('klawiatura.png')});
+  await page.getByRole('button',{name:'Sprawdź odpowiedź',exact:true}).click();
+  await expect(page.locator('.info')).toContainText('Dobrze');
+  await expect(pad).toHaveCount(0);
+});
+
+test('edycja kursorem, zamiana zaznaczenia, kasowanie i przełącznik zachowują wpis',async({page})=>{
+  await open(page);
+  await page.getByRole('button',{name:'Rozpocznij lekcję',exact:true}).click();
+  for(let i=0;i<2;i++)await page.getByRole('button',{name:'Pomiń',exact:true}).click();
+  const input=page.getByRole('textbox',{name:'Twoja odpowiedź',exact:true});
+  const pad=page.getByRole('group',{name:'Klawiatura matematyczna',exact:true});
+  for(const name of ['1','2','Kursor w lewo','3'])await pad.getByRole('button',{name,exact:true}).click();
+  await expect(input).toHaveValue('132');
+  await input.selectText();
+  await pad.getByRole('button',{name:'9',exact:true}).click();
+  await expect(input).toHaveValue('9');
+  await pad.getByRole('button',{name:'Usuń znak',exact:true}).click();
+  await expect(input).toHaveValue('');
+  for(const name of ['Minus','2','Potęga','3'])await pad.getByRole('button',{name,exact:true}).click();
+  await expect(input).toHaveValue('-2^3');
+  await page.getByRole('button',{name:'Klawiatura telefonu',exact:true}).click();
+  await expect(input).toHaveAttribute('inputmode','text');
+  await expect(input).toHaveValue('-2^3');
+  await expect(pad).toHaveCount(0);
+  await input.fill('0,5');
+  await page.getByRole('button',{name:'Klawiatura matematyczna',exact:true}).click();
+  await expect(input).toHaveAttribute('inputmode','none');
+  await expect(input).toHaveValue('0,5');
+  await pad.getByRole('button',{name:'Wyczyść odpowiedź',exact:true}).click();
+  await expect(input).toHaveValue('');
+  await page.getByRole('button',{name:'Cofnij wyczyszczenie',exact:true}).click();
+  await expect(input).toHaveValue('0,5');
+  await page.getByRole('button',{name:'Schowaj',exact:true}).click();
+  await expect(pad).toHaveCount(0);
+  await page.getByRole('button',{name:'Pokaż cyfry',exact:true}).click();
+  await expect(pad).toBeVisible();
+});

@@ -3,6 +3,7 @@ import { Math as Tex } from '@/components/Math';
 import type { KontekstNauczyciela, Prosba, StatusNauczyciela, WiadomoscCzatu } from './nauczyciel-kontekst';
 import { PROSBA_TEKST } from './nauczyciel-kontekst';
 import { statusNauczyciela, zapytajNauczyciela } from './nauczyciel-klient';
+import { ModalPanel } from '@/components/ModalPanel';
 
 /**
  * „Zapytaj nauczyciela” — przy każdej karcie. Najpierw pomoc w następnym
@@ -50,7 +51,7 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
   const ai = status?.dostepny === true;
 
   return (
-    <div className="nauczyciel" role="dialog" aria-modal="true" aria-label="Nauczyciel" data-bez-gestu>
+    <ModalPanel className="nauczyciel" label="Nauczyciel" onClose={onZamknij}>
       <header className="nauczyciel__glowa">
         <div>
           <p className="nauczyciel__tytul">Nauczyciel</p>
@@ -64,10 +65,13 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
       </header>
 
       {status && !ai && (
-        <p className="nauczyciel__demo">
-          Odpowiedzi składam z podpowiedzi i oficjalnego rozwiązania zapisanych przy tej karcie. {powod ?? status.powod}{' '}
-          Prawdziwy nauczyciel działa po uruchomieniu serwera z kluczem API (<code>ANTHROPIC_API_KEY</code>, <code>npm run dev</code>).
-        </p>
+        <div className="nauczyciel__demo">
+          <p>AI jest niedostępne. Możesz korzystać z podpowiedzi i rozwiązania zapisanych przy tej karcie.</p>
+          <details><summary>Konfiguracja i szczegóły techniczne</summary>
+            <p>{powod ?? status.powod}</p>
+            <p>Nauczyciel AI wymaga serwera z kluczem <code>ANTHROPIC_API_KEY</code> (<code>npm run dev</code>).</p>
+          </details>
+        </div>
       )}
 
       <div className="nauczyciel__czat" aria-live="polite">
@@ -87,7 +91,7 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
             ))}
           </div>
         ))}
-        {czeka && <div className="dymek dymek--nauczyciel dymek--czeka">…</div>}
+        {czeka && <div className="dymek dymek--nauczyciel dymek--czeka" role="status">Przygotowuję odpowiedź…</div>}
         <div ref={koniec} />
       </div>
 
@@ -123,6 +127,6 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
           Wyślij
         </button>
       </form>
-    </div>
+    </ModalPanel>
   );
 }

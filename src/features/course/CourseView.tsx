@@ -52,8 +52,8 @@ export function CourseView({ course, subjectName, topics, skills, states, nauka,
               {course.summary.byLevel.PR.covered}/{course.summary.byLevel.PR.total}.
             </>
           )}{' '}
-          W lekcjach z kartami postęp pochodzi z serii i powtórek. W pozostałych — z ćwiczeń kursu.
         </p>
+        <details className="course__explanation"><summary>Jak liczymy postęp</summary><p>W lekcjach z kartami postęp pochodzi z serii i powtórek. W pozostałych — z ćwiczeń kursu. Przerobienie materiału nie oznacza trwałego opanowania; utrwalenie potwierdzają późniejsze powtórki.</p></details>
         <div className="bar course__bar" aria-hidden>
           <div className="bar__fill" style={{ width: `${course.summary.ratio * 100}%` }} />
         </div>
@@ -93,18 +93,19 @@ export function CourseView({ course, subjectName, topics, skills, states, nauka,
                     const status = skillStatus(state, course.lessonsDone.has(s.id));
                     const feedLesson = lekcjaNauki(s.id);
                     const feedStatus = feedLesson && nauka ? postep(nauka, feedLesson).status : null;
+                    const displayedStatus: SkillStatus = feedStatus === 'nowa' ? 'new' : feedStatus === 'w trakcie' ? 'learning' : feedStatus === 'przerobiona' ? 'covered' : feedStatus === 'utrwalona' ? 'retained' : status;
                     const lesson = course.lessonOf.get(s.id);
                     const isNext = nextSkillId === s.id;
                     const planned = plannedOn.get(s.id);
                     return (
                       <li key={s.id} className={isNext ? 'skill skill--next' : 'skill'}>
-                        <span className={STATUS_ICON[status]} aria-hidden>
-                          {(status === 'covered' || status === 'retained') && <Icon name="check" size={12} />}
+                        <span className={STATUS_ICON[displayedStatus]} aria-hidden>
+                          {(displayedStatus === 'covered' || displayedStatus === 'retained') && <Icon name="check" size={12} />}
                         </span>
-                        <span className="skill__info">
+                        <div className="skill__info">
                           <span className="skill__name">
                             {s.name}
-                            {isNext && <span className="skill__here">tu jesteś</span>}
+                            {isNext && <span className="skill__here">Polecane teraz</span>}
                           </span>
                           <span className="skill__meta">
                             <span className={s.level === 'PP' ? 'chip chip--pp' : 'chip chip--pr'}>
@@ -116,15 +117,15 @@ export function CourseView({ course, subjectName, topics, skills, states, nauka,
                               </span>
                             )}
                             <span>{feedStatus ?? STATUS_LABELS[status]}</span>
-                            {!feedLesson && <span>· poziom: {MASTERY_LABELS[state?.level ?? MasteryLevel.Unknown]}</span>}
-                            {planned && status !== 'covered' && status !== 'retained' && (
-                              <span>· w planie: {formatDay(planned)}</span>
-                            )}
                           </span>
-                        </span>
+                          {(!feedLesson || planned) && <details className="skill__details"><summary>Szczegóły postępu</summary>
+                            {!feedLesson && <p>Poziom: {MASTERY_LABELS[state?.level ?? MasteryLevel.Unknown]}</p>}
+                            {planned && <p>W planie: {formatDay(planned)}</p>}
+                          </details>}
+                        </div>
                         <span className="skill__actions">
                           {(lesson || feedLesson) && (
-                            <button type="button" className="btn btn--small" onClick={() => onOpenLesson(s.id)}>
+                            <button type="button" className={`btn btn--small${isNext ? ' btn--primary' : ''}`} onClick={() => onOpenLesson(s.id)}>
                               <Icon name="book" size={15} /> Ucz się
                             </button>
                           )}

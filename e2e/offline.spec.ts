@@ -15,6 +15,6 @@ test('po pierwszej wizycie aplikacja działa bez sieci', async ({ page, context 
 
   // Lekcje wszystkich przedmiotów są w pamięci podręcznej, nie tylko ostatnio otwarte.
   await chooseSubject(page, 'Informatyka');
-  await page.getByRole('button', { name: /Kontynuuj/ }).click();
+  await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
   await expect(page.locator('.karta__pytanie')).toBeVisible();
 });

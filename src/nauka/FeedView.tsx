@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Math as Tex } from '@/components/Math';
 import { ETAP_NAZWA, type Karta, type Lekcja } from './typy';
 import { karta as kartaLekcji, LEKCJE } from './lekcje';
@@ -23,6 +23,7 @@ import { NauczycielPanel } from './NauczycielPanel';
 import type { KontekstNauczyciela } from './nauczyciel-kontekst';
 import { kiedy } from './czas';
 import './nauka.css';
+import { ModalPanel } from '@/components/ModalPanel';
 
 export type Tryb = 'nauka' | 'powtorka' | 'trening';
 
@@ -33,7 +34,7 @@ interface Props {
   zmien: (s: StanNauki) => void;
   przedmiot: string;
   onWyjdz: () => void;
-  onWyklad: () => void;
+  wyklad: (onBack: () => void) => ReactNode;
   onInna: (skillId: string, tryb: Tryb) => void;
   onNastepna: () => void;
   treningDostepny: boolean;
@@ -56,12 +57,7 @@ function useKomputer(): boolean {
   return k;
 }
 
-const piszeTeraz = () => {
-  const a = document.activeElement;
-  return a instanceof HTMLInputElement || a instanceof HTMLTextAreaElement;
-};
-
-export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onWyklad, onInna, onNastepna, treningDostepny }: Props) {
+export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyklad, onInna, onNastepna, treningDostepny }: Props) {
   const komputer = useKomputer();
   const [trening, setTrening] = useState(0);
   const [kolejkaTreningu] = useState(() => kartyTreningu(stan, l, Date.now()));
@@ -87,6 +83,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
   const [kierunek, setKierunek] = useState<'gora' | 'dol'>('gora');
   const [komunikat, setKomunikat] = useState<string | null>(null);
   const [nauczyciel, setNauczyciel] = useState(false);
+  const [wykladOtwarty, setWykladOtwarty] = useState(false);
   const zdarzenie = useRef<Zdarzenie | null>(null);
   const [wynikSerii, setWynikSerii] = useState<string | null>(null);
 
@@ -210,47 +207,6 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
     setLicznik((n) => n + 1);
   };
 
-  // Klawiatura na komputerze: strzałki — tylko gdy nie piszesz.
-  useEffect(() => {
-    const f = (e: KeyboardEvent) => {
-      if (piszeTeraz()) return;
-      if (e.key === 'Escape' && nauczyciel) setNauczyciel(false);
-      if (nauczyciel) return;
-      if ((e.key === 'ArrowDown' || e.key === 'PageDown') && (widoczna?.wynik || ekran === 'stop' || podglad !== null)) {
-        e.preventDefault();
-        dalej();
-      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-        e.preventDefault();
-        wstecz();
-      }
-    };
-    window.addEventListener('keydown', f);
-    return () => window.removeEventListener('keydown', f);
-  });
-
-  // Gest: przesunięcie w górę — dalej (albo pominięcie), w dół — wstecz.
-  // Wyłączony, gdy palec startuje na polu odpowiedzi albo trwa pisanie.
-  const start = useRef<{ x: number; y: number; t: number } | null>(null);
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'mouse') return;
-    const cel = e.target as HTMLElement;
-    if (piszeTeraz() || cel.closest('[data-bez-gestu],input,textarea,select,pre')) {
-      start.current = null;
-      return;
-    }
-    start.current = { x: e.clientX, y: e.clientY, t: Date.now() };
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    const s = start.current;
-    start.current = null;
-    if (!s || piszeTeraz()) return;
-    const dy = s.y - e.clientY;
-    const dx = Math.abs(s.x - e.clientX);
-    if (Math.abs(dy) < 70 || Math.abs(dy) < dx * 1.5 || Date.now() - s.t > 900) return;
-    if (dy > 0) dalej();
-    else wstecz();
-  };
-
   const kontekstAI = useMemo((): KontekstNauczyciela | null => {
     if (!k) return null;
     const nr = numerKroku(stan, l, k.id);
@@ -298,12 +254,20 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
   })();
 
   const odpowiedziano = Boolean(widoczna?.wynik);
+  const previousIndex = podglad !== null ? podglad - 1 : historia.length - (biez?.wynik ? 2 : 1);
+  const scene = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = scene.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    el.querySelector<HTMLElement>('h2')?.focus({preventScroll:true});
+  }, [widoczna?.id, licznik, ekran]);
   const inna = LEKCJE.find((x) => x.przedmiot === l.przedmiot && x.skillId !== l.skillId);
 
   return (
     <div className={`feed${komputer ? ' feed--komputer' : ''}`}>
       <header className="feed__gora">
-        <button type="button" className="feed__wyjdz" onClick={onWyjdz} aria-label="Wyjdź — postęp jest zapisany">
+        <button type="button" className="feed__wyjdz" onClick={onWyjdz} aria-label="Wyjdź z lekcji">
           ✕ <span>Wyjdź</span>
         </button>
         <div className="feed__tytul">
@@ -319,13 +283,13 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
             <span style={{ width: `${pasekRazem ? (100 * pasekZrobione) / pasekRazem : 0}%` }} />
           </div>
         </div>
-        <button type="button" className="btn btn--small feed__wyklad" onClick={onWyklad}>
+        <button type="button" className="btn btn--small feed__wyklad" onClick={() => setWykladOtwarty(true)}>
           Wykład
         </button>
       </header>
 
       <div className="feed__uklad">
-        <main className="feed__scena" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+        <main ref={scene} className="feed__scena">
           {komunikat && (
             <p className="feed__komunikat" role="status">
               {komunikat}
@@ -336,7 +300,10 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
           {ekran === 'karta' && k && widoczna && (
             <section key={`${widoczna.id}-${licznik}`} className={`feed__karta feed__karta--${kierunek}`} aria-label={relacja}>
               {podglad !== null && <p className="feed__podglad">Poprzednia karta — podgląd. „Dalej” wraca do bieżącej.</p>}
-              <p className={`feed__relacja${z ? '' : ' feed__relacja--pomoc'}`}>{relacja}</p>
+              <div className={`feed__relacja${z ? '' : ' feed__relacja--pomoc'}`}>
+                <strong>{tryb === 'nauka' && l.seria.includes(k.id) ? `Krok ${numerKroku(stan,l,k.id).krok} z ${numerKroku(stan,l,k.id).z}` : tryb === 'nauka' ? 'Łatwiejszy krok' : tryb === 'trening' ? 'Trening dodatkowy' : 'Powtórka'} · {ETAP_NAZWA[k.etap]}</strong>
+                <span className="feed__meta">{z ? `${etykietaZrodla(z)} · ${z.rok} · zadanie ${z.numer}` : 'Ćwiczenie pomocnicze FORGE — to nie jest zadanie CKE'}</span>
+              </div>
               <KartaWidok karta={k} zadanie={z} wynik={widoczna.wynik} komputer={komputer} onWynik={onWynik} />
               {z && <Zrodlo zadanie={z} />}
             </section>
@@ -349,7 +316,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
                   ? 'Przećwiczyłeś jeden typ zadania. Kończymy czy robimy następne?'
                   : 'Dobra seria kroków. Kończymy na dziś czy idziemy dalej?'}
               </h2>
-              <p className="karta__uwaga">Postęp jest zapisany. Możesz wrócić w dowolnej chwili.</p>
+              <p className="karta__uwaga">Możesz zakończyć sesję i wrócić do nauki później.</p>
               <div className="feed__stop-akcje">
                 <button type="button" className="btn btn--primary" onClick={() => doNastepnej(stan)}>
                   Robimy następne
@@ -383,29 +350,18 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, onW
 
       {ekran === 'karta' && (
         <footer className="feed__dol">
-          <button type="button" className="btn" onClick={wstecz} disabled={historia.length === 0 || podglad === 0}>
-            ↑ Wstecz
-          </button>
-          <button
-            type="button"
-            className="btn feed__nauczyciel"
-            onClick={() => setNauczyciel(true)}
-            disabled={!kontekstAI}
-          >
-            Zapytaj nauczyciela
-          </button>
-          {odpowiedziano || podglad !== null ? (
-            <button type="button" className="btn btn--primary" onClick={dalej}>
-              Dalej ↓
-            </button>
-          ) : (
-            <button type="button" className="btn" onClick={dalej} title="Pominięcie nie zwiększa postępu">
-              Pomiń
-            </button>
-          )}
+          <div id="feed-primary-action" className="feed__primary">
+            {(odpowiedziano || podglad !== null) && <button type="button" className="btn btn--primary" onClick={dalej}>Dalej →</button>}
+          </div>
+          <div className="feed__tools">
+            <button type="button" className="btn btn--quiet" onClick={wstecz} disabled={previousIndex < 0}>← Wstecz</button>
+            <button type="button" className="btn btn--quiet" onClick={() => setNauczyciel(true)} disabled={!kontekstAI} aria-label="Zapytaj nauczyciela">Pomoc nauczyciela</button>
+            {!odpowiedziano && podglad === null && <button type="button" className="btn btn--quiet" onClick={dalej} title="Pominięcie nie zwiększa postępu">Pomiń</button>}
+          </div>
         </footer>
       )}
 
+      {wykladOtwarty && <ModalPanel label="Wykład" className="modal-lesson" onClose={() => setWykladOtwarty(false)}>{wyklad(() => setWykladOtwarty(false))}</ModalPanel>}
       {nauczyciel && kontekstAI && <NauczycielPanel kontekst={kontekstAI} onZamknij={() => setNauczyciel(false)} />}
     </div>
   );
@@ -557,7 +513,7 @@ function PanelZadania({ lekcja: l, stan, tryb, aktualna }: { lekcja: Lekcja; sta
           })}
         </ol>
       )}
-      <p className="karta__uwaga">Strzałki ↑/↓ — poprzednia/następna karta. Enter — sprawdź.</p>
+      <p className="karta__uwaga">Wybierz odpowiedź, a potem ją sprawdź. Do kolejnego kroku przejdziesz przyciskiem „Dalej”.</p>
     </aside>
   );
 }

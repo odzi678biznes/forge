@@ -169,7 +169,13 @@ export function App() {
           zmien={zmienNauke}
           przedmiot={SUBJECT_LABELS[l.przedmiot]}
           onWyjdz={toCommandCenter}
-          onWyklad={() => forge.openLesson(l.skillId)}
+          wyklad={(onBack) => {
+            const lesson = corpus.lessons.find((x) => x.skillId === l.skillId);
+            const skill = skills.find((x) => x.id === l.skillId);
+            return lesson && skill ? <LessonView lesson={lesson} skill={skill}
+              topic={topics.find((x) => x.id === skill.topicId)} onBack={onBack}
+              onPractice={onBack} backLabel="Wróć do zadania" /> : <button onClick={onBack}>Wróć do zadania</button>;
+          }}
           onInna={otworzFeed}
           treningDostepny={Boolean(wybierzTrening(stanNauki, LEKCJE.filter((x) => x.przedmiot === l.przedmiot), Date.now()))}
           onNastepna={() => {
@@ -186,6 +192,7 @@ export function App() {
   if (state.screen === 'arena' && state.current && state.plan) {
     return (
       <Arena
+        mathematical={state.subject === 'math'}
         selection={state.current}
         step={state.step}
         total={state.plan.questionCount}
@@ -437,6 +444,7 @@ export function App() {
           onKurs={() => goTo('course')}
           nextCourse={course.ordered.find((s) => !lekcjaNauki(s.id) && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id)) ?? null}
           onCourseLesson={forge.openLesson}
+          descriptions={Object.fromEntries(corpus.lessons.map(l => [l.skillId, l.intro]))}
         />
       );
       break;

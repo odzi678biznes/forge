@@ -8,6 +8,7 @@ import {
   type Question,
 } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
+import { MathInput } from '@/components/MathInput';
 import { Figure } from '@/components/Figure';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
@@ -39,6 +40,7 @@ interface Props {
   onTimeUp?: () => void;
   /** Czy trwa uruchamianie testow kodu. */
   running?: boolean;
+  mathematical?: boolean;
   /** Opcjonalna warstwa AI - brak albo wylaczona oznacza zwykla arene. */
   ai?: ArenaAi;
 }
@@ -119,6 +121,7 @@ export function Arena({
   deadlineAt,
   onTimeUp,
   running = false,
+  mathematical = false,
   ai,
 }: Props) {
   const speech = useSpeech();
@@ -284,6 +287,8 @@ export function Arena({
                   <span className="choice__letter">{letter}</span>
                   <span className="choice__text">
                     <Tex>{c}</Tex>
+                    {locked && letter === question.answer && <span className="opcja__status">✓ Poprawna odpowiedź</span>}
+                    {locked && answer === letter && letter !== question.answer && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
                   </span>
                 </button>
               );
@@ -294,7 +299,8 @@ export function Arena({
             <label className="arena__label" htmlFor="answer">
               Twoja odpowiedź
             </label>
-            <input
+            {mathematical ? <MathInput id="answer" ref={inputRef} className="arena__input"
+              value={answer} onChange={setAnswer} disabled={locked} /> : <input
               id="answer"
               ref={inputRef}
               className="arena__input"
@@ -303,7 +309,7 @@ export function Arena({
               disabled={locked}
               autoComplete="off"
               inputMode="text"
-            />
+            />}
           </>
         )}
 
@@ -330,7 +336,7 @@ export function Arena({
             onClick={submit}
             disabled={answer.trim() === ''}
           >
-            Sprawdź
+            Sprawdź odpowiedź
             <kbd>Enter</kbd>
           </button>
         )}

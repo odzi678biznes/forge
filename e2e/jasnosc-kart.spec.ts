@@ -3,7 +3,7 @@ import { expectNoSideScroll, open } from './helpers';
 
 test('analiza błędu ma dane, zasadę i odpowiedzi oddzielone od obliczeń', async ({ page }, testInfo) => {
   await open(page);
-  await page.getByRole('button', { name: /Kontynuuj/ }).click();
+  await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Pomiń' }).click();
   await expect(page.locator('.karta__kontekst')).toContainText('Mnożenie wykonujemy przed dodawaniem');
   const zapis = page.getByRole('list', { name: 'Zapis do sprawdzenia' });
@@ -11,6 +11,7 @@ test('analiza błędu ma dane, zasadę i odpowiedzi oddzielone od obliczeń', as
   await expect(zapis.getByRole('button')).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Odpowiedzi', exact: true }).getByRole('button')).toHaveCount(3);
   await page.getByRole('button', { name: /Wiersz 2/ }).click();
+  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
   await expect(page.getByRole('status')).toContainText('Dobrze');
   await expect(page.locator('.info__wyjasnienie')).toContainText('nie jest pierwszym błędem');
   if (testInfo.project.name === 'telefon') {
@@ -21,7 +22,7 @@ test('analiza błędu ma dane, zasadę i odpowiedzi oddzielone od obliczeń', as
 
 test('rozwiązanie jest dostępne bez liczenia i nie zalicza automatycznie zadania', async ({ page }) => {
   await open(page);
-  await page.getByRole('button', { name: /Kontynuuj/ }).click();
+  await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
   for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Pomiń' }).click();
   const progress = page.getByRole('progressbar');
   const before = await progress.getAttribute('aria-valuenow');

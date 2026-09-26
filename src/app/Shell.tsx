@@ -4,6 +4,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { installUpdate, subscribePwa, updateReady } from '@/platform/pwa';
 import { SUBJECT_LABELS, SUBJECT_SHORT, type Screen, type SubjectId } from './useForge';
 import './shell.css';
+import { ModalPanel } from '@/components/ModalPanel';
 
 /**
  * Powłoka aplikacji: nawigacja wokół ekranów kursu.
@@ -130,15 +131,16 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
       </header>
 
       {moreOpen && (
-        <div className="shell__sheet" role="dialog" aria-label="Więcej">
+        <ModalPanel className="shell__sheet" label="Więcej" onClose={() => setMoreOpen(false)}>
+          <header className="modal-panel__header"><h2>Więcej</h2><button className="btn btn--small" onClick={() => setMoreOpen(false)}>Zamknij menu</button></header>
           {SECONDARY.map((n) => item(n, 'sheet'))}
-        </div>
+        </ModalPanel>
       )}
 
       <div className="shell__content">
         {update && !updateLater && (
           <div className="shell__update" role="status">
-            <span>Jest nowa wersja FORGE. Odśwież, kiedy zechcesz — Twoje dane są zapisane.</span>
+            <span>Jest nowa wersja FORGE. Zakończ bieżące zadanie przed odświeżeniem.</span>
             <button type="button" className="btn btn--small btn--primary" onClick={installUpdate}>
               Odśwież
             </button>
@@ -154,7 +156,7 @@ export function Shell({ screen, subject, onSubject, onNavigate, badges, children
         {PRIMARY.map((n) => item(n, 'tab'))}
         <button
           type="button"
-          className={`nav__item nav__item--tab${moreOpen ? ' nav__item--on' : ''}`}
+          className={`nav__item nav__item--tab${moreOpen || SECONDARY.some(n => n.screen === active) ? ' nav__item--on' : ''}`}
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen((o) => !o)}
         >

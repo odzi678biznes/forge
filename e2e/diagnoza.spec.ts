@@ -21,7 +21,7 @@ test('diagnoza biznesu kończy się raportem i planem tylko dla tego przedmiotu'
   await expect(page.getByText('Wynik diagnozy', { exact: true })).toBeVisible();
   await expect(page.getByText('Rynek pracy i zatrudnienie').first()).toBeVisible();
   await page.getByRole('button', { name: 'Przyjmij ten plan' }).click();
-  await expect(page.getByRole('button', { name: /Kontynuuj/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ })).toBeVisible();
   await otworzPlan(page);
 
   // Powrót następuje dopiero po zapisie planu. Z przyjętym planem

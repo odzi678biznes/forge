@@ -291,13 +291,13 @@
   gap: var(--space-3);
 }
 
-.chapter details {
+.chapter > details {
   background: var(--bg-deep);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
 
-.chapter details[open] {
+.chapter > details[open] {
   border-color: var(--line-strong);
 }
 

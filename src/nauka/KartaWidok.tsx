@@ -1,4 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MathInput } from '@/components/MathInput';
+import { AnswerAction } from './AnswerAction';
 import { Math as Tex } from '@/components/Math';
 import type { Karta, KartaZadanie, Oczekiwane, ZadanieCke } from './typy';
 import { normalizuj, ocenOtwarta, sprawdzKolejnosc, sprawdzWpis, sprawdzWynikKodu } from './sprawdz';
@@ -52,7 +54,7 @@ export function KartaWidok({ karta, zadanie, wynik, komputer, onWynik }: Props) 
         </p>
       )}
       {karta.rodzaj === 'zadanie' && zadanie && <PelneZadanie zadanie={zadanie} />}
-      <h2 className="karta__pytanie">
+      <h2 className="karta__pytanie" tabIndex={-1}>
         <Tex>{karta.pytanie}</Tex>
       </h2>
       {karta.podpowiedz && karta.rodzaj !== 'wpis' && (
@@ -92,9 +94,14 @@ function PelneZadanie({ zadanie }: { zadanie: ZadanieCke }) {
 }
 
 function Informacja({ karta, wynik }: { karta: Karta; wynik: Wynik }) {
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panel.current?.focus({preventScroll:true});
+    panel.current?.scrollIntoView({block:'nearest'});
+  }, []);
   return (
-    <div className={`info ${wynik.poprawna ? 'info--ok' : 'info--zle'}`} role="status">
-      <p className="info__werdykt">{wynik.poprawna ? 'Dobrze' : 'Jeszcze nie'}</p>
+    <div ref={panel} tabIndex={-1} className={`info ${wynik.poprawna ? 'info--ok' : 'info--zle'}`} role="status">
+      <p className="info__werdykt">{wynik.poprawna ? '✓ Dobrze' : '↺ Jeszcze nie'}</p>
       {!wynik.poprawna && wynik.przyczyna && (
         <p className="info__przyczyna">
           <Tex>{wynik.przyczyna}</Tex>
@@ -195,9 +202,11 @@ function Wybor({
   id,
   opcje,
   decyzja,
+  poprawna,
   zablokowana,
   onWynik,
   wiersze = false,
+  stalaKolejnosc = false,
 }: {
   id: string;
   opcje: string[];
@@ -206,25 +215,29 @@ function Wybor({
   zablokowana: boolean;
   onWynik: (i: number) => void;
   wiersze?: boolean;
+  stalaKolejnosc?: boolean;
 }) {
-  const kolejnosc = useMemo(() => wiersze ? opcje.map((_, i) => i) : tasuj(opcje, id), [opcje, id, wiersze]);
+  const kolejnosc = useMemo(() => (wiersze || stalaKolejnosc) ? opcje.map((_, i) => i) : tasuj(opcje, id), [opcje, id, wiersze, stalaKolejnosc]);
   const [wybrana, setWybrana] = useState<number | null>(null);
   return (
-    <div className={`opcje${decyzja ? ' opcje--decyzja' : ''}${wiersze ? ' opcje--wiersze' : ''}`} role="group" aria-label="Odpowiedzi">
+    <div className={`opcje${decyzja ? ' opcje--decyzja' : ''}${wiersze ? ' opcje--wiersze' : ''}`} role="group" aria-label={stalaKolejnosc ? "Odpowiedzi A–D" : "Odpowiedzi"}>
       {kolejnosc.map((i, n) => (
         <button
           key={i}
           type="button"
-          className={`opcja${wybrana === i ? ' opcja--wybrana' : ''}`}
+          className={`opcja${wybrana === i ? ' opcja--wybrana' : ''}${zablokowana && i === poprawna ? ' opcja--poprawna' : ''}${zablokowana && wybrana === i && i !== poprawna ? ' opcja--bledna' : ''}`}
+          aria-pressed={wybrana === i}
           disabled={zablokowana}
           onClick={() => {
             setWybrana(i);
-            onWynik(i);
           }}
         >
           <span className="opcja__litera">{LITERY[n]}.</span> <Tex>{opcje[i] ?? ''}</Tex>
+          {zablokowana && i === poprawna && <span className="opcja__status">✓ Poprawna odpowiedź</span>}
+          {zablokowana && wybrana === i && i !== poprawna && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
         </button>
       ))}
+      {!zablokowana && <AnswerAction disabled={wybrana === null} onClick={() => { if (wybrana !== null) onWynik(wybrana); }} />}
     </div>
   );
 }
@@ -263,10 +276,9 @@ function Kolejnosc({
           </button>
         ))}
       </div>
-      {zostaly.length === 0 && !zablokowana && (
-        <button
-          type="button"
-          className="btn btn--primary karta__sprawdz"
+      {!zablokowana && (
+        <AnswerAction
+          disabled={zostaly.length > 0}
           onClick={() =>
             onWynik({
               poprawna: sprawdzKolejnosc(ulozone),
@@ -274,14 +286,11 @@ function Kolejnosc({
             })
           }
         >
-          Sprawdź
-        </button>
+          Sprawdź odpowiedź</AnswerAction>
       )}
     </div>
   );
 }
-
-const ZNAKI_MAT = ['/', '^', '−', ','];
 
 function Wpis({
   klawiatura,
@@ -296,19 +305,6 @@ function Wpis({
 }) {
   const [t, setT] = useState('');
   const [hint, setHint] = useState(false);
-  const pole = useRef<HTMLInputElement>(null);
-  const wstaw = (z: string) => {
-    const el = pole.current;
-    const znak = z === '−' ? '-' : z;
-    if (!el) return setT(t + znak);
-    const a = el.selectionStart ?? t.length;
-    const b = el.selectionEnd ?? t.length;
-    setT(t.slice(0, a) + znak + t.slice(b));
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(a + 1, a + 1);
-    });
-  };
   return (
     <form
       className="wpis"
@@ -318,34 +314,22 @@ function Wpis({
         if (t.trim() !== '' && !zablokowana) onWpis(t);
       }}
     >
-      <input
-        ref={pole}
+      {klawiatura === 'mat' ? <MathInput value={t} onChange={setT} disabled={zablokowana} /> : <input
         className="wpis__pole"
         value={t}
         onChange={(e) => setT(e.target.value)}
         disabled={zablokowana}
-        inputMode={klawiatura === 'mat' ? 'text' : 'text'}
+        inputMode="text"
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
         enterKeyHint="done"
         aria-label="Twoja odpowiedź"
-        placeholder={klawiatura === 'mat' ? 'np. 3/4' : 'Twoja odpowiedź'}
-      />
-      {klawiatura === 'mat' && !zablokowana && (
-        <div className="wpis__znaki">
-          {ZNAKI_MAT.map((z) => (
-            <button key={z} type="button" className="wpis__znak" onClick={() => wstaw(z)} aria-label={`Wstaw ${z}`}>
-              {z}
-            </button>
-          ))}
-        </div>
-      )}
+        placeholder="Twoja odpowiedź"
+      />}
       {!zablokowana && (
         <div className="wpis__akcje">
-          <button type="submit" className="btn btn--primary" disabled={t.trim() === ''}>
-            Sprawdź
-          </button>
+          <AnswerAction disabled={t.trim() === ''} />
           {podpowiedz && !hint && (
             <button type="button" className="btn" onClick={() => setHint(true)}>
               Podpowiedź
@@ -386,9 +370,7 @@ function WpisKodu({ zablokowana, onWpis }: { zablokowana: boolean; onWpis: (t: s
       />
       {!zablokowana && (
         <div className="wpis__akcje">
-          <button type="submit" className="btn btn--primary" disabled={t.trim() === ''}>
-            Sprawdź
-          </button>
+          <AnswerAction disabled={t.trim() === ''} />
         </div>
       )}
     </form>
@@ -430,9 +412,7 @@ function Otwarta({
           placeholder="Napisz odpowiedź własnymi słowami"
         />
         <div className="wpis__akcje">
-          <button type="submit" className="btn btn--primary" disabled={t.trim().length < 5}>
-            Porównaj z kluczem CKE
-          </button>
+          <AnswerAction disabled={t.trim().length < 5}>Porównaj z kluczem CKE</AnswerAction>
         </div>
       </form>
     );
@@ -460,9 +440,7 @@ function Otwarta({
       </p>
       {!zablokowana && (
         <div className="wpis__akcje">
-          <button type="button" className="btn btn--primary" onClick={() => onWynik({ poprawna: true, tekst: t })}>
-            Spełniam kryteria
-          </button>
+          <AnswerAction onClick={() => onWynik({ poprawna: true, tekst: t })}>Spełniam kryteria</AnswerAction>
           <button type="button" className="btn" onClick={() => onWynik({ poprawna: false, tekst: t })}>
             Jeszcze nie
           </button>
@@ -496,22 +474,11 @@ function KoniecZadania({
       )}
       {karta.python && <EdytorPython python={karta.python} komputer={komputer} />}
       {k.typ === 'abcd' && zadanie?.odpowiedzi && (
-        <div className="opcje opcje--abcd" role="group" aria-label="Odpowiedzi A–D">
-          {zadanie.odpowiedzi.map((o, i) => (
-            <button
-              key={i}
-              type="button"
-              className="opcja"
-              disabled={zablokowana}
-              onClick={() => onWynik({ poprawna: i === k.poprawna, tekst: LITERY[i] ?? '' })}
-            >
-              <span className="opcja__litera">{LITERY[i]}.</span> <Tex>{o}</Tex>
-            </button>
-          ))}
-        </div>
+        <Wybor id={karta.id} opcje={zadanie.odpowiedzi} poprawna={k.poprawna} decyzja={false} wiersze={false} stalaKolejnosc
+          zablokowana={zablokowana} onWynik={i => onWynik({ poprawna: i === k.poprawna, tekst: LITERY[i] ?? '' })} />
       )}
       {k.typ === 'pf' && <PrawdaFalsz zdania={k.zdania} poprawne={k.poprawne} zablokowana={zablokowana} onWynik={onWynik} />}
-      {k.typ === 'wpis' && <WieleWpisow oczekiwane={k.oczekiwane} etykiety={k.etykiety} zablokowana={zablokowana} onWynik={onWynik} />}
+      {k.typ === 'wpis' && <WieleWpisow mathematical={zadanie?.przedmiot === 'math'} oczekiwane={k.oczekiwane} etykiety={k.etykiety} zablokowana={zablokowana} onWynik={onWynik} />}
       {k.typ === 'otwarta' && (
         <Otwarta kryteria={k.kryteria} slowa={k.slowa} wzorcowe={k.wzorcowe} zablokowana={zablokowana} onWynik={onWynik} />
       )}
@@ -555,9 +522,7 @@ function PrawdaFalsz({
         </div>
       ))}
       {!zablokowana && (
-        <button
-          type="button"
-          className="btn btn--primary karta__sprawdz"
+        <AnswerAction
           disabled={odp.some((x) => x === null)}
           onClick={() =>
             onWynik({
@@ -566,19 +531,20 @@ function PrawdaFalsz({
             })
           }
         >
-          Sprawdź
-        </button>
+          Sprawdź odpowiedź</AnswerAction>
       )}
     </div>
   );
 }
 
 function WieleWpisow({
+  mathematical = false,
   oczekiwane,
   etykiety,
   zablokowana,
   onWynik,
 }: {
+  mathematical?: boolean;
   oczekiwane: Oczekiwane[];
   etykiety: string[];
   zablokowana: boolean;
@@ -596,7 +562,11 @@ function WieleWpisow({
       }}
     >
       {oczekiwane.map((_, i) => (
-        <label key={i} className="wpis__etykieta">
+        mathematical ? <div key={i} className="wpis__etykieta">
+          <span><Tex>{etykiety[i] ?? ''}</Tex></span>
+          <MathInput focusOnly value={t[i] ?? ''} disabled={zablokowana} label={etykiety[i] ?? `Odpowiedź ${i+1}`}
+            onChange={value=>setT(t.map((x,j)=>j===i?value:x))} />
+        </div> : <label key={i} className="wpis__etykieta">
           <span>
             <Tex>{etykiety[i] ?? ''}</Tex>
           </span>
@@ -612,9 +582,7 @@ function WieleWpisow({
       ))}
       {!zablokowana && (
         <div className="wpis__akcje">
-          <button type="submit" className="btn btn--primary" disabled={t.some((x) => x.trim() === '')}>
-            Sprawdź
-          </button>
+          <AnswerAction disabled={t.some((x) => x.trim() === '')} />
         </div>
       )}
     </form>

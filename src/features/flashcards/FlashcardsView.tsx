@@ -88,6 +88,9 @@ function Session({ queue, dueCount, newCount, skills, onRate, onDone, nextLesson
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (finished) return;
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if ((e.key === 'Enter' || e.key === ' ') && e.target instanceof Element && e.target.closest('button, a, summary')) return;
       if (e.key === ' ' || e.key === 'Enter') {
         if (!revealed) {
           e.preventDefault();

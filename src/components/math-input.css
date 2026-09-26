@@ -1,0 +1,11 @@
+.math-entry { min-width: 0; width: 100%; }
+.math-entry > input { width: 100%; }
+.math-entry__tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem; }
+.math-entry__mode { background: transparent; color: var(--text-muted); border: 0; min-height: 2.75rem; padding: .35rem .25rem; font-size: .875rem; text-align: left; }
+.math-entry__mode:hover { color: var(--action-primary); }
+.math-pad { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .375rem; max-width: 26rem; }
+.math-pad button { min-height: 2.75rem; min-width: 0; padding: .25rem; border: 1px solid var(--control-border); border-radius: .5rem; color: var(--text); font: inherit; font-size: 1.125rem; touch-action: manipulation; }
+.math-pad__digit { background: var(--bg-overlay); }
+.math-pad__symbol { background: var(--bg-deep); }
+.math-pad button:hover { border-color: var(--action-primary); }
+.math-pad button:active { background: var(--selection); }

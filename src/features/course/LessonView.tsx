@@ -23,9 +23,10 @@ interface Props {
   topic: Topic | undefined;
   onPractice: () => void;
   onBack: () => void;
+  backLabel?: string;
 }
 
-export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) {
+export function LessonView({ lesson, skill, topic, onPractice, onBack, backLabel = 'Kurs' }: Props) {
   const speech = useSpeech();
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack }: Props) 
     <main className="page lesson">
       <header>
         <button type="button" className="link" onClick={onBack}>
-          &larr; Kurs
+          &larr; {backLabel}
         </button>
         <p className="page__eyebrow">
           {topic?.name ?? 'Lekcja'} · {skill.level === 'PR' ? 'rozszerzenie' : 'podstawa'} · {lesson.minutes} min
