@@ -2,9 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   PROSBA_TEKST,
+  PROSBY,
   type KontekstNauczyciela,
   type OdpowiedzNauczyciela,
   type StatusNauczyciela,
+  type StrukturaOdpowiedzi,
   type ZapytanieNauczyciela,
 } from '../src/nauka/nauczyciel-kontekst.js';
 
@@ -39,14 +41,59 @@ Piszesz po polsku, prostymi zdaniami, krótko (zwykle 2–6 zdań). Wzory zapisu
 
 Zasady:
 - Najpierw pomagasz wykonać NASTĘPNY mały krok. Pełnego rozwiązania nie podajesz, dopóki uczeń wprost o nie nie poprosi (prośba „Pokaż pełne rozwiązanie”).
-- Opierasz się na oryginalnym zadaniu CKE i oficjalnej odpowiedzi z kontekstu. Nie wymyślasz innych danych ani innej odpowiedzi.
+- Opierasz się na zadaniu i odpowiedzi z kontekstu (zadanie CKE albo zadanie FORGE w stylu maturalnym). Nie wymyślasz innych danych ani innej odpowiedzi.
 - O tym, czy odpowiedź ucznia jest poprawna, zdecydowała już aplikacja (reguły i klucz CKE) — ten wynik jest w kontekście. Nie podważaj go.
 - Gdy uczeń się pomylił, nazwij konkretną przyczynę błędu na podstawie jego odpowiedzi i wróć o krok.
 - „Nie rozumiem” — wyjaśnij ten sam krok prościej, na mniejszym kawałku, z przykładem z tego zadania.
 - „Skąd to się bierze?” — wyjaśnij sens reguły (dlaczego działa), nie tylko jak jej użyć.
 - „Wytłumacz inaczej” — użyj innej drogi (inna analogia, inny sposób zapisu), nie powtarzaj poprzedniego wyjaśnienia.
 - Nie zawstydzaj, nie poganiaj. Na koniec możesz zadać jedno krótkie pytanie sprawdzające.
-- Jeśli pytanie nie dotyczy nauki, łagodnie wróć do zadania.`;
+- Jeśli pytanie nie dotyczy nauki, łagodnie wróć do zadania.
+
+Podpowiedzi stopniujesz. Uczeń ma myśleć sam — pomagasz najmniej, jak się da:
+1) bardzo mała wskazówka, 2) nazwanie właściwego pojęcia lub wzoru, 3) sugestia następnego działania, 4) podobny mini-przykład z INNYMI liczbami.
+Wyniku kroku nie podajesz, dopóki uczeń wprost nie poprosi o pełne rozwiązanie. Jeśli kontekst mówi, jakie podpowiedzi uczeń już widział, daj następny szczebel — nie powtarzaj ich.
+„Co zrobiłem źle?” — wskaż PIERWSZE miejsce, w którym rozumowanie ucznia się rozjeżdża, i nazwij przyczynę. Jeśli pasuje jedna z przyczyn z listy znanych błędów, podaj jej identyfikator w polu misconception.
+
+Odpowiadasz w formacie JSON:
+- rodzaj: podpowiedz | wyjasnienie | przyklad | diagnoza | rozwiazanie | inne,
+- tekst: to, co zobaczy uczeń,
+- ujawniaWynik: true, jeśli tekst podaje wynik bieżącego kroku lub całego zadania,
+- pytanieKontrolne: jedno krótkie pytanie sprawdzające albo pusty tekst,
+- misconception: identyfikator z listy znanych błędów albo pusty tekst.`;
+
+/** Schemat odpowiedzi — aplikacja nie pokazuje dowolnego tekstu, tylko pola z tej struktury. */
+const SCHEMAT = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['rodzaj', 'tekst', 'ujawniaWynik', 'pytanieKontrolne', 'misconception'],
+  properties: {
+    rodzaj: { type: 'string', enum: ['podpowiedz', 'wyjasnienie', 'przyklad', 'diagnoza', 'rozwiazanie', 'inne'] },
+    tekst: { type: 'string' },
+    ujawniaWynik: { type: 'boolean' },
+    pytanieKontrolne: { type: 'string' },
+    misconception: { type: 'string' },
+  },
+} as const;
+
+/** Odczyt odpowiedzi w strukturze; null — model zwrócił coś innego. */
+export function struktura(json: string, znaneBledy: string[]): (StrukturaOdpowiedzi & { tekst: string }) | null {
+  try {
+    const o = JSON.parse(json) as Partial<StrukturaOdpowiedzi & { tekst: string }>;
+    const rodzaje = ['podpowiedz', 'wyjasnienie', 'przyklad', 'diagnoza', 'rozwiazanie', 'inne'];
+    if (typeof o.tekst !== 'string' || !o.tekst.trim() || !rodzaje.includes(o.rodzaj as string) || typeof o.ujawniaWynik !== 'boolean') return null;
+    return {
+      rodzaj: o.rodzaj as StrukturaOdpowiedzi['rodzaj'],
+      tekst: o.tekst.trim(),
+      ujawniaWynik: o.ujawniaWynik,
+      pytanieKontrolne: typeof o.pytanieKontrolne === 'string' ? o.pytanieKontrolne.trim() : '',
+      // Tylko błędy z katalogu aplikacji — model nie dopisuje nowych kategorii.
+      misconception: typeof o.misconception === 'string' && znaneBledy.includes(o.misconception) ? o.misconception : '',
+    };
+  } catch {
+    return null;
+  }
+}
 
 function opisKontekstu(k: KontekstNauczyciela): string {
   const z = k.zadanie;
@@ -71,14 +118,28 @@ function opisKontekstu(k: KontekstNauczyciela): string {
       ? `Odpowiedź ucznia: ${k.odpowiedzUcznia} — aplikacja oceniła ją jako ${k.czyPoprawna ? 'POPRAWNĄ' : 'BŁĘDNĄ'}.`
       : 'Uczeń jeszcze nie odpowiedział na ten krok.',
     k.trudnosci.length > 0 ? `Wcześniejsze trudności w tej lekcji: ${k.trudnosci.join(' | ')}` : 'Wcześniejszych trudności brak.',
+    ...(k.sesja ? opisSesji(k.sesja) : []),
   ];
   return linie.filter(Boolean).join('\n');
+}
+
+function opisSesji(s: NonNullable<KontekstNauczyciela['sesja']>): string[] {
+  return [
+    `Aktywność: ${s.aktywnosc}.`,
+    `Opanowanie ucznia (0–100): ${Object.entries(s.opanowanie).map(([n, v]) => `${n} ${Math.round(v)}`).join(', ') || 'brak danych'}.`,
+    s.bledy.length ? `Powtarzające się błędy ucznia: ${s.bledy.join('; ')}.` : '',
+    s.rozwiazanieUcznia.length ? `Rozwiązanie ucznia do tej pory: ${s.rozwiazanieUcznia.join(' | ')}` : '',
+    s.proby.length ? `Próby ucznia w tym kroku: ${s.proby.join(' | ')}` : '',
+    s.diagnoza ? `Aplikacja rozpoznała w ostatniej odpowiedzi: ${s.diagnoza}` : '',
+    s.podpowiedziPokazane.length ? `Podpowiedzi, które uczeń już widział: ${s.podpowiedziPokazane.join(' | ')}` : 'Uczeń nie widział jeszcze podpowiedzi.',
+    `Znane błędy (identyfikatory): ${s.znaneBledy.join(', ')}`,
+  ].filter(Boolean);
 }
 
 export function waliduj(body: unknown): ZapytanieNauczyciela | null {
   const b = body as Partial<ZapytanieNauczyciela> | null;
   if (!b || typeof b !== 'object' || !b.kontekst || typeof b.prosba !== 'string') return null;
-  if (!['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie'].includes(b.prosba)) return null;
+  if (!PROSBY.includes(b.prosba)) return null;
   if (!Array.isArray(b.historia)) return null;
   const text = (v: unknown): v is string => typeof v === 'string';
   const texts = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
@@ -92,6 +153,14 @@ export function waliduj(body: unknown): ZapytanieNauczyciela | null {
     const z = k.zadanie;
     if (!z || typeof z !== 'object' || ![z.zrodlo,z.dokument,z.numer,z.poziom,z.url,z.tresc,z.oficjalnaOdpowiedz,z.zasadyOceniania].every(text) || !texts(z.rozwiazanie)) return null;
     if (z.odpowiedzi !== undefined && !texts(z.odpowiedzi)) return null;
+  }
+  if (k.sesja !== undefined) {
+    const x = k.sesja;
+    if (!x || typeof x !== 'object' || !text(x.aktywnosc) || !texts(x.bledy) || !texts(x.podpowiedziPokazane) || !texts(x.podpowiedzi)
+      || !texts(x.proby) || !texts(x.rozwiazanieUcznia) || !texts(x.znaneBledy) || typeof x.opanowanie !== 'object' || x.opanowanie === null
+      || !Object.values(x.opanowanie).every((v) => typeof v === 'number')) return null;
+    if (x.przyklad !== undefined && !text(x.przyklad)) return null;
+    if (x.diagnoza !== undefined && !text(x.diagnoza)) return null;
   }
   if (!b.historia.every(w => w && (w.rola === 'uczen' || w.rola === 'nauczyciel') && text(w.tekst))) return null;
   if (b.prosba === 'pytanie' && (typeof b.pytanie !== 'string' || b.pytanie.trim() === '')) return null;
@@ -109,7 +178,11 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     model: MODEL,
     max_tokens: 8000,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'medium' },
+    // Mała podpowiedź nie potrzebuje długiego namysłu — taniej i szybciej.
+    output_config: {
+      effort: z.prosba === 'podpowiedz' || z.prosba === 'podobny' ? 'low' : 'medium',
+      format: { type: 'json_schema', schema: SCHEMAT },
+    },
     // Model zapasowy przy odmowie — tylko dla modeli, które go obsługują (Opus 5 / Fable).
     ...(/opus-5|fable/.test(MODEL) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
     system: `${SYSTEM}\n\n--- KONTEKST ---\n${opisKontekstu(z.kontekst)}`,
@@ -118,12 +191,15 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
   if (odp.stop_reason === 'refusal') {
     return { tekst: 'Nie mogę na to odpowiedzieć. Spróbujmy wrócić do zadania.', model: odp.model };
   }
-  const tekst = odp.content
+  const surowy = odp.content
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
     .map((b) => b.text)
     .join('\n')
     .trim();
-  return { tekst: tekst || 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model };
+  const s = struktura(surowy, z.kontekst.sesja?.znaneBledy ?? []);
+  if (!s) return { tekst: 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model };
+  const { tekst, ...reszta } = s;
+  return { tekst, model: odp.model, struktura: reszta };
 }
 
 function wyslij(res: ServerResponse, kod: number, json: unknown): void {

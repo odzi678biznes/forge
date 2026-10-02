@@ -5,6 +5,10 @@ import { useNauka } from '@/nauka/useNauka';
 import { LEKCJE, lekcja as lekcjaNauki } from '@/nauka/lekcje';
 import { postep as postepNauki, powtorkaNaTeraz, wybierzTrening } from '@/nauka/silnik';
 import { spojnyPostep } from '@/nauka/spojny-postep';
+import { useSesja } from '@/nauka/sesja/useSesja';
+import { SesjaView, type TrybSesji } from '@/nauka/sesja/SesjaView';
+import { opanowanieTematu } from '@/nauka/sesja/model';
+import { UMIEJETNOSCI_TEMATU } from '@/nauka/sesja/tresc';
 import { CORPORA, SUBJECT_LABELS, useForge, type Screen, type SubjectId } from './useForge';
 import { remainingMinutes, subjectGlance, useCourse } from './useCourse';
 import { dayKey } from '@/learning-engine/schedule';
@@ -74,6 +78,23 @@ export function App() {
     () => spojnyPostep(stanNauki, state.skillStates, forge.lessonProgress),
     [stanNauki, state.skillStates, forge.lessonProgress],
   );
+
+  // --- Nowy tryb nauki matematyki (demo): osobny klucz learning_progress_v2 ---
+  const { postep: postepV2, zmien: zmienV2 } = useSesja(port, state.screen !== 'loading');
+  const [trybSesji, setTrybSesji] = useState<TrybSesji>('lekcja');
+  const nazwyMat = useMemo(() => Object.fromEntries(MATH_CORPUS.skills.map((x) => [x.id, x.name])), []);
+  const otworzSesje = useCallback((tryb: TrybSesji = 'lekcja') => {
+    setTrybSesji(tryb);
+    goTo('sesja');
+  }, [goTo]);
+  // Bezpośredni link do demo: …/#sesja (np. do sprawdzenia na telefonie).
+  const linkSesji = useRef(typeof location !== 'undefined' && location.hash === '#sesja');
+  useEffect(() => {
+    if (!linkSesji.current || state.screen === 'loading' || !postepV2) return;
+    linkSesji.current = false;
+    history.replaceState(history.state, '', location.pathname + location.search);
+    otworzSesje('lekcja');
+  }, [state.screen, postepV2, otworzSesje]);
 
   // Dzień ma jeden budżet na wszystkie przedmioty: każdy kalendarz wie, ile
   // materiału zostało w pozostałych.
@@ -157,6 +178,27 @@ export function App() {
   }
 
   // --- Ekrany skupienia: bez nawigacji wokół (sek. 7.2) -----------------------
+
+  if (state.screen === 'sesja' && postepV2) {
+    return (
+      <ErrorBoundary onHome={toCommandCenter}>
+        <SesjaView
+          tryb={trybSesji}
+          postep={postepV2}
+          zmien={zmienV2}
+          dawne={spojny.states}
+          fiszki={MATH_CORPUS.flashcards}
+          stanyFiszek={forge.cardStates}
+          onOcenFiszke={(f, r) => {
+            void forge.rateCard(f, r);
+          }}
+          nazwyUmiejetnosci={nazwyMat}
+          onWyjdz={toCommandCenter}
+          onTryb={setTrybSesji}
+        />
+      </ErrorBoundary>
+    );
+  }
 
   if (state.screen === 'nauka' && feed && stanNauki) {
     const l = lekcjaNauki(feed.skillId);
@@ -447,6 +489,12 @@ export function App() {
           nextCourse={course.ordered.find((s) => !lekcjaNauki(s.id) && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id)) ?? null}
           onCourseLesson={forge.openLesson}
           descriptions={Object.fromEntries(corpus.lessons.map(l => [l.skillId, l.intro]))}
+          sesja={state.subject === 'math' && postepV2 ? {
+            temat: 'Funkcja kwadratowa',
+            opanowanie: Math.round(opanowanieTematu(postepV2, UMIEJETNOSCI_TEMATU, spojny.states)),
+            wToku: Boolean(postepV2.sesja && postepV2.sesja.koniec === null),
+            onStart: () => otworzSesje('lekcja'),
+          } : null}
         />
       );
       break;
