@@ -21,9 +21,11 @@ interface Props {
   nextCourse: { id: string; name: string } | null;
   onCourseLesson: (skillId: string) => void;
   descriptions: Record<string, string>;
+  /** Nowy tryb nauki matematyki (demo) — tylko dla matematyki. */
+  sesja?: { temat: string; opanowanie: number; wToku: boolean; onStart: () => void } | null;
 }
 
-export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions }: Props) {
+export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions, sesja }: Props) {
   const teraz = Date.now();
   const lekcje = LEKCJE.filter((l) => l.przedmiot === przedmiot);
   const data = new Date(teraz).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -56,6 +58,19 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
         <h1 className="dzis__tytul">Dziś · {przedmiotNazwa}</h1>
         <p className="dzis__subtitle">Jedna lekcja. Kolejny krok w Twoim tempie.</p>
       </header>
+
+      {sesja && (
+        <button type="button" className="dzis__sesja" onClick={sesja.onStart}>
+          <span className="dzis__sesja-nad">Kontynuuj matematykę · nowy tryb (demo)</span>
+          <span className="dzis__sesja-temat">{sesja.temat}</span>
+          <span className="dzis__sesja-poziom">
+            Poziom opanowania
+            <span className="dzis__sesja-bar" aria-hidden><span style={{ width: `${sesja.opanowanie}%` }} /></span>
+            <strong>{sesja.opanowanie}%</strong>
+          </span>
+          <span className="dzis__sesja-cta">{sesja.wToku ? 'Kontynuuj' : 'Zacznij'} <span aria-hidden>→</span></span>
+        </button>
+      )}
 
       {cel || nextCourse ? (
         <section className="dzis__recommendation" aria-label="Rekomendowana nauka">

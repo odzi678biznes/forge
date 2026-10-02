@@ -86,7 +86,9 @@ export type Screen =
   /** Prototyp nauki: dotychczasowy „Dziś” (plan dnia i statystyki) — teraz pod „Więcej”. */
   | 'plan'
   /** Prototyp nauki: pionowy feed kart. */
-  | 'nauka';
+  | 'nauka'
+  /** Nowy tryb nauki matematyki: pełne zadanie, swipe, klocki, speed round. */
+  | 'sesja';
 
 export type SubjectId = 'math' | 'cs' | 'biz';
 

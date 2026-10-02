@@ -65,6 +65,10 @@ bywa przybliżone.
 
 ### Ekrany
 
+- **Nowy tryb nauki matematyki (demo)** — „Dziś” → *Kontynuuj matematykę* albo
+  link `…/#sesja`: pełne zadanie maturalne krok po kroku, mikro-zadania, fiszki
+  swipe, klocki „ułóż rozwiązanie”, ⚡ szybka powtórka i nauczyciel AI na każdym
+  ekranie. Opis: `docs/nowy-tryb-matematyki.md`.
 - **Dziś** — jeden następny krok, plan dnia (lekcje, powtórki, fiszki), skrót
   pozostałych przedmiotów i uczciwa informacja, czy tempo wystarcza do terminu.
 - **Kurs** — działy i lekcje w kolejności; po lekcji ćwiczenia od łatwych do
