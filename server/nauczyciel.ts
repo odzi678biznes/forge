@@ -79,7 +79,9 @@ const SCHEMAT = {
 /** Odczyt odpowiedzi w strukturze; null — model zwrócił coś innego. */
 export function struktura(json: string, znaneBledy: string[]): (StrukturaOdpowiedzi & { tekst: string }) | null {
   try {
-    const o = JSON.parse(json) as Partial<StrukturaOdpowiedzi & { tekst: string }>;
+    // Bez schematu model bywa skłonny owinąć JSON w blok kodu — zdejmujemy go.
+    const czysty = json.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const o = JSON.parse(czysty) as Partial<StrukturaOdpowiedzi & { tekst: string }>;
     const rodzaje = ['podpowiedz', 'wyjasnienie', 'przyklad', 'diagnoza', 'rozwiazanie', 'inne'];
     if (typeof o.tekst !== 'string' || !o.tekst.trim() || !rodzaje.includes(o.rodzaj as string) || typeof o.ujawniaWynik !== 'boolean') return null;
     return {
@@ -174,19 +176,26 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     content: w.tekst.slice(0, 2000),
   }));
   const tekstProsby = z.prosba === 'pytanie' ? (z.pytanie ?? '').slice(0, 1000) : PROSBA_TEKST[z.prosba];
-  const odp = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
-    thinking: { type: 'adaptive' },
-    // Mała podpowiedź nie potrzebuje długiego namysłu — taniej i szybciej.
-    output_config: {
-      effort: z.prosba === 'podpowiedz' || z.prosba === 'podobny' ? 'low' : 'medium',
-      format: { type: 'json_schema', schema: SCHEMAT },
-    },
-    // Model zapasowy przy odmowie — tylko dla modeli, które go obsługują (Opus 5 / Fable).
-    ...(/opus-5|fable/.test(MODEL) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-    system: `${SYSTEM}\n\n--- KONTEKST ---\n${opisKontekstu(z.kontekst)}`,
-    messages: [...historia, { role: 'user', content: tekstProsby }],
+  const zapytanie = (zeSchematem: boolean) =>
+    client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 8000,
+      thinking: { type: 'adaptive' },
+      // Mała podpowiedź nie potrzebuje długiego namysłu — taniej i szybciej.
+      output_config: {
+        effort: z.prosba === 'podpowiedz' || z.prosba === 'podobny' ? 'low' : 'medium',
+        ...(zeSchematem ? { format: { type: 'json_schema' as const, schema: SCHEMAT } } : {}),
+      },
+      // Model zapasowy przy odmowie — tylko dla modeli, które go obsługują (Opus 5 / Fable).
+      ...(/opus-5|fable/.test(MODEL) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
+      system: `${SYSTEM}\n\n--- KONTEKST ---\n${opisKontekstu(z.kontekst)}`,
+      messages: [...historia, { role: 'user', content: tekstProsby }],
+    });
+  // Gdyby API odrzuciło format JSON (np. model ustawiony w FORGE_NAUCZYCIEL_MODEL
+  // go nie obsługuje), nauczyciel ma dalej działać — jedno ponowienie bez schematu.
+  const odp = await zapytanie(true).catch((err: unknown) => {
+    if (err instanceof Anthropic.BadRequestError) return zapytanie(false);
+    throw err;
   });
   if (odp.stop_reason === 'refusal') {
     return { tekst: 'Nie mogę na to odpowiedzieć. Spróbujmy wrócić do zadania.', model: odp.model };
@@ -197,9 +206,14 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     .join('\n')
     .trim();
   const s = struktura(surowy, z.kontekst.sesja?.znaneBledy ?? []);
-  if (!s) return { tekst: 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model };
-  const { tekst, ...reszta } = s;
-  return { tekst, model: odp.model, struktura: reszta };
+  if (s) {
+    const { tekst, ...reszta } = s;
+    return { tekst, model: odp.model, struktura: reszta };
+  }
+  // Odpowiedź bez struktury (tylko w trybie zapasowym): zwykły tekst, bez metadanych.
+  // Surowego JSON-a nigdy nie pokazujemy uczniowi.
+  const zwykly = surowy && !surowy.startsWith('{') && !surowy.startsWith('```') ? surowy : '';
+  return { tekst: zwykly || 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model };
 }
 
 function wyslij(res: ServerResponse, kod: number, json: unknown): void {
