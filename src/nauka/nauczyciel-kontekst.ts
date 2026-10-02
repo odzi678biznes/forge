@@ -4,7 +4,22 @@
  * odpowiedź ucznia i wcześniejsze trudności. Klucz API zostaje na serwerze.
  */
 
-export type Prosba = 'nastepny-krok' | 'nie-rozumiem' | 'skad' | 'inaczej' | 'pelne' | 'pytanie' | 'korepetytor';
+export type Prosba =
+  | 'nastepny-krok'
+  | 'nie-rozumiem'
+  | 'skad'
+  | 'inaczej'
+  | 'pelne'
+  | 'pytanie'
+  /** Sesja matematyki: kolejny szczebel podpowiedzi (bez wyniku). */
+  | 'podpowiedz'
+  | 'prosciej'
+  | 'podobny'
+  | 'co-zle'
+  /** Korepetytor w tle: decyzja o tempie na podstawie raportu z odpowiedzi. */
+  | 'korepetytor';
+
+export const PROSBY: readonly Prosba[] = ['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie', 'podpowiedz', 'prosciej', 'podobny', 'co-zle', 'korepetytor'];
 
 export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   'nastepny-krok': 'Pomóż mi zrobić następny krok.',
@@ -13,6 +28,10 @@ export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   inaczej: 'Wytłumacz inaczej.',
   pelne: 'Pokaż pełne rozwiązanie.',
   korepetytor: 'Oceń moje tempo i zdecyduj, jak mamy iść dalej.',
+  podpowiedz: 'Daj mi małą podpowiedź. Nie podawaj wyniku.',
+  prosciej: 'Wytłumacz mi to prościej.',
+  podobny: 'Pokaż podobny przykład.',
+  'co-zle': 'Co zrobiłem źle?',
 };
 
 /**
@@ -25,6 +44,46 @@ export interface RaportKorepetytora {
   samodzielnosc: number;
   odpowiedzi: { krok: string; etap: string; poprawnaZaPierwszym: boolean; proby: number; czasS: number | null }[];
   poprzednie?: 'latwiej' | 'tak-samo' | 'trudniej';
+}
+
+/**
+ * Kontekst sesji matematyki (nowy tryb nauki): co uczeń już zrobił, jakie
+ * podpowiedzi widział i jakie błędy popełnia. Pole opcjonalne — stary feed
+ * kart CKE go nie wysyła.
+ */
+export interface KontekstSesji {
+  /** Rodzaj aktywności: pełne zadanie, mikro-zadanie, klocki, speed… */
+  aktywnosc: string;
+  /** Opanowanie umiejętności 0–100 (nazwa → wartość). */
+  opanowanie: Record<string, number>;
+  /** Powtarzające się błędy ucznia (nazwy przyczyn). */
+  bledy: string[];
+  /** Podpowiedzi lokalne, które uczeń już zobaczył przy tym kroku. */
+  podpowiedziPokazane: string[];
+  /** Pełna drabina podpowiedzi kroku — tryb demonstracyjny bez AI z niej korzysta. */
+  podpowiedzi: string[];
+  przyklad?: string;
+  /** Ile prób w tym kroku i jakie odpowiedzi (od najstarszej). */
+  proby: string[];
+  /** Kroki już zrobione (zapis rozwiązania ucznia). */
+  rozwiazanieUcznia: string[];
+  /** Identyfikatory błędów, które AI może wskazać (pamięć błędów). */
+  znaneBledy: string[];
+  /** Diagnoza aplikacji dla ostatniej odpowiedzi, jeśli ją rozpoznała. */
+  diagnoza?: string;
+}
+
+/**
+ * Odpowiedź nauczyciela w strukturze (structured output). UI pokazuje
+ * `tekst`, ale wie też, czy odpowiedź zdradza wynik i jaki błąd rozpoznano.
+ */
+export interface StrukturaOdpowiedzi {
+  rodzaj: 'podpowiedz' | 'wyjasnienie' | 'przyklad' | 'diagnoza' | 'rozwiazanie' | 'inne';
+  ujawniaWynik: boolean;
+  /** Krótkie pytanie sprawdzające albo pusty tekst. */
+  pytanieKontrolne: string;
+  /** Rozpoznany błąd z listy `znaneBledy` albo pusty tekst. */
+  misconception: string;
 }
 
 export interface KontekstNauczyciela {
@@ -57,6 +116,7 @@ export interface KontekstNauczyciela {
   czyPoprawna: boolean | null;
   /** Kroki tej lekcji, w których uczeń pomylił się za pierwszym razem. */
   trudnosci: string[];
+  sesja?: KontekstSesji;
 }
 
 export interface WiadomoscCzatu {
@@ -77,6 +137,7 @@ export interface ZapytanieNauczyciela {
 export interface OdpowiedzNauczyciela {
   tekst: string;
   model: string;
+  struktura?: StrukturaOdpowiedzi;
 }
 
 export interface StatusNauczyciela {

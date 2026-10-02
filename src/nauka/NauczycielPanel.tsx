@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Math as Tex } from '@/components/Math';
 import type { KontekstNauczyciela, Prosba, StatusNauczyciela, WiadomoscCzatu } from './nauczyciel-kontekst';
 import { PROSBA_TEKST } from './nauczyciel-kontekst';
-import { odswiezStatusNauczyciela, statusNauczyciela, ustawKodNauczyciela, zapytajNauczyciela } from './nauczyciel-klient';
+import { odswiezStatusNauczyciela, statusNauczyciela, ustawKodNauczyciela, zapytajNauczyciela, type Odpowiedz } from './nauczyciel-klient';
 import { ModalPanel } from '@/components/ModalPanel';
 import { Sformatowane } from './Sformatowane';
 
@@ -15,14 +15,28 @@ import { Sformatowane } from './Sformatowane';
 interface Props {
   kontekst: KontekstNauczyciela;
   onZamknij: () => void;
+  /** Szybkie prośby (domyślnie zestaw feedu CKE). */
+  szybkie?: Exclude<Prosba, 'pytanie' | 'pelne'>[];
+  /** Gotowe pytania do tego kroku, np. „Dlaczego używamy tutaj delty?”. */
+  sugestie?: string[];
+  /** Wywoływane po każdej odpowiedzi — sesja zapisuje użycie AI i rozpoznany błąd. */
+  onOdpowiedz?: (o: Odpowiedz, prosba: Prosba) => void;
+  /** Wstęp nad czatem zamiast domyślnego opisu. */
+  wstep?: string;
 }
 
 interface Wpis extends WiadomoscCzatu {
   tryb?: 'ai' | 'demo';
+  pytanieKontrolne?: string;
+  /** Odpowiedź zdradza wynik, choć uczeń prosił tylko o pomoc — schowana. */
+  ukryta?: boolean;
+  zPamieci?: boolean;
 }
 
+// Bez rzędu gotowych próśb: jedna podpowiedź na start (pierwsza z listy), potem własne pytania.
+const SZYBKIE: Exclude<Prosba, 'pytanie' | 'pelne'>[] = ['nastepny-krok'];
 
-export function NauczycielPanel({ kontekst, onZamknij }: Props) {
+export function NauczycielPanel({ kontekst, onZamknij, szybkie = SZYBKIE, sugestie = [], onOdpowiedz, wstep }: Props) {
   const [status, setStatus] = useState<StatusNauczyciela | null>(null);
   const [czat, setCzat] = useState<Wpis[]>([]);
   const [pytanie, setPytanie] = useState('');
@@ -48,7 +62,14 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
     setPowod(o.powod ?? null);
     if (o.tryb === 'ai') setStatus({dostepny:true,model:o.model,powod:null});
     else if (o.powod) setStatus({dostepny:false,model:null,powod:o.powod});
-    setCzat((c) => [...c, { rola: 'nauczyciel', tekst: o.tekst, tryb: o.tryb }]);
+    const ukryta = o.struktura?.ujawniaWynik === true && prosba !== 'pelne';
+    setCzat((c) => [...c, {
+      rola: 'nauczyciel', tekst: o.tekst, tryb: o.tryb,
+      ...(o.struktura?.pytanieKontrolne ? { pytanieKontrolne: o.struktura.pytanieKontrolne } : {}),
+      ...(ukryta ? { ukryta } : {}),
+      ...(o.zPamieci ? { zPamieci: true } : {}),
+    }]);
+    onOdpowiedz?.(o, prosba);
   };
 
   const ai = status?.dostepny === true;
@@ -92,16 +113,25 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
       <div className="nauczyciel__czat" aria-live="polite">
         {czat.length === 0 && (
           <div className="nauczyciel__start">
-            <p className="karta__uwaga">Widzę to zadanie i Twoją odpowiedź. Napisz, czego nie rozumiesz.</p>
-            <button type="button" className="btn btn--small" disabled={czeka} onClick={() => void zapytaj('nastepny-krok')}>
-              💡 {PROSBA_TEKST['nastepny-krok']}
-            </button>
+            <p className="karta__uwaga">{wstep ?? 'Widzę to zadanie i Twoją odpowiedź. Napisz, czego nie rozumiesz.'}</p>
+            {szybkie[0] && (
+              <button type="button" className="btn btn--small" disabled={czeka} onClick={() => void zapytaj(szybkie[0]!)}>
+                💡 {PROSBA_TEKST[szybkie[0]]}
+              </button>
+            )}
           </div>
         )}
         {czat.map((w, i) => (
           <div key={i} className={`dymek dymek--${w.rola}`}>
             {w.tryb === 'demo' && <span className="dymek__demo">demo</span>}
-            {w.rola === 'nauczyciel' ? <Sformatowane tekst={w.tekst} /> : <p><Tex>{w.tekst}</Tex></p>}
+            {w.zPamieci && <span className="dymek__demo">z pamięci</span>}
+            {w.rola === 'uczen' ? <p><Tex>{w.tekst}</Tex></p> : w.ukryta ? (
+              <details className="dymek__ukryta">
+                <summary>Ta odpowiedź zawiera wynik — pokaż mimo to</summary>
+                <Sformatowane tekst={w.tekst} />
+              </details>
+            ) : <Sformatowane tekst={w.tekst} />}
+            {w.pytanieKontrolne && <p className="dymek__kontrolne"><Tex>{w.pytanieKontrolne}</Tex></p>}
           </div>
         ))}
         {czeka && <div className="dymek dymek--nauczyciel dymek--czeka" role="status">Przygotowuję odpowiedź…</div>}
@@ -121,7 +151,7 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
         <input
           value={pytanie}
           onChange={(e) => setPytanie(e.target.value)}
-          placeholder="Zapytaj o to zadanie…"
+          placeholder={sugestie[0] ? `Np. „${sugestie[0]}”` : 'Zapytaj o to zadanie…'}
           aria-label="Własne pytanie do nauczyciela"
           enterKeyHint="send"
         />

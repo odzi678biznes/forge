@@ -19,14 +19,16 @@ export const MathInput = forwardRef<HTMLInputElement, {
   value: string; onChange: (value: string) => void; disabled?: boolean;
   id?: string; label?: string; placeholder?: string; className?: string;
   focusOnly?: boolean;
-}>(function MathInput({value,onChange,disabled=false,id,label='Twoja odpowiedź',placeholder='np. 3/4',className='wpis__pole',focusOnly=false}, forwarded) {
+  /** Dodatkowy rząd klawiszy: [napis, nazwa dla czytnika, wstawiany tekst]. */
+  extraKeys?: ReadonlyArray<readonly [string, string, string]>;
+}>(function MathInput({value,onChange,disabled=false,id,label='Twoja odpowiedź',placeholder='np. 3/4',className='wpis__pole',focusOnly=false,extraKeys=[]}, forwarded) {
   const field=useRef<HTMLInputElement>(null);
   useImperativeHandle(forwarded,()=>field.current!,[]);
   const [math,setMath]=useState(readMode);
   const [open,setOpen]=useState(!focusOnly);
   const [cleared,setCleared]=useState<string|null>(null);
   const padId=useId();
-  const edit=(key:string)=>{
+  const edit=(key:string,insertText?:string)=>{
     const el=field.current;
     if(!el||disabled)return;
     let a=el.selectionStart??value.length, b=el.selectionEnd??a;
@@ -38,7 +40,7 @@ export const MathInput = forwardRef<HTMLInputElement, {
       if(a===b)a=Math.max(0,a-1);
       next=value.slice(0,a)+value.slice(b);
     }else{
-      const insert=key==='−'?'-':key;
+      const insert=insertText??(key==='−'?'-':key);
       next=value.slice(0,a)+insert+value.slice(b);a+=insert.length;
     }
     flushSync(()=>onChange(next));
@@ -74,6 +76,8 @@ export const MathInput = forwardRef<HTMLInputElement, {
         flushSync(()=>onChange(cleared));setCleared(null);field.current?.focus({preventScroll:true});
       }}>Cofnij wyczyszczenie</button>}
       {math&&open&&<div id={padId} className="math-pad" role="group" aria-label="Klawiatura matematyczna">
+        {extraKeys.map(([key,name,insert])=><button type="button" key={`x-${key}`} aria-label={name} title={name}
+          className="math-pad__symbol math-pad__extra" onPointerDown={e=>e.preventDefault()} onClick={()=>edit(key,insert)}>{key}</button>)}
         {keys.map(([key,name])=><button type="button" key={key} aria-label={name} title={name}
           className={/^[0-9]$/.test(key)?'math-pad__digit':'math-pad__symbol'}
           onPointerDown={e=>e.preventDefault()} onClick={()=>edit(key)}>{key}</button>)}

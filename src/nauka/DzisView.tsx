@@ -23,9 +23,11 @@ interface Props {
   descriptions: Record<string, string>;
   /** Sprawdzian działu po przerobieniu jego podstawy. */
   sprawdzian?: { nazwa: string; onStart: () => void } | null;
+  /** Nowy tryb nauki matematyki (demo) — tylko dla matematyki. */
+  sesja?: { temat: string; opanowanie: number; wToku: boolean; onStart: () => void } | null;
 }
 
-export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions, sprawdzian = null }: Props) {
+export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions, sprawdzian = null, sesja }: Props) {
   const teraz = Date.now();
   const lekcje = LEKCJE.filter((l) => l.przedmiot === przedmiot);
   const data = new Date(teraz).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -80,6 +82,14 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
           </button>
         </section>
       ) : <section className="dzis__recommendation"><h2 className="dzis__lesson">Dostępne lekcje przerobione</h2><p className="dzis__description">Możesz zakończyć naukę na dziś, wrócić do wybranej lekcji w kursie albo przećwiczyć materiał w treningu dodatkowym.</p><button className="btn" onClick={onKurs}>Otwórz kurs</button></section>}
+
+      {/* Demo nowego trybu matematyki — drugorzędne, pod główną rekomendacją. */}
+      {sesja && (
+        <button type="button" className="dzis__sesja dzis__sesja--mala" onClick={sesja.onStart}>
+          <span className="dzis__sesja-nad">Kontynuuj matematykę · nowy tryb (demo) · {sesja.temat} · {sesja.opanowanie}%</span>
+          <span className="dzis__sesja-cta">{sesja.wToku ? 'Kontynuuj' : 'Zacznij'} <span aria-hidden>→</span></span>
+        </button>
+      )}
 
       <p className="dzis__powtorka">
         {najblizsza

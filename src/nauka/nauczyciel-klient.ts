@@ -4,6 +4,7 @@ import type {
   Prosba,
   RaportKorepetytora,
   StatusNauczyciela,
+  StrukturaOdpowiedzi,
   WiadomoscCzatu,
 } from './nauczyciel-kontekst';
 
@@ -33,6 +34,23 @@ export interface Odpowiedz {
   model: string | null;
   /** Dla trybu demo: czego brakuje do prawdziwego nauczyciela. */
   powod?: string;
+  /** Odpowiedź AI w strukturze (rodzaj, czy zdradza wynik, rozpoznany błąd). */
+  struktura?: StrukturaOdpowiedzi;
+  /** Odpowiedź z pamięci podręcznej — bez nowego zapytania do API. */
+  zPamieci?: boolean;
+}
+
+/**
+ * Pamięć podręczna odpowiedzi na pierwsze pytanie w danym kroku. Ta sama
+ * prośba przy tym samym kroku i tej samej odpowiedzi ucznia nie kosztuje
+ * drugiego zapytania (np. po zamknięciu i ponownym otwarciu panelu).
+ */
+const pamiec = new Map<string, Odpowiedz>();
+const MAX_PAMIECI = 60;
+
+function kluczPamieci(k: KontekstNauczyciela, prosba: Prosba, historia: WiadomoscCzatu[], pytanie?: string): string | null {
+  if (historia.length > 0) return null;
+  return JSON.stringify([k.lekcja, k.krok.pytanie, k.odpowiedzUcznia, k.sesja?.podpowiedziPokazane.length ?? 0, k.sesja?.proby ?? [], prosba, pytanie ?? '']);
 }
 
 let statusCache: Promise<StatusNauczyciela> | null = null;
@@ -72,6 +90,9 @@ export async function zapytajNauczyciela(
 ): Promise<Odpowiedz> {
   const s = await statusNauczyciela();
   if (!s.dostepny) return { ...demo(kontekst, prosba), ...(s.powod ? { powod: s.powod } : {}) };
+  const klucz = kluczPamieci(kontekst, prosba, historia, pytanie);
+  const zapamietana = klucz ? pamiec.get(klucz) : undefined;
+  if (zapamietana) return { ...zapamietana, zPamieci: true };
   try {
     const r = await fetch(API, {
       method: 'POST',
@@ -85,7 +106,12 @@ export async function zapytajNauczyciela(
     }
     const o = (await r.json()) as OdpowiedzNauczyciela;
     if (typeof o.tekst !== 'string' || !o.tekst.trim() || typeof o.model !== 'string') throw new Error('Nieprawidłowa odpowiedź serwera');
-    return { tekst: o.tekst, tryb: 'ai', model: o.model };
+    const wynik: Odpowiedz = { tekst: o.tekst, tryb: 'ai', model: o.model, ...(o.struktura ? { struktura: o.struktura } : {}) };
+    if (klucz) {
+      if (pamiec.size >= MAX_PAMIECI) pamiec.delete(pamiec.keys().next().value as string);
+      pamiec.set(klucz, wynik);
+    }
+    return wynik;
   } catch {
     return { ...demo(kontekst, prosba), powod: 'Brak połączenia z serwerem nauczyciela.' };
   }
@@ -95,7 +121,7 @@ export async function zapytajNauczyciela(
 export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
   const z = k.zadanie;
   const krokRozw = z ? (z.rozwiazanie[Math.min(z.rozwiazanie.length - 1, Math.max(0, k.krok.numer - 2))] ?? '') : '';
-  let tekst: string;
+  let tekst = '';
   switch (prosba) {
     case 'nastepny-krok':
       tekst = k.odpowiedzUcznia !== null && k.czyPoprawna === false
@@ -117,7 +143,27 @@ export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
         : k.krok.wyjasnienie;
       break;
     case 'pytanie':
-      tekst = 'W trybie demonstracyjnym nie odpowiem na własne pytanie — do tego potrzebny jest prawdziwy nauczyciel AI na serwerze.';
+      tekst = k.sesja ? `Bez AI mogę odpowiedzieć tylko tym, co zapisane przy kroku: ${k.sesja.podpowiedzi[1] ?? k.krok.wyjasnienie}` : 'W trybie demonstracyjnym nie odpowiem na własne pytanie — do tego potrzebny jest prawdziwy nauczyciel AI na serwerze.';
+      break;
+    case 'podpowiedz': {
+      // Kolejny szczebel lokalnej drabiny — bez wyniku.
+      const ss = k.sesja;
+      const nast = ss?.podpowiedzi[ss.podpowiedziPokazane.length];
+      tekst = nast ?? (ss?.przyklad ? `Podobny przykład: ${ss.przyklad}` : k.krok.wyjasnienie);
+      break;
+    }
+    case 'prosciej':
+      tekst = k.sesja?.podpowiedzi[1] ? `Prościej: ${k.sesja.podpowiedzi[1]}` : `Weźmy tylko ten jeden krok. ${k.krok.wyjasnienie}`;
+      break;
+    case 'podobny':
+      tekst = k.sesja?.przyklad ? `Podobny przykład: ${k.sesja.przyklad}` : k.krok.wyjasnienie;
+      break;
+    case 'co-zle':
+      tekst = k.sesja?.diagnoza
+        ? k.sesja.diagnoza
+        : k.odpowiedzUcznia !== null && k.czyPoprawna === false
+          ? `Nie rozpoznaję tego błędu automatycznie. Sprawdź: ${k.sesja?.podpowiedzi[2] ?? k.krok.wyjasnienie}`
+          : 'Na razie nie widzę błędu — odpowiedz na krok, a potem zapytaj jeszcze raz.';
       break;
     case 'korepetytor':
       tekst = '';
