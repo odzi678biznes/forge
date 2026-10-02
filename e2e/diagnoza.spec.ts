@@ -45,3 +45,38 @@ test('diagnoza biznesu kończy się raportem i planem tylko dla tego przedmiotu'
   await page.getByRole('button', { name: /Diagnoza przekrojowa/ }).click();
   await expect(page.getByText(/Masz już aktywny plan z tego przedmiotu/)).toBeVisible();
 });
+
+test('nowe pytanie nie przejmuje odpowiedzi z poprzedniego', async ({ page }) => {
+  await open(page);
+  await chooseSubject(page, 'Biznes i zarządzanie');
+  await otworzPlan(page);
+  await page.getByRole('button', { name: /Diagnoza przekrojowa/ }).click();
+  await page.getByRole('button', { name: 'Zacznij diagnozę' }).click();
+  await expect(page.getByText('Pytanie 1 z 16')).toBeVisible();
+
+  // Rejestr każdego stanu ekranu: który to numer pytania i czy „Sprawdź” jest aktywne.
+  await page.evaluate(() => {
+    const w = window as unknown as { stany: string[] };
+    w.stany = [];
+    const zapisz = () => {
+      const licznik = document.querySelector('.arena__count')?.textContent?.trim() ?? '';
+      const przycisk = document.querySelector<HTMLButtonElement>('.arena__submit');
+      const stan = `${licznik}|${przycisk ? (przycisk.disabled ? 'off' : 'on') : '-'}`;
+      if (w.stany[w.stany.length - 1] !== stan) w.stany.push(stan);
+    };
+    new MutationObserver(zapisz).observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+    zapisz();
+  });
+  for (let i = 1; i <= 4; i++) {
+    await expect(page.getByText(`Pytanie ${i} z 16`)).toBeVisible();
+    await answerAnything(page);
+  }
+  await expect(page.getByText('Pytanie 5 z 16')).toBeVisible();
+
+  // Pierwsza klatka każdego nowego pytania: puste pole, więc „Sprawdź” nieaktywne.
+  const stany = await page.evaluate(() => (window as unknown as { stany: string[] }).stany);
+  for (let n = 2; n <= 5; n++) {
+    const pierwszy = stany.find((s) => s.startsWith(`Pytanie ${n} z 16|`));
+    expect(pierwszy, `pytanie ${n}: ${stany.join(' → ')}`).toBe(`Pytanie ${n} z 16|off`);
+  }
+});

@@ -69,7 +69,10 @@ const AI_HINT_LEVEL: HintLevel = 3;
  * licznika nawet w tle.
  */
 function useCountdown(deadlineAt: number | null | undefined, onTimeUp?: () => void) {
-  const [remaining, setRemaining] = useState<number | null>(null);
+  // Wartość od pierwszej klatki — licznik nie miga przy każdym nowym pytaniu.
+  const [remaining, setRemaining] = useState<number | null>(() =>
+    deadlineAt === null || deadlineAt === undefined ? null : globalThis.Math.max(0, deadlineAt - Date.now()),
+  );
   const firedRef = useRef(false);
 
   useEffect(() => {
@@ -111,7 +114,18 @@ const CONFIDENCE_OPTIONS: Array<{ value: Confidence; label: string }> = [
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
-export function Arena({
+/**
+ * Każde pytanie dostaje własną instancję ekranu, więc odpowiedź, pewność
+ * i podpowiedzi są świeże od pierwszej klatki. Wcześniej czyścił je efekt po
+ * renderze: przez chwilę nowe pytanie pokazywało poprzednią odpowiedź przy
+ * aktywnym „Sprawdź”, a szybkie dotknięcie lub Enter wysłałyby ją jako
+ * odpowiedź na nowe pytanie (i gubiły wpis zrobiony w tym momencie).
+ */
+export function Arena(props: Props) {
+  return <ArenaPytania key={props.selection.question.id} {...props} />;
+}
+
+function ArenaPytania({
   selection,
   step,
   total,
@@ -128,7 +142,8 @@ export function Arena({
   const [reasoning, setReasoning] = useState('');
   const remaining = useCountdown(deadlineAt, onTimeUp);
   const { question } = selection;
-  const [answer, setAnswer] = useState('');
+  // Zadanie programistyczne startuje z kodem startowym, a nie z pustym polem.
+  const [answer, setAnswer] = useState(() => (question.format === 'code' ? question.code?.starterCode ?? '' : ''));
   const [confidence, setConfidence] = useState<Confidence>('partial');
   const [hintLevel, setHintLevel] = useState<HintLevel>(0);
   const [whyOpen, setWhyOpen] = useState(false);
@@ -138,18 +153,13 @@ export function Arena({
   const isChoice = question.format === 'choice' && question.choices !== undefined;
   const continueRef = useRef<HTMLButtonElement>(null);
 
-  // Nowe pytanie zaczyna sie czysto i z kursorem w polu odpowiedzi.
+  // Nowe pytanie zaczyna z kursorem w polu odpowiedzi. Stan jest świeży, bo
+  // ekran powstaje od nowa dla każdego pytania; czytanie na głos zatrzymuje
+  // sprzątanie useSpeech przy odmontowaniu poprzedniego pytania.
   useEffect(() => {
-    // Zadanie programistyczne startuje z kodem startowym, a nie z pustym polem.
-    setAnswer(question.format === 'code' ? question.code?.starterCode ?? '' : '');
-    setConfidence('partial');
-    setHintLevel(0);
-    setWhyOpen(false);
-    setReasoning('');
-    speech.stop();
     if (question.format === 'code') editorRef.current?.focus();
     else inputRef.current?.focus();
-  }, [question.id]);
+  }, []);
 
   // Zadanie zamknięte: litera albo cyfra wybiera odpowiedź bez myszy.
   useEffect(() => {
