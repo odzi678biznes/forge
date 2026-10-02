@@ -3,6 +3,13 @@
 Strona pozostaje na GitHub Pages. Prywatny nauczyciel działa przez funkcje Vercel
 `api/nauczyciel.ts` i `api/nauczyciel/status.ts` w projekcie `forge-teacher`.
 
+## Wdrażanie
+
+Projekt `forge-teacher` jest podłączony do repozytorium (Vercel → Settings → Git):
+każdy push na `main` wdraża produkcję automatycznie, a pozostałe gałęzie dostają
+wdrożenia podglądowe. Stan wdrożeń widać też w GitHubie przy commicie (Deployments).
+Ręczne wdrożenie z komputera zostaje jako zapasowe: `npx vercel --prod`.
+
 ## Konfiguracja serwera (Production)
 
 - `ANTHROPIC_API_KEY`: klucz konta Anthropic, wyłącznie w ustawieniach serwera.
@@ -18,7 +25,8 @@ Ta zmienna zawiera wyłącznie adres, nie klucz API ani kod dostępu.
 Na telefonie nauczyciel prosi o kod dostępu. Jest przechowywany w sesji przeglądarki;
 po zakończeniu sesji może być wymagany ponownie. Klucza Anthropic nie wpisuje się w aplikacji.
 
-Zmiana zmiennych Vercel wymaga nowego wdrożenia. Dla tego środowiska Windows CLI wymaga
+Zmiana zmiennych Vercel wymaga nowego wdrożenia (Vercel → Deployments → ostatnie
+wdrożenie produkcyjne → Redeploy). Przy wdrożeniu z CLI na Windows trzeba ustawić
 `NODE_USE_SYSTEM_CA=1`, aby korzystać z systemowego magazynu zaufanych certyfikatów.
 
 ## Weryfikacja
