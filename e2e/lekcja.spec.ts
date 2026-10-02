@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { chooseSubject, open } from './helpers';
+import { chooseSubject, open, otworzWyklad } from './helpers';
 
 test('z feedu można otworzyć wykład: intuicja, przepis i pytanie do odsłonięcia', async ({ page }) => {
   await open(page);
   await chooseSubject(page, 'Biznes i zarządzanie');
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
-  await page.getByRole('button', { name: 'Wykład' }).click();
+  await otworzWyklad(page);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Przedsiębiorczość i innowacje' })).toBeVisible();
   for (const name of ['Skąd to się bierze', 'Jak to zrobić', 'Sprawdź, czy rozumiesz']) {

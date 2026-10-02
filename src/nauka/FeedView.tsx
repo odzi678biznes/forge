@@ -16,6 +16,7 @@ import {
   zapiszTrening,
   terminPowtorki,
   trudnosci,
+  zastosujTempo,
   type StanNauki,
   type Zdarzenie,
 } from './silnik';
@@ -23,6 +24,7 @@ import { KartaWidok, type Wynik } from './KartaWidok';
 import { NauczycielPanel } from './NauczycielPanel';
 import type { KontekstNauczyciela } from './nauczyciel-kontekst';
 import { kiedy } from './czas';
+import { raportKorepetytora, zapytajKorepetytora } from './korepetytor';
 import './nauka.css';
 import { ModalPanel } from '@/components/ModalPanel';
 
@@ -77,7 +79,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
     const k = obecna(stan);
     return k ? { id: k.id, wynik: null } : null;
   });
-  const [ekran, setEkran] = useState<'karta' | 'stop' | 'koniec'>(() => (obecna(stan) ? 'karta' : 'koniec'));
+  const [ekran, setEkran] = useState<'karta' | 'stop' | 'koniec' | 'odlozona'>(() => (obecna(stan) ? 'karta' : 'koniec'));
   const [historia, setHistoria] = useState<Pozycja[]>([]);
   const [podglad, setPodglad] = useState<number | null>(null);
   const [licznik, setLicznik] = useState(0);
@@ -85,8 +87,26 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
   const [komunikat, setKomunikat] = useState<string | null>(null);
   const [nauczyciel, setNauczyciel] = useState(false);
   const [wykladOtwarty, setWykladOtwarty] = useState(false);
+  const [arkusz, setArkusz] = useState(false);
   const zdarzenie = useRef<Zdarzenie | null>(null);
   const [wynikSerii, setWynikSerii] = useState<string | null>(null);
+  // Korepetytor w tle: notatka o tempie (null — jeszcze nic nie powiedział).
+  const [nota, setNota] = useState<string | null>(null);
+  const [notaCzeka, setNotaCzeka] = useState(false);
+  const stanRef = useRef(stan);
+  stanRef.current = stan;
+  // Od kiedy uczeń widzi bieżącą kartę — do pomiaru czasu odpowiedzi.
+  const pokazanoOd = useRef(Date.now());
+  useEffect(() => { pokazanoOd.current = Date.now(); }, [biez?.id, licznik]);
+
+  const korepetytor = (s: StanNauki) => {
+    setNotaCzeka(true);
+    void zapytajKorepetytora(raportKorepetytora(s, l, przedmiot)).then((d) => {
+      zmien(zastosujTempo(stanRef.current, l, d));
+      setNota(d.komentarz);
+      setNotaCzeka(false);
+    });
+  };
 
   const widoczna: Pozycja | null = podglad !== null ? (historia[podglad] ?? null) : biez;
   const k = widoczna ? kartaLekcji(l, widoczna.id) : null;
@@ -108,10 +128,11 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
     setBiez(nowa);
     setHistoria((h) => [...h, nowa]);
     if (tryb === 'nauka') {
-      const r = odpowiedz(stan, l, biez.id, w.poprawna, teraz);
+      const r = odpowiedz(stan, l, biez.id, w.poprawna, teraz, teraz - pokazanoOd.current);
       zmien(r.stan);
       zdarzenie.current = r.zdarzenie;
       pokazKomunikat(r.zdarzenie.komunikat);
+      if (r.zdarzenie.stop || r.zdarzenie.koniecSerii) korepetytor(r.stan);
       if (r.zdarzenie.koniecSerii) {
         // Wynik CAŁEGO zadania CKE — nie ostatniej karty (po nim może być karta pomocnicza).
         const idZadania = l.seria.find((id) => kartaLekcji(l, id).etap === 'zadanie');
@@ -190,6 +211,11 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
     if (zd?.koniecSerii) {
       setBiez(null);
       setEkran('koniec');
+      return;
+    }
+    if (zd?.odlozona) {
+      setBiez(null);
+      setEkran('odlozona');
       return;
     }
     if (zd?.stop) {
@@ -291,8 +317,8 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
             <span style={{ width: `${pasekRazem ? (100 * pasekZrobione) / pasekRazem : 0}%` }} />
           </div>
         </div>
-        <button type="button" className="btn btn--small feed__wyklad" onClick={() => setWykladOtwarty(true)}>
-          Wykład
+        <button type="button" className="feed__ikona" onClick={() => setArkusz(true)} aria-label="Zadanie i wykład" title="Zadanie, źródło, rozwiązanie i wykład">
+          📄
         </button>
       </header>
 
@@ -308,12 +334,11 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
           {ekran === 'karta' && k && widoczna && (
             <section key={`${widoczna.id}-${licznik}`} className={`feed__karta feed__karta--${kierunek}`} aria-label={relacja}>
               {podglad !== null && <p className="feed__podglad">Poprzednia karta — podgląd. „Dalej” wraca do bieżącej.</p>}
-              <div className={`feed__relacja${z ? '' : ' feed__relacja--pomoc'}`}>
-                <strong>{tryb === 'nauka' && l.seria.includes(k.id) ? `Krok ${numerKroku(stan,l,k.id).krok} z ${numerKroku(stan,l,k.id).z}` : tryb === 'nauka' ? 'Łatwiejszy krok' : tryb === 'trening' ? 'Trening dodatkowy' : 'Powtórka'} · {ETAP_NAZWA[k.etap]}</strong>
-                <span className="feed__meta">{z ? `${etykietaZrodla(z)} · ${z.rok} · zadanie ${z.numer}` : 'Ćwiczenie pomocnicze FORGE — to nie jest zadanie CKE'}</span>
-              </div>
+              <p className={`feed__krok${z ? '' : ' feed__krok--pomoc'}`}>
+                {tryb === 'nauka' && l.seria.includes(k.id) ? `Krok ${numerKroku(stan,l,k.id).krok}/${numerKroku(stan,l,k.id).z}` : tryb === 'nauka' ? 'Łatwiejszy krok' : tryb === 'trening' ? 'Trening' : 'Powtórka'}
+                {z ? ` · CKE ${z.rok}` : ' · ćwiczenie FORGE (nie CKE)'}
+              </p>
               <KartaWidok karta={k} zadanie={z} wynik={widoczna.wynik} komputer={komputer} onWynik={onWynik} />
-              {z && <Zrodlo zadanie={z} />}
             </section>
           )}
 
@@ -324,7 +349,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
                   ? 'Przećwiczyłeś jeden typ zadania. Kończymy czy robimy następne?'
                   : 'Dobra seria kroków. Kończymy na dziś czy idziemy dalej?'}
               </h2>
-              <p className="karta__uwaga">Możesz zakończyć sesję i wrócić do nauki później.</p>
+              <NotaKorepetytora nota={nota} czeka={notaCzeka} />
               <div className="feed__stop-akcje">
                 <button type="button" className="btn btn--primary" onClick={() => doNastepnej(stan)}>
                   Robimy następne
@@ -336,6 +361,18 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
             </section>
           )}
 
+          {ekran === 'odlozona' && (
+            <section key="odlozona" className="feed__karta feed__stop">
+              <h2>Ten temat na dziś odpuszczamy</h2>
+              <p>Trzy potknięcia z rzędu to sygnał, że lepiej wrócić tu na świeżo. Jutro zaczniemy od łatwiejszego kroku.</p>
+              <div className="feed__stop-akcje">
+                <button type="button" className="btn btn--primary" onClick={onNastepna}>Inny temat →</button>
+                <button type="button" className="btn" onClick={onWyjdz}>Kończę na dziś</button>
+              </div>
+            </section>
+          )}
+
+          {ekran === 'koniec' && <NotaKorepetytora nota={nota} czeka={notaCzeka} />}
           {ekran === 'koniec' && (
             <Koniec
               lekcja={l}
@@ -362,15 +399,54 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
             {(odpowiedziano || podglad !== null) && <button type="button" className="btn btn--primary" onClick={dalej}>Dalej →</button>}
           </div>
           <div className="feed__tools">
-            <button type="button" className="btn btn--quiet" onClick={wstecz} disabled={previousIndex < 0}>← Wstecz</button>
-            <button type="button" className="btn btn--quiet" onClick={() => setNauczyciel(true)} disabled={!kontekstAI} aria-label="Zapytaj nauczyciela">Pomoc nauczyciela</button>
+            <button type="button" className="btn btn--quiet" onClick={wstecz} disabled={previousIndex < 0} aria-label="Wstecz" title="Poprzednia karta">←</button>
+            <button type="button" className="btn btn--quiet" onClick={() => setNauczyciel(true)} disabled={!kontekstAI} aria-label="Zapytaj nauczyciela" title="Zapytaj nauczyciela">💬 Zapytaj</button>
             {!odpowiedziano && podglad === null && <button type="button" className="btn btn--quiet" onClick={dalej} title="Pominięcie nie zwiększa postępu">Pomiń</button>}
           </div>
         </footer>
       )}
 
+      {arkusz && (
+        <ModalPanel label="Zadanie" className="arkusz-zadania" onClose={() => setArkusz(false)}>
+          <ArkuszZadania zadanie={z} onWyklad={() => { setArkusz(false); setWykladOtwarty(true); }} onZamknij={() => setArkusz(false)} />
+        </ModalPanel>
+      )}
       {wykladOtwarty && <ModalPanel label="Wykład" className="modal-lesson" onClose={() => setWykladOtwarty(false)}>{wyklad(() => setWykladOtwarty(false))}</ModalPanel>}
       {nauczyciel && kontekstAI && <NauczycielPanel kontekst={kontekstAI} onZamknij={() => setNauczyciel(false)} />}
+    </div>
+  );
+}
+
+function NotaKorepetytora({ nota, czeka }: { nota: string | null; czeka: boolean }) {
+  if (!nota && !czeka) return null;
+  return (
+    <p className="feed__nota" role="status">
+      <span aria-hidden>🧭</span> {nota ?? 'Korepetytor patrzy na Twoje tempo…'}
+    </p>
+  );
+}
+
+/** Wszystko poza bieżącym krokiem — w jednym miejscu, pod ikoną 📄. */
+function ArkuszZadania({ zadanie: z, onWyklad, onZamknij }: {
+  zadanie: ReturnType<typeof zadanieCke>; onWyklad: () => void; onZamknij: () => void;
+}) {
+  return (
+    <div className="arkusz">
+      <header className="arkusz__glowa">
+        <p className="arkusz__tytul">{z ? `Zadanie ${z.numer} · ${etykietaZrodla(z)} ${z.rok}` : 'Ćwiczenie pomocnicze'}</p>
+        <button type="button" className="btn btn--small" onClick={onZamknij}>Zamknij</button>
+      </header>
+      {z && (
+        <>
+          <p className="arkusz__tresc"><Tex>{z.tresc}</Tex></p>
+          {z.odpowiedzi && (
+            <p className="arkusz__abcd">{z.odpowiedzi.map((o, i) => <span key={i}>{'ABCD'[i]}. <Tex>{o}</Tex></span>)}</p>
+          )}
+          <Zrodlo zadanie={z} />
+        </>
+      )}
+      {!z && <p className="karta__uwaga">Do tego tematu nie ma autentycznego zadania CKE — to ćwiczenie przygotowane przez FORGE.</p>}
+      <button type="button" className="btn arkusz__wyklad" onClick={onWyklad}>📖 Wykład do lekcji</button>
     </div>
   );
 }
@@ -379,6 +455,7 @@ function Zrodlo({ zadanie: z }: { zadanie: NonNullable<ReturnType<typeof zadanie
   return (
     <details className="zrodlo" data-bez-gestu>
       <summary>Źródło i pełne rozwiązanie</summary>
+      <p className="karta__uwaga">Samo odsłonięcie rozwiązania nie zalicza zadania.</p>
       <p>
         <strong>{etykietaZrodla(z)}</strong> — {z.dokument}, zadanie {z.numer}, poziom {z.poziom === 'PP' ? 'podstawowy' : 'rozszerzony'},{' '}
         {z.punkty} pkt.

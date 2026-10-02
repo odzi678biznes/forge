@@ -58,12 +58,16 @@ export const isCovered = (state: SkillState | undefined): boolean =>
 export const examScope = (skills: Skill[]): Skill[] => skills.filter((s) => !s.extra);
 
 /**
- * Umiejętności w kolejności kursu: działy po kolei, w dziale - po kolei.
+ * Umiejętności w kolejności kursu: najpierw CAŁA podstawa (działy po kolei),
+ * dopiero potem rozszerzenie (znów działy po kolei). Rozszerzenie stoi na
+ * podstawie, więc nie wchodzi, zanim podstawa nie jest opanowana.
  * Materiał dodatkowy nie wchodzi do planu.
  */
 export function courseOrder(topics: Topic[], skills: Skill[]): Skill[] {
   const scope = examScope(skills);
-  return topics.flatMap((t) => scope.filter((s) => s.topicId === t.id));
+  const poziom = (level: ExamLevel) =>
+    topics.flatMap((t) => scope.filter((s) => s.topicId === t.id && examLevelOf(s) === level));
+  return [...poziom('PP'), ...poziom('PR')];
 }
 
 /**

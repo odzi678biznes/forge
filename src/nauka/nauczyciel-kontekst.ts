@@ -4,7 +4,7 @@
  * odpowiedź ucznia i wcześniejsze trudności. Klucz API zostaje na serwerze.
  */
 
-export type Prosba = 'nastepny-krok' | 'nie-rozumiem' | 'skad' | 'inaczej' | 'pelne' | 'pytanie';
+export type Prosba = 'nastepny-krok' | 'nie-rozumiem' | 'skad' | 'inaczej' | 'pelne' | 'pytanie' | 'korepetytor';
 
 export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   'nastepny-krok': 'Pomóż mi zrobić następny krok.',
@@ -12,7 +12,20 @@ export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   skad: 'Skąd to się bierze?',
   inaczej: 'Wytłumacz inaczej.',
   pelne: 'Pokaż pełne rozwiązanie.',
+  korepetytor: 'Oceń moje tempo i zdecyduj, jak mamy iść dalej.',
 };
+
+/**
+ * Raport dla korepetytora w tle: same liczby i treści kroków, bez danych
+ * osobowych. Czas powyżej 3 minut (przerwa) jest już pominięty (null).
+ */
+export interface RaportKorepetytora {
+  przedmiot: string;
+  lekcja: string;
+  samodzielnosc: number;
+  odpowiedzi: { krok: string; etap: string; poprawnaZaPierwszym: boolean; proby: number; czasS: number | null }[];
+  poprzednie?: 'latwiej' | 'tak-samo' | 'trudniej';
+}
 
 export interface KontekstNauczyciela {
   przedmiot: string;
@@ -57,6 +70,8 @@ export interface ZapytanieNauczyciela {
   /** Własne pytanie ucznia (dla prośby 'pytanie'). */
   pytanie?: string;
   historia: WiadomoscCzatu[];
+  /** Dla prośby 'korepetytor'. */
+  raport?: RaportKorepetytora;
 }
 
 export interface OdpowiedzNauczyciela {

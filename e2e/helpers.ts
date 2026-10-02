@@ -46,5 +46,12 @@ export async function otworzWiecej(page: Page, nazwa: string | RegExp): Promise<
   await page.getByRole('button', { name: nazwa }).first().click();
 }
 
+/** Wykład jest w arkuszu pod ikoną 📄 — razem z treścią zadania i źródłem. */
+export async function otworzWyklad(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Zadanie i wykład', exact: true }).click();
+  await page.getByRole('button', { name: /Wykład do lekcji/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Wykład', exact: true })).toBeVisible();
+}
+
 /** Dotychczasowy „Dziś” (plan dnia, diagnoza) jest teraz pod „Więcej”. */
 export const otworzPlan = (page: Page) => otworzWiecej(page, 'Statystyki');

@@ -25,14 +25,14 @@ const skills: Skill[] = [
 const withLevel = (id: string, level: MasteryLevel): SkillState => ({ ...emptySkillState(id), level });
 
 describe('kolejnosc kursu', () => {
-  it('idzie wedlug kolejnosci dzialow, nie kolejnosci listy umiejetnosci', () => {
-    expect(courseOrder(topics, skills).map((s) => s.id)).toEqual(['b', 'c', 'a']);
+  it('najpierw cala podstawa wedlug kolejnosci dzialow, potem rozszerzenie', () => {
+    expect(courseOrder(topics, skills).map((s) => s.id)).toEqual(['b', 'a', 'c']);
   });
 
   it('nastepna lekcja to pierwsza nieprzerobiona', () => {
     const order = courseOrder(topics, skills);
     const states = new Map([['b', withLevel('b', MasteryLevel.Independent)]]);
-    expect(nextLessonSkill(order, states)?.id).toBe('c');
+    expect(nextLessonSkill(order, states)?.id).toBe('a');
   });
 
   it('podpowiedz nie przesuwa kursu - poziom Wspomagane to jeszcze nie przerobione', () => {
@@ -92,7 +92,7 @@ describe('material dodatkowy (poza wymaganiami egzaminu)', () => {
   const withExtra = [...skills, makeSkill({ id: 'x', topicId: 't-1', level: 'PR', examValue: 1, extra: true })];
 
   it('nie wchodzi do kolejnosci kursu ani planu', () => {
-    expect(courseOrder(topics, withExtra).map((s) => s.id)).toEqual(['b', 'c', 'a']);
+    expect(courseOrder(topics, withExtra).map((s) => s.id)).toEqual(['b', 'a', 'c']);
   });
 
   it('nie zmienia postepu dzialu ani gotowosci', () => {

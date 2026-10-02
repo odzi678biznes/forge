@@ -41,6 +41,8 @@ export interface SelectionInput {
    * wracamy do normalnego rankingu, zamiast zostawiac pusty ekran.
    */
   focusSkillId?: string;
+  /** Zestaw kompetencji (sprawdzian działu) — ranking tylko w ich obrębie. */
+  focusSkillIds?: string[];
 }
 
 export type SelectionRule =
@@ -70,7 +72,14 @@ const RULE_LABELS: Record<SelectionRule, string> = {
 };
 
 export function selectNextQuestion(input: SelectionInput): Selection | null {
-  const { focusSkillId } = input;
+  const { focusSkillId, focusSkillIds } = input;
+
+  if (focusSkillIds !== undefined && focusSkillIds.length > 0) {
+    const zestaw = new Set(focusSkillIds);
+    const { focusSkillIds: _set, ...bezZestawu } = input;
+    const focused = selectNextQuestion({ ...bezZestawu, skills: input.skills.filter((s) => zestaw.has(s.id)) });
+    if (focused) return focused;
+  }
 
   if (focusSkillId !== undefined) {
     const focused = rank({ ...input, skills: input.skills.filter((s) => s.id === focusSkillId) });
@@ -80,7 +89,7 @@ export function selectNextQuestion(input: SelectionInput): Selection | null {
 
   // Rodzenstwo wlasciwosci rest jest zwolnione z noUnusedLocals, wiec to
   // jest czysty sposob na usuniecie pola przy exactOptionalPropertyTypes.
-  const { focusSkillId: _dropped, ...withoutFocus } = input;
+  const { focusSkillId: _dropped, focusSkillIds: _droppedSet, ...withoutFocus } = input;
   return rank(withoutFocus);
 }
 

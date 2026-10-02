@@ -382,6 +382,7 @@ export function useForge(deps: ForgeDeps = {}) {
       states: Map<string, SkillState>,
       recent: string[],
       focusSkillId?: string,
+      focusSkillIds?: string[],
     ): Selection | null =>
       selectNextQuestion({
         skills,
@@ -391,6 +392,7 @@ export function useForge(deps: ForgeDeps = {}) {
         recentSkillIds: recent,
         now: Date.now(),
         ...(focusSkillId === undefined ? {} : { focusSkillId }),
+        ...(focusSkillIds === undefined ? {} : { focusSkillIds }),
       }),
     [skills, questions],
   );
@@ -404,7 +406,7 @@ export function useForge(deps: ForgeDeps = {}) {
     (chosen: MissionPlan) => {
       askedRef.current = new Set();
       const m = startMission(chosen, `m-${Date.now()}`, Date.now());
-      const first = pickNext(skillStates, recentSkillIds, chosen.focusSkillId);
+      const first = pickNext(skillStates, recentSkillIds, chosen.focusSkillId, chosen.focusSkillIds);
       if (!first) return;
 
       askedRef.current.add(first.question.id);
@@ -577,7 +579,7 @@ export function useForge(deps: ForgeDeps = {}) {
     const next =
       plan.kind === 'diagnostic' || done
         ? null
-        : pickNext(skillStates, recent, plan.focusSkillId);
+        : pickNext(skillStates, recent, plan.focusSkillId, plan.focusSkillIds);
 
     if (!next) {
       // Diagnoza konczy sie raportem, a nie zwyklym podsumowaniem misji.
@@ -876,6 +878,7 @@ export function useForge(deps: ForgeDeps = {}) {
     skills,
     topics,
     questions,
+    missions,
     setSubject,
     setDayMode,
     beginMission,

@@ -4,6 +4,7 @@ import { AnswerAction } from './AnswerAction';
 import { Math as Tex } from '@/components/Math';
 import type { Karta, KartaZadanie, Oczekiwane, ZadanieCke } from './typy';
 import { normalizuj, ocenOtwarta, sprawdzKolejnosc, sprawdzWpis, sprawdzWynikKodu } from './sprawdz';
+import { WARIANTY, pokazWartosc, type Wariant } from './warianty';
 
 /**
  * Jedna karta feedu: jedno pytanie, jedna interakcja. Sprawdzanie — regułami
@@ -57,27 +58,14 @@ export function KartaWidok({ karta, zadanie, wynik, komputer, onWynik }: Props) 
       <h2 className="karta__pytanie" tabIndex={-1}>
         <Tex>{karta.pytanie}</Tex>
       </h2>
-      {karta.podpowiedz && karta.rodzaj !== 'wpis' && (
-        <details className="karta__pomoc">
-          <summary>Przypomnij zasadę</summary>
+      {karta.podpowiedz && !wynik && (
+        <details className="karta__pomoc karta__pomoc--mala">
+          <summary>💡 Podpowiedź</summary>
           <p><Tex>{karta.podpowiedz}</Tex></p>
         </details>
       )}
       <Interakcja karta={karta} zadanie={zadanie} zablokowana={zablokowana} komputer={komputer} onWynik={onWynik} />
       {wynik && <Informacja karta={karta} wynik={wynik} />}
-      {zadanie && karta.rodzaj !== 'zadanie' && (
-        <details className="karta__pomoc">
-          <summary>Treść całego zadania</summary>
-          <PelneZadanie zadanie={zadanie} />
-        </details>
-      )}
-      {zadanie && karta.rodzaj === 'zadanie' && !wynik && (
-        <details className="karta__pomoc">
-          <summary>Nie mam jak liczyć — pokaż rozwiązanie</summary>
-          <p>Prześledź kroki. Samo odsłonięcie rozwiązania nie zalicza zadania. Możesz wrócić do niego później.</p>
-          <ol>{zadanie.rozwiazanie.map((krok, i) => <li key={i}><Tex>{krok}</Tex></li>)}</ol>
-        </details>
-      )}
     </div>
   );
 }
@@ -88,7 +76,6 @@ function PelneZadanie({ zadanie }: { zadanie: ZadanieCke }) {
       <p className="karta__tresc">
         <Tex>{zadanie.tresc}</Tex>
       </p>
-      <p className="karta__uwaga">Treść w skrócie, dane z oryginału. Pełny tekst — w dokumencie CKE (link w „Źródło”).</p>
     </div>
   );
 }
@@ -102,14 +89,18 @@ function Informacja({ karta, wynik }: { karta: Karta; wynik: Wynik }) {
   return (
     <div ref={panel} tabIndex={-1} className={`info ${wynik.poprawna ? 'info--ok' : 'info--zle'}`} role="status">
       <p className="info__werdykt">{wynik.poprawna ? '✓ Dobrze' : '↺ Jeszcze nie'}</p>
-      {!wynik.poprawna && wynik.przyczyna && (
-        <p className="info__przyczyna">
-          <Tex>{wynik.przyczyna}</Tex>
-        </p>
+      {/* Jedno zdanie na pierwszym planie; reszta pod „Dlaczego?”, żeby ekran nie był przeładowany. */}
+      {!wynik.poprawna && wynik.przyczyna ? (
+        <>
+          <p className="info__przyczyna"><Tex>{wynik.przyczyna}</Tex></p>
+          <details className="info__wiecej">
+            <summary>Dlaczego tak?</summary>
+            <p className="info__wyjasnienie"><Tex>{karta.wyjasnienie}</Tex></p>
+          </details>
+        </>
+      ) : (
+        <p className="info__wyjasnienie"><Tex>{karta.wyjasnienie}</Tex></p>
       )}
-      <p className="info__wyjasnienie">
-        <Tex>{karta.wyjasnienie}</Tex>
-      </p>
     </div>
   );
 }
@@ -144,6 +135,11 @@ function Interakcja({ karta, zadanie, zablokowana, komputer, onWynik }: Interakc
     case 'kolejnosc':
       return <Kolejnosc id={karta.id} elementy={karta.elementy} zablokowana={zablokowana} onWynik={onWynik} />;
     case 'wpis':
+      if (WARIANTY[karta.id]) {
+        const warianty = WARIANTY[karta.id] as Wariant[];
+        return <WyborWariantow id={karta.id} warianty={warianty} kodowe={false} zablokowana={zablokowana}
+          poprawny={(v) => sprawdzWpis(v, karta.oczekiwane)} onWynik={onWynik} />;
+      }
       return (
         <Wpis
           klawiatura={karta.klawiatura}
@@ -180,7 +176,10 @@ function Interakcja({ karta, zadanie, zablokowana, komputer, onWynik }: Interakc
           <pre className="kod">
             <code>{karta.kod}</code>
           </pre>
-          <WpisKodu zablokowana={zablokowana} onWpis={(t) => onWynik({ poprawna: sprawdzWynikKodu(t, karta.wynik), tekst: t })} />
+          {WARIANTY[karta.id]
+            ? <WyborWariantow id={karta.id} warianty={WARIANTY[karta.id] as Wariant[]} kodowe zablokowana={zablokowana}
+                poprawny={(v) => sprawdzWynikKodu(v, karta.wynik)} onWynik={onWynik} />
+            : <WpisKodu zablokowana={zablokowana} onWpis={(t) => onWynik({ poprawna: sprawdzWynikKodu(t, karta.wynik), tekst: t })} />}
         </>
       );
     case 'otwarta':
@@ -198,6 +197,35 @@ function Interakcja({ karta, zadanie, zablokowana, komputer, onWynik }: Interakc
   }
 }
 
+/**
+ * Wybór zamiast liczenia w głowie: warianty to poprawny wynik i typowe błędy.
+ * Na telefonie uczeń wybiera właściwą ścieżkę, a zły wybór od razu mówi, skąd błąd.
+ */
+function WyborWariantow({ id, warianty, kodowe, zablokowana, poprawny, onWynik }: {
+  id: string;
+  warianty: Wariant[];
+  kodowe: boolean;
+  zablokowana: boolean;
+  poprawny: (wartosc: string) => boolean;
+  onWynik: (w: Wynik) => void;
+}) {
+  const indeks = warianty.findIndex((v) => poprawny(v.wartosc));
+  return (
+    <Wybor
+      id={id}
+      opcje={warianty.map((v) => (kodowe ? v.wartosc : pokazWartosc(v.wartosc)))}
+      poprawna={indeks}
+      decyzja={false}
+      kodowe={kodowe}
+      zablokowana={zablokowana}
+      onWynik={(i) => {
+        const v = warianty[i];
+        onWynik({ poprawna: i === indeks, tekst: v?.wartosc ?? '', ...(v?.dlaczego ? { przyczyna: v.dlaczego } : {}) });
+      }}
+    />
+  );
+}
+
 function Wybor({
   id,
   opcje,
@@ -207,6 +235,7 @@ function Wybor({
   onWynik,
   wiersze = false,
   stalaKolejnosc = false,
+  kodowe = false,
 }: {
   id: string;
   opcje: string[];
@@ -216,6 +245,7 @@ function Wybor({
   onWynik: (i: number) => void;
   wiersze?: boolean;
   stalaKolejnosc?: boolean;
+  kodowe?: boolean;
 }) {
   const kolejnosc = useMemo(() => (wiersze || stalaKolejnosc) ? opcje.map((_, i) => i) : tasuj(opcje, id), [opcje, id, wiersze, stalaKolejnosc]);
   const [wybrana, setWybrana] = useState<number | null>(null);
@@ -232,7 +262,7 @@ function Wybor({
             setWybrana(i);
           }}
         >
-          <span className="opcja__litera">{LITERY[n]}.</span> <Tex>{opcje[i] ?? ''}</Tex>
+          <span className="opcja__litera">{LITERY[n]}.</span> {kodowe ? <pre className="opcja__kod">{opcje[i] ?? ''}</pre> : <Tex>{opcje[i] ?? ''}</Tex>}
           {zablokowana && i === poprawna && <span className="opcja__status">✓ Poprawna odpowiedź</span>}
           {zablokowana && wybrana === i && i !== poprawna && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
         </button>

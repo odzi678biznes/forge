@@ -1010,3 +1010,103 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------ minimalna karta */
+
+.feed__ikona {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.feed__krok {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--t-small);
+  letter-spacing: 0.02em;
+}
+
+.feed__krok--pomoc { color: var(--challenge); }
+
+.opcja__kod {
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.karta__pomoc--mala {
+  padding: 0 var(--space-3);
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.info__wiecej summary {
+  min-height: 44px;
+  align-content: center;
+  cursor: pointer;
+  color: var(--progress);
+}
+
+.arkusz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.arkusz__glowa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.arkusz__tytul { margin: 0; font-weight: 700; }
+.arkusz__tresc { margin: 0; line-height: 1.55; }
+
+.arkusz__abcd {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+/* --------------------------------------------- odpowiedź nauczyciela z formatem */
+
+.nauczyciel__start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.sformatowane { display: flex; flex-direction: column; gap: var(--space-2); line-height: 1.55; }
+.sformatowane p, .sformatowane ul, .sformatowane ol { margin: 0; }
+.sformatowane ul, .sformatowane ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: var(--space-1); }
+.sformatowane strong { color: var(--text); font-weight: 700; }
+.sformatowane__naglowek { font-weight: 700; }
+.sformatowane__wzor {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--bg-abyss);
+  overflow-x: auto;
+  text-align: center;
+}
+
+.feed__nota {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--progress);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+
+.arkusz__glowa .btn { flex-shrink: 0; white-space: nowrap; }
+.arkusz__abcd { gap: var(--space-3); }
+.arkusz__abcd span { display: flex; align-items: center; gap: var(--space-2); }

@@ -13,8 +13,8 @@ test('błąd prowadzi do łatwiejszego kroku tego samego zadania CKE', async ({ 
   await chooseSubject(page, 'Matematyka');
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
 
-  const relacja = page.locator('.feed__relacja');
-  await expect(relacja).toContainText('Krok 1 z 9');
+  const relacja = page.locator('.feed__krok');
+  await expect(relacja).toContainText('Krok 1/9');
   await page.getByRole('button', { name: /Potęgę.*w nawiasie/ }).click();
   await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
   await expect(page.getByText('✓ Dobrze', { exact: true })).toBeVisible();
@@ -61,8 +61,10 @@ test('nauczyciel bez klucza API działa w oznaczonym trybie demonstracyjnym', as
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
   await page.getByRole('button', { name: 'Zapytaj nauczyciela' }).click();
   await expect(page.getByText('Tryb demonstracyjny — to nie jest AI')).toBeVisible();
-  await page.getByRole('button', { name: 'Nie rozumiem.' }).click();
-  await expect(page.locator('.dymek--nauczyciel')).toContainText('Weźmy tylko ten jeden krok');
+  // Bez listy gotowych próśb: jedna podpowiedź na start, potem własne pytania.
+  await expect(page.getByRole('button', { name: 'Nie rozumiem.' })).toHaveCount(0);
+  await page.getByRole('button', { name: /Pomóż mi zrobić następny krok/ }).click();
+  await expect(page.locator('.dymek--nauczyciel')).toBeVisible();
 });
 
 test('po serii Dziś prowadzi do następnej lekcji, a trening rotuje karty', async ({ page }) => {

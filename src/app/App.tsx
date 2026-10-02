@@ -3,7 +3,7 @@ import { DzisView } from '@/nauka/DzisView';
 import { FeedView, type Tryb } from '@/nauka/FeedView';
 import { useNauka } from '@/nauka/useNauka';
 import { LEKCJE, lekcja as lekcjaNauki } from '@/nauka/lekcje';
-import { postep as postepNauki, powtorkaNaTeraz, wybierzTrening } from '@/nauka/silnik';
+import { odlozonaTeraz, postep as postepNauki, powtorkaNaTeraz, wybierzTrening } from '@/nauka/silnik';
 import { spojnyPostep } from '@/nauka/spojny-postep';
 import { CORPORA, SUBJECT_LABELS, useForge, type Screen, type SubjectId } from './useForge';
 import { remainingMinutes, subjectGlance, useCourse } from './useCourse';
@@ -14,7 +14,8 @@ import { MissionSummary } from '@/features/missions/MissionSummary';
 import { Arena } from '@/features/questions/Arena';
 import { MasteryMap } from '@/features/mastery-map/MasteryMap';
 import { ErrorLab } from '@/features/error-lab/ErrorLab';
-import { practiceFor, repairFor, timeTrial, trainingFor } from '@/learning-engine/mission';
+import { practiceFor, repairFor, sprawdzianDzialu, sprawdzianTytul, timeTrial, trainingFor } from '@/learning-engine/mission';
+import { examLevelOf } from '@/learning-engine/course';
 import { openErrorCount } from '@/learning-engine/error-lab';
 import { DiagnosticIntro } from '@/features/diagnostics/DiagnosticIntro';
 import { DiagnosticReportView } from '@/features/diagnostics/DiagnosticReportView';
@@ -152,6 +153,22 @@ export function App() {
     else beginMission(practiceFor(skill));
   };
 
+  // Odłożona lekcja (seria błędów) czeka do jutra — w tym czasie idziemy dalej.
+  const odlozona = (skillId: string) => Boolean(stanNauki && lekcjaNauki(skillId) && odlozonaTeraz(stanNauki, skillId, Date.now()));
+  const nastepnaWKursie = (pomin?: string) =>
+    course.ordered.find((s) => s.id !== pomin && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id) && !odlozona(s.id));
+
+  // Prosty sprawdzian działu: gdy cała podstawa działu jest przerobiona, a sprawdzianu jeszcze nie było.
+  const sprawdzian = (() => {
+    for (const t of topics) {
+      const pp = course.ordered.filter((s) => s.topicId === t.id && examLevelOf(s) === 'PP' && course.lessonOf.has(s.id));
+      if (pp.length === 0 || !pp.every((s) => course.lessonsDone.has(s.id))) continue;
+      if (forge.missions.some((m) => m.kind === 'boss' && m.finishedAt !== null && m.title === sprawdzianTytul(t))) continue;
+      return { topic: t, skills: pp };
+    }
+    return null;
+  })();
+
   if (state.screen === 'loading') {
     return <p className="boot">Wczytywanie profilu…</p>;
   }
@@ -181,7 +198,7 @@ export function App() {
           onInna={otworzFeed}
           treningDostepny={Boolean(wybierzTrening(stanNauki, LEKCJE.filter((x) => x.przedmiot === l.przedmiot), Date.now()))}
           onNastepna={() => {
-            const next = course.ordered.find((s) => course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id));
+            const next = nastepnaWKursie(l.skillId);
             if (next) otworzLekcje(next.id);
             else toCommandCenter();
           }}
@@ -445,6 +462,7 @@ export function App() {
           onWiecej={() => goTo('plan')}
           onKurs={() => goTo('course')}
           nextCourse={course.ordered.find((s) => !lekcjaNauki(s.id) && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id)) ?? null}
+          sprawdzian={sprawdzian ? { nazwa: sprawdzian.topic.name, onStart: () => beginMission(sprawdzianDzialu(sprawdzian.topic, sprawdzian.skills)) } : null}
           onCourseLesson={forge.openLesson}
           descriptions={Object.fromEntries(corpus.lessons.map(l => [l.skillId, l.intro]))}
         />

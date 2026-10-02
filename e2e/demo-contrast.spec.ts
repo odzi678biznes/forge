@@ -45,7 +45,9 @@ test('kontrast faktycznych styli tekstu i kontrolki oraz powiększenie układu',
   await audit('Zaznaczona odpowiedź');
   await page.getByRole('button',{name:'Sprawdź odpowiedź'}).click();
   await audit('Błędna odpowiedź i wyjaśnienie');
-  await page.getByRole('button',{name:'Wykład',exact:true}).click();
+  await page.getByRole('button',{name:'Zadanie i wykład',exact:true}).click();
+  await audit('Arkusz zadania');
+  await page.getByRole('button',{name:/Wykład do lekcji/}).click();
   await audit('Wykład');
   await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Zapytaj nauczyciela'}).click();

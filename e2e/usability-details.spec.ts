@@ -11,10 +11,10 @@ test('czytelny kurs, spójna ikona postępu, fokus wyniku i dostępność Wstecz
   await page.getByRole('button',{name:/Potęgę.*w nawiasie/}).click();
   await page.getByRole('button',{name:'Sprawdź odpowiedź'}).click();
   await expect(page.locator('.info')).toBeFocused();
-  await expect(page.getByRole('button',{name:'← Wstecz',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Wstecz',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:/Dalej/}).click();
   await expect(page.locator('.karta__pytanie')).toBeFocused();
-  await expect(page.getByRole('button',{name:'← Wstecz',exact:true})).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Wstecz',exact:true})).toBeEnabled();
   await page.getByRole('button',{name:'Wyjdź z lekcji'}).click();
   await page.getByRole('button',{name:'Wszystkie lekcje w Kursie →'}).click();
   const current=page.locator('.skill').filter({hasText:'Ułamki i kolejność działań'});

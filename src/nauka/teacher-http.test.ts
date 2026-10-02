@@ -47,3 +47,10 @@ it('passes task and question to the model and returns its answer', async () => {
   expect(ask).toHaveBeenCalledWith(body);
   expect((await response.json()).tekst).toContain('potęgę dwójki');
 });
+it('accepts a background tutor report and rejects a malformed one', () => {
+  const kontekst = { przedmiot: 'Matematyka', lekcja: 'x', zadanie: null, krok: { etap: 'podsumowanie', numer: 1, z: 1, pytanie: 'p', wyjasnienie: '-' }, odpowiedzUcznia: null, czyPoprawna: null, trudnosci: [] };
+  const raport = { przedmiot: 'Matematyka', lekcja: 'x', samodzielnosc: 0, odpowiedzi: [{ krok: 'k', etap: 'fragment', poprawnaZaPierwszym: true, proby: 1, czasS: null }] };
+  expect(teacher.waliduj({ kontekst, prosba: 'korepetytor', historia: [], raport })).not.toBeNull();
+  expect(teacher.waliduj({ kontekst, prosba: 'korepetytor', historia: [] })).toBeNull();
+  expect(teacher.waliduj({ kontekst, prosba: 'korepetytor', historia: [], raport: { ...raport, odpowiedzi: [{ krok: 1 }] } })).toBeNull();
+});

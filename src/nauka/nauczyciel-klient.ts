@@ -2,6 +2,7 @@ import type {
   KontekstNauczyciela,
   OdpowiedzNauczyciela,
   Prosba,
+  RaportKorepetytora,
   StatusNauczyciela,
   WiadomoscCzatu,
 } from './nauczyciel-kontekst';
@@ -67,6 +68,7 @@ export async function zapytajNauczyciela(
   prosba: Prosba,
   historia: WiadomoscCzatu[],
   pytanie?: string,
+  raport?: RaportKorepetytora,
 ): Promise<Odpowiedz> {
   const s = await statusNauczyciela();
   if (!s.dostepny) return { ...demo(kontekst, prosba), ...(s.powod ? { powod: s.powod } : {}) };
@@ -75,7 +77,7 @@ export async function zapytajNauczyciela(
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authorization() },
       signal: AbortSignal.timeout(60_000),
-      body: JSON.stringify({ kontekst, prosba, historia, ...(pytanie ? { pytanie } : {}) }),
+      body: JSON.stringify({ kontekst, prosba, historia, ...(pytanie ? { pytanie } : {}), ...(raport ? { raport } : {}) }),
     });
     if (!r.ok) {
       const blad = ((await r.json().catch(() => ({}))) as { blad?: string }).blad ?? `HTTP ${r.status}`;
@@ -116,6 +118,9 @@ export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
       break;
     case 'pytanie':
       tekst = 'W trybie demonstracyjnym nie odpowiem na własne pytanie — do tego potrzebny jest prawdziwy nauczyciel AI na serwerze.';
+      break;
+    case 'korepetytor':
+      tekst = '';
       break;
   }
   return { tekst, tryb: 'demo', model: null };

@@ -35,7 +35,12 @@ export function status(): StatusNauczyciela {
 }
 
 const SYSTEM = `Jesteś spokojnym, cierpliwym nauczycielem przygotowującym do matury (CKE). Uczeń jest początkujący.
-Piszesz po polsku, prostymi zdaniami, krótko (zwykle 2–6 zdań). Wzory zapisuj w LaTeX-u między znakami $...$, kod w odwrotnych apostrofach.
+Piszesz po polsku, prostymi zdaniami, krótko. Uczeń czyta na telefonie, więc odpowiedź ma być przejrzysta:
+- jedna myśl = jeden krótki akapit (akapity oddzielaj pustą linią); zwykle 2–4 akapity, bez wstępów typu „Świetne pytanie”,
+- kolejne kroki rachunku jako lista numerowana („1. …”), wyliczenia jako lista z „- ”,
+- najważniejsze słowo lub wynik pogrubiaj **tak**, oszczędnie,
+- wzory w tekście w LaTeX-u między $...$; ważny wzór lub przekształcenie w osobnej linii między $$...$$,
+- kod w odwrotnych apostrofach; bez tabel, nagłówków i HTML-a.
 
 Zasady:
 - Najpierw pomagasz wykonać NASTĘPNY mały krok. Pełnego rozwiązania nie podajesz, dopóki uczeń wprost o nie nie poprosi (prośba „Pokaż pełne rozwiązanie”).
@@ -78,7 +83,7 @@ function opisKontekstu(k: KontekstNauczyciela): string {
 export function waliduj(body: unknown): ZapytanieNauczyciela | null {
   const b = body as Partial<ZapytanieNauczyciela> | null;
   if (!b || typeof b !== 'object' || !b.kontekst || typeof b.prosba !== 'string') return null;
-  if (!['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie'].includes(b.prosba)) return null;
+  if (!['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie', 'korepetytor'].includes(b.prosba)) return null;
   if (!Array.isArray(b.historia)) return null;
   const text = (v: unknown): v is string => typeof v === 'string';
   const texts = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
@@ -95,11 +100,53 @@ export function waliduj(body: unknown): ZapytanieNauczyciela | null {
   }
   if (!b.historia.every(w => w && (w.rola === 'uczen' || w.rola === 'nauczyciel') && text(w.tekst))) return null;
   if (b.prosba === 'pytanie' && (typeof b.pytanie !== 'string' || b.pytanie.trim() === '')) return null;
+  if (b.prosba === 'korepetytor') {
+    const r = b.raport;
+    if (!r || typeof r !== 'object' || !text(r.przedmiot) || !text(r.lekcja) || !Number.isInteger(r.samodzielnosc)) return null;
+    if (!Array.isArray(r.odpowiedzi) || r.odpowiedzi.length > 20) return null;
+    if (!r.odpowiedzi.every((o) => o && text(o.krok) && text(o.etap) && typeof o.poprawnaZaPierwszym === 'boolean'
+      && Number.isInteger(o.proby) && (o.czasS === null || Number.isFinite(o.czasS)))) return null;
+  }
   return b as ZapytanieNauczyciela;
+}
+
+const SYSTEM_KOREPETYTOR = `Jesteś korepetytorem, który w tle prowadzi ucznia przez kurs maturalny (cel: 100% na maturze rozszerzonej).
+Dostajesz raport z ostatnich kroków lekcji: czy odpowiedź była poprawna za pierwszym razem, ile prób, ile sekund (null = przerwa albo brak pomiaru — tego nie oceniaj).
+Decydujesz o tempie kolejnych kroków:
+- "trudniej" — gdy uczeń odpowiada pewnie i szybko; podnosimy poprzeczkę lekko, o jeden stopień,
+- "tak-samo" — gdy idzie dobrze, ale nie bez potknięć,
+- "latwiej" — gdy się myli albo długo się zastanawia; nie męczymy go, wracamy do mniejszych kroków.
+"samodzielnosc": 0 = pełne prowadzenie, 1 = bez kroków pomocniczych, 2 = od razu całe zadanie.
+Odpowiedz WYŁĄCZNIE jednym obiektem JSON: {"tempo":"latwiej"|"tak-samo"|"trudniej","komentarz":"…"}
+Komentarz: jedno krótkie, ciepłe zdanie po polsku do ucznia (bez ocen typu „słabo”), np. co zauważyłeś i co teraz zrobimy.`;
+
+function opisRaportu(z: ZapytanieNauczyciela): string {
+  const r = z.raport!;
+  return [
+    `Przedmiot: ${r.przedmiot}. Lekcja: ${r.lekcja}. Obecna samodzielność: ${r.samodzielnosc}.`,
+    r.poprzednie ? `Poprzednia decyzja: ${r.poprzednie}.` : '',
+    ...r.odpowiedzi.map((o, i) => `${i + 1}. [${o.etap}] ${o.krok.slice(0, 200)} — ${o.poprawnaZaPierwszym ? 'dobrze' : 'błąd'} za pierwszym razem, prób: ${o.proby}, czas: ${o.czasS === null ? 'brak' : `${o.czasS} s`}`),
+  ].filter(Boolean).join('\n');
 }
 
 export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyciela> {
   const client = new Anthropic({ timeout: 45_000, maxRetries: 0 });
+  if (z.prosba === 'korepetytor') {
+    const odp = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 4000,
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'low' },
+      system: SYSTEM_KOREPETYTOR,
+      messages: [{ role: 'user', content: opisRaportu(z) }],
+    });
+    const tekst = odp.content
+      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('\n')
+      .trim();
+    return { tekst: tekst || '{}', model: odp.model };
+  }
   const historia: Anthropic.Beta.BetaMessageParam[] = z.historia.slice(-MAX_HISTORIA).map((w) => ({
     role: w.rola === 'uczen' ? 'user' : 'assistant',
     content: w.tekst.slice(0, 2000),

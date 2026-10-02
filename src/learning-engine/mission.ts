@@ -1,4 +1,4 @@
-import type { Mission, MissionKind, Skill, SkillState } from '@/data/types';
+import type { Mission, MissionKind, Skill, SkillState, Topic } from '@/data/types';
 import { MasteryLevel } from '@/data/types';
 import { isDue } from './review';
 
@@ -36,6 +36,8 @@ export interface MissionPlan {
   questionCount: number;
   /** Kompetencja wskazana przez uzytkownika z mapy albo z dziennika bledow. */
   focusSkillId?: string;
+  /** Kilka kompetencji naraz — sprawdzian działu losuje zadania tylko z nich. */
+  focusSkillIds?: string[];
   /**
    * Budzet czasu na cala misje w ms. Ustawiany WYLACZNIE dla prob czasowych,
    * ktore uzytkownik wybiera sam (sek. 4.3). Blueprint sek. 14 zakazuje
@@ -92,6 +94,23 @@ export function trainingFor(skill: Skill, level: number): MissionPlan {
     rationale: `Wybrana z mapy. Obecny poziom: ${level} z 5.`,
     questionCount: MISSION_LENGTHS.training,
     focusSkillId: skill.id,
+  };
+}
+
+export const sprawdzianTytul = (topic: Topic): string => `Sprawdzian działu: ${topic.name}`;
+
+/**
+ * Prosty sprawdzian działu po przerobieniu jego podstawy: po dwa zadania
+ * z każdej umiejętności (4–8 zadań), bez limitu czasu. Słabe miejsca trafiają
+ * do powtórek tak samo jak w zwykłych ćwiczeniach.
+ */
+export function sprawdzianDzialu(topic: Topic, skills: Skill[]): MissionPlan {
+  return {
+    kind: 'boss',
+    title: sprawdzianTytul(topic),
+    rationale: 'Podstawa tego działu za Tobą. Krótki sprawdzian pokaże, co już siedzi, a co wróci w powtórce.',
+    questionCount: Math.min(8, Math.max(4, skills.length * 2)),
+    focusSkillIds: skills.map((s) => s.id),
   };
 }
 

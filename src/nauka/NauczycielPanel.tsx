@@ -4,6 +4,7 @@ import type { KontekstNauczyciela, Prosba, StatusNauczyciela, WiadomoscCzatu } f
 import { PROSBA_TEKST } from './nauczyciel-kontekst';
 import { odswiezStatusNauczyciela, statusNauczyciela, ustawKodNauczyciela, zapytajNauczyciela } from './nauczyciel-klient';
 import { ModalPanel } from '@/components/ModalPanel';
+import { Sformatowane } from './Sformatowane';
 
 /**
  * „Zapytaj nauczyciela” — przy każdej karcie. Najpierw pomoc w następnym
@@ -20,7 +21,6 @@ interface Wpis extends WiadomoscCzatu {
   tryb?: 'ai' | 'demo';
 }
 
-const SZYBKIE: Exclude<Prosba, 'pytanie'>[] = ['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej'];
 
 export function NauczycielPanel({ kontekst, onZamknij }: Props) {
   const [status, setStatus] = useState<StatusNauczyciela | null>(null);
@@ -91,34 +91,21 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
 
       <div className="nauczyciel__czat" aria-live="polite">
         {czat.length === 0 && (
-          <p className="karta__uwaga">
-            Znam zadanie{kontekst.zadanie ? ` (${kontekst.zadanie.zrodlo}, zad. ${kontekst.zadanie.numer})` : ''}, ten krok i Twoją
-            odpowiedź. Zacznę od następnego kroku — pełne rozwiązanie pokażę, gdy o nie poprosisz.
-          </p>
+          <div className="nauczyciel__start">
+            <p className="karta__uwaga">Widzę to zadanie i Twoją odpowiedź. Napisz, czego nie rozumiesz.</p>
+            <button type="button" className="btn btn--small" disabled={czeka} onClick={() => void zapytaj('nastepny-krok')}>
+              💡 {PROSBA_TEKST['nastepny-krok']}
+            </button>
+          </div>
         )}
         {czat.map((w, i) => (
           <div key={i} className={`dymek dymek--${w.rola}`}>
             {w.tryb === 'demo' && <span className="dymek__demo">demo</span>}
-            {w.tekst.split('\n').map((l, j) => (
-              <p key={j}>
-                <Tex>{l}</Tex>
-              </p>
-            ))}
+            {w.rola === 'nauczyciel' ? <Sformatowane tekst={w.tekst} /> : <p><Tex>{w.tekst}</Tex></p>}
           </div>
         ))}
         {czeka && <div className="dymek dymek--nauczyciel dymek--czeka" role="status">Przygotowuję odpowiedź…</div>}
         <div ref={koniec} />
-      </div>
-
-      <div className="nauczyciel__szybkie">
-        {SZYBKIE.map((p) => (
-          <button key={p} type="button" className="btn btn--small" disabled={czeka} onClick={() => void zapytaj(p)}>
-            {PROSBA_TEKST[p]}
-          </button>
-        ))}
-        <button type="button" className="btn btn--small nauczyciel__pelne" disabled={czeka} onClick={() => void zapytaj('pelne')}>
-          {PROSBA_TEKST.pelne}
-        </button>
       </div>
 
       <form
@@ -134,7 +121,7 @@ export function NauczycielPanel({ kontekst, onZamknij }: Props) {
         <input
           value={pytanie}
           onChange={(e) => setPytanie(e.target.value)}
-          placeholder="Własne pytanie…"
+          placeholder="Zapytaj o to zadanie…"
           aria-label="Własne pytanie do nauczyciela"
           enterKeyHint="send"
         />

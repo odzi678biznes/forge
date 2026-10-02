@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { open, expectNoSideScroll } from './helpers';
+import { open, expectNoSideScroll, otworzWyklad } from './helpers';
 
 const start = /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/;
 
@@ -29,18 +29,21 @@ test('wybór wymaga zatwierdzenia, scroll nie pomija, wynik czeka na Dalej', asy
   await expect(page.getByRole('button', { name: 'Sprawdź odpowiedź' })).toBeDisabled();
 });
 
-test('wpis zachowuje się po wykładzie i modalnej pomocy, Escape przywraca fokus', async ({ page }) => {
+test('wybór zachowuje się po arkuszu zadania i modalnej pomocy, Escape przywraca fokus', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: start }).click();
   for (let i=0;i<2;i++) await page.getByRole('button', { name: 'Pomiń' }).click();
-  const answer = page.getByRole('textbox', { name: 'Twoja odpowiedź', exact:true });
-  await answer.fill('1/2');
-  const lecture = page.getByRole('button', { name: 'Wykład', exact:true });
+  // Zamiast wpisywania — wybór jednego z wariantów (na telefonie nie liczymy w głowie).
+  await expect(page.getByRole('textbox', { name: 'Twoja odpowiedź' })).toHaveCount(0);
+  const answer = page.locator('.opcja').filter({ hasText: '1' }).first();
+  await answer.click();
+  await expect(answer).toHaveClass(/opcja--wybrana/);
+  const lecture = page.getByRole('button', { name: 'Zadanie i wykład', exact:true });
   await lecture.click();
-  await expect(page.getByRole('dialog', { name: 'Wykład', exact:true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Zadanie', exact:true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(lecture).toBeFocused();
-  await expect(answer).toHaveValue('1/2');
+  await expect(answer).toHaveClass(/opcja--wybrana/);
   const help = page.getByRole('button', { name: 'Zapytaj nauczyciela' });
   await help.click();
   const dialog = page.getByRole('dialog', { name: 'Nauczyciel' });
@@ -53,9 +56,9 @@ test('wpis zachowuje się po wykładzie i modalnej pomocy, Escape przywraca foku
   expect(await dialog.evaluate(el=>el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press('Escape');
   await expect(help).toBeFocused();
-  await expect(answer).toHaveValue('1/2');
+  await expect(answer).toHaveClass(/opcja--wybrana/);
   await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await expect(page.locator('.info')).toContainText('Dobrze');
+  await expect(page.locator('.info')).toBeVisible();
 });
 
 test('menu Więcej ma fokus modalny i wraca do przycisku', async ({ page }) => {
@@ -80,7 +83,7 @@ test('układ na sześciu szerokościach, większy tekst i odstępy', async ({ pa
     await expectNoSideScroll(page,`Dziś ${width}`);
     await page.getByRole('button',{name:start}).click();
     await expectNoSideScroll(page,`Karta ${width}`);
-    await page.getByRole('button',{name:'Wykład',exact:true}).click();
+    await otworzWyklad(page);
     await expectNoSideScroll(page,`Wykład ${width}`);
     const modal=page.getByRole('dialog');
     expect(await modal.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);

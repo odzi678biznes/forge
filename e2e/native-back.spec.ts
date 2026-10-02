@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { open, otworzPlan } from './helpers';
+import { open, otworzPlan, otworzWyklad } from './helpers';
 
 test('systemowe wstecz zamyka panel, wraca o kartę i potem do mapy', async ({ page }) => {
   await open(page);
@@ -9,8 +9,7 @@ test('systemowe wstecz zamyka panel, wraca o kartę i potem do mapy', async ({ p
   const first = await page.locator('.karta__pytanie').innerText();
   await page.getByRole('button', { name: 'Pomiń', exact: true }).click();
   await expect(page.locator('.karta__pytanie')).not.toHaveText(first);
-  await page.getByRole('button', { name: 'Wykład', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Wykład' })).toBeVisible();
+  await otworzWyklad(page);
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Wykład' })).toHaveCount(0);
   await expect(page.locator('.karta__pytanie')).not.toHaveText(first);

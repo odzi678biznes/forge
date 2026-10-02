@@ -24,6 +24,8 @@ export interface WynikKarty {
   pominieta?: boolean;
   /** Krok zaliczony (poprawna odpowiedź w dowolnej próbie) — tylko to liczy się do paska. */
   zaliczona?: boolean;
+  /** Czas pierwszej odpowiedzi (ms); brak — przerwa w trakcie albo nieznany. */
+  czas?: number;
 }
 
 export interface StanLekcji {
@@ -38,6 +40,20 @@ export interface StanLekcji {
   /** Odpowiedzi od ostatniego punktu zakończenia. */
   odStopu: number;
   ukonczona: number | null;
+  /** Błędne odpowiedzi z rzędu (każda próba) — sygnał, że trzeba odpuścić. */
+  bledyZRzedu?: number;
+  /** Lekcja odłożona po serii błędów — wraca po przerwie, od łatwiejszej strony. */
+  odlozona?: number | null;
+}
+
+export type Tempo = 'latwiej' | 'tak-samo' | 'trudniej';
+
+/** Ostatnia decyzja korepetytora — wpływa na start kolejnych lekcji. */
+export interface DecyzjaKorepetytora {
+  tempo: Tempo;
+  komentarz: string;
+  zrodlo: 'ai' | 'reguly';
+  kiedy: number;
 }
 
 export interface StanPowtorki {
@@ -57,12 +73,19 @@ export interface StanNauki {
   powtorki: Record<string, StanPowtorki>;
   /** Ostatnie pokazanie karty treningowej; nie wpływa na FSRS. */
   trening?: Record<string, number>;
+  korepetytor?: DecyzjaKorepetytora;
 }
 
 export const PRZERWA_MS = 20 * 3600_000;
 /** Co ile odpowiedzi proponujemy dyskretny punkt zakończenia. */
 export const STOP_CO = 6;
 const PRZYSPIESZ_PO = 3;
+/** Dłużej niż tyle nad jedną kartą — to przerwa, nie miara trudności. */
+export const PRZERWA_KARTY_MS = 180_000;
+/** Poprawnie i tak szybko — liczy się podwójnie do przyspieszenia. */
+export const SZYBKO_MS = 25_000;
+/** Tyle błędów z rzędu — nie męczymy, odkładamy temat na później. */
+export const ODLOZ_PO = 3;
 
 const planista = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
 
@@ -97,8 +120,24 @@ export function nowaLekcja(): StanLekcji {
   return { pozycja: 0, wstawione: [], wyniki: {}, seria: 0, samodzielnosc: 0, odStopu: 0, ukonczona: null };
 }
 
+/** Nowa lekcja startuje z poziomem, który korepetytor uznał ostatnio za właściwy. */
 export function stanLekcji(stan: StanNauki, skillId: string): StanLekcji {
-  return stan.lekcje[skillId] ?? nowaLekcja();
+  return stan.lekcje[skillId] ?? { ...nowaLekcja(), samodzielnosc: stan.korepetytor?.tempo === 'trudniej' ? 1 : 0 };
+}
+
+/** Odłożona lekcja czeka do następnego dnia — w tym czasie idziemy dalej. */
+export function odlozonaTeraz(stan: StanNauki, skillId: string, teraz: number): boolean {
+  const o = stan.lekcje[skillId]?.odlozona;
+  return typeof o === 'number' && teraz - o < PRZERWA_MS;
+}
+
+/** Decyzja korepetytora: zapamiętana i zastosowana do bieżącej lekcji. */
+export function zastosujTempo(stan: StanNauki, l: Lekcja, d: DecyzjaKorepetytora): StanNauki {
+  const s = stan.lekcje[l.skillId];
+  const nowy: StanNauki = { ...stan, korepetytor: d };
+  if (!s || s.ukonczona !== null) return nowy;
+  const samodzielnosc = d.tempo === 'latwiej' ? 0 : d.tempo === 'trudniej' ? (Math.min(2, s.samodzielnosc + 1) as 0 | 1 | 2) : s.samodzielnosc;
+  return { ...nowy, lekcje: { ...stan.lekcje, [l.skillId]: { ...s, samodzielnosc, seria: 0 } } };
 }
 
 // ------------------------------------------------------------------ nauka
@@ -136,6 +175,8 @@ export interface Zdarzenie {
   stop: boolean;
   /** Seria właśnie się skończyła. */
   koniecSerii: boolean;
+  /** Za dużo błędów z rzędu — lekcja odłożona, idziemy do czegoś innego. */
+  odlozona?: boolean;
 }
 
 function przesun(s: StanLekcji, l: Lekcja, kartaId: string): void {
@@ -155,21 +196,45 @@ export function odpowiedz(
   kartaId: string,
   poprawna: boolean,
   teraz: number,
+  /** Ile trwała odpowiedź; powyżej PRZERWA_KARTY_MS traktujemy to jako przerwę. */
+  czasMs?: number,
 ): { stan: StanNauki; zdarzenie: Zdarzenie } {
   const s: StanLekcji = structuredClone(stanLekcji(stan, l.skillId));
   const k = karta(l, kartaId);
   const w = s.wyniki[kartaId] ?? { proby: 0, pierwsza: null };
   const pierwszaProba = w.pierwsza === null;
+  const czas = czasMs !== undefined && czasMs >= 0 && czasMs <= PRZERWA_KARTY_MS ? czasMs : undefined;
   w.proby += 1;
-  if (pierwszaProba) w.pierwsza = poprawna;
+  if (pierwszaProba) {
+    w.pierwsza = poprawna;
+    if (czas !== undefined) w.czas = czas;
+  }
   if (poprawna) w.zaliczona = true;
   s.wyniki[kartaId] = w;
   s.odStopu += 1;
+  s.odlozona = null;
+  s.bledyZRzedu = poprawna ? 0 : (s.bledyZRzedu ?? 0) + 1;
 
   let komunikat: string | null = null;
 
+  if (!poprawna && s.bledyZRzedu >= ODLOZ_PO) {
+    // Nie męczymy: odkładamy temat do jutra i wracamy do niego od łatwiejszej strony.
+    s.odlozona = teraz;
+    s.bledyZRzedu = 0;
+    s.seria = 0;
+    s.samodzielnosc = 0;
+    s.odStopu = 0;
+    if (k.latwiejsza && s.wstawione[0] !== k.latwiejsza) s.wstawione = [k.latwiejsza, kartaId, ...s.wstawione.filter((id) => id !== kartaId && id !== k.latwiejsza)];
+    const nowy: StanNauki = { ...stan, lekcje: { ...stan.lekcje, [l.skillId]: s } };
+    return {
+      stan: nowy,
+      zdarzenie: { komunikat: 'Na dziś odpuszczamy ten temat — wróci jutro, od łatwiejszej strony.', stop: false, koniecSerii: false, odlozona: true },
+    };
+  }
+
   if (poprawna) {
-    if (pierwszaProba) s.seria += 1;
+    // Szybka i poprawna odpowiedź za pierwszym razem przyspiesza podwójnie.
+    if (pierwszaProba) s.seria += czas !== undefined && czas <= SZYBKO_MS ? 2 : 1;
     przesun(s, l, kartaId);
     if (s.seria >= PRZYSPIESZ_PO && s.samodzielnosc < 2 && k.etap !== 'zadanie') {
       s.samodzielnosc = (s.samodzielnosc + 1) as 1 | 2;

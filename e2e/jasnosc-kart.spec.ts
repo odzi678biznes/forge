@@ -26,8 +26,11 @@ test('rozwiązanie jest dostępne bez liczenia i nie zalicza automatycznie zadan
   for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Pomiń' }).click();
   const progress = page.getByRole('progressbar');
   const before = await progress.getAttribute('aria-valuenow');
-  await page.getByText('Nie mam jak liczyć — pokaż rozwiązanie', { exact: true }).click();
+  // Rozwiązanie jest pod ikoną 📄, a nie na karcie.
+  await page.getByRole('button', { name: 'Zadanie i wykład', exact: true }).click();
+  await page.getByText('Źródło i pełne rozwiązanie', { exact: true }).click();
   await expect(page.getByText('Samo odsłonięcie', { exact: false })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(progress).toHaveAttribute('aria-valuenow', before!);
   await expect(page.getByRole('button', { name: 'Pomiń' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Odpowiedzi A–D' }).getByRole('button')).toHaveCount(4);

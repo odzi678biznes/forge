@@ -1,5 +1,5 @@
 import { LEKCJE } from './lekcje';
-import { biezaca, numerKroku, postep, powtorkaNaTeraz, terminPowtorki, type StanNauki } from './silnik';
+import { biezaca, numerKroku, odlozonaTeraz, postep, powtorkaNaTeraz, terminPowtorki, type StanNauki } from './silnik';
 import { kiedy } from './czas';
 import type { Przedmiot } from './typy';
 import type { Tryb } from './FeedView';
@@ -21,20 +21,23 @@ interface Props {
   nextCourse: { id: string; name: string } | null;
   onCourseLesson: (skillId: string) => void;
   descriptions: Record<string, string>;
+  /** Sprawdzian działu po przerobieniu jego podstawy. */
+  sprawdzian?: { nazwa: string; onStart: () => void } | null;
 }
 
-export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions }: Props) {
+export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions, sprawdzian = null }: Props) {
   const teraz = Date.now();
   const lekcje = LEKCJE.filter((l) => l.przedmiot === przedmiot);
   const data = new Date(teraz).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
 
   if (!stan) return <p className="boot">Wczytywanie…</p>;
 
-  // Kolejność decyzji: zaległa powtórka > rozpoczęta lekcja > nowa lekcja.
+  // Kolejność decyzji: zaległa powtórka > rozpoczęta lekcja > sprawdzian działu > nowa lekcja.
+  // Lekcja odłożona po serii błędów czeka do jutra — nie wraca od razu.
   const zalegla = lekcje.find((l) => powtorkaNaTeraz(stan, l.skillId, teraz));
-  const wToku = lekcje.find((l) => postep(stan, l).status === 'w trakcie');
+  const wToku = lekcje.find((l) => postep(stan, l).status === 'w trakcie' && !odlozonaTeraz(stan, l.skillId, teraz));
   const nowa = lekcje.find((l) => postep(stan, l).status === 'nowa');
-  const cel = zalegla ? { l: zalegla, tryb: 'powtorka' as const } : wToku ? { l: wToku, tryb: 'nauka' as const } : nowa ? { l: nowa, tryb: 'nauka' as const } : null;
+  const cel = zalegla ? { l: zalegla, tryb: 'powtorka' as const } : wToku ? { l: wToku, tryb: 'nauka' as const } : !sprawdzian && nowa ? { l: nowa, tryb: 'nauka' as const } : null;
 
   const krok = (() => {
     if (!cel) return null;
@@ -57,7 +60,16 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
         <p className="dzis__subtitle">Jedna lekcja. Kolejny krok w Twoim tempie.</p>
       </header>
 
-      {cel || nextCourse ? (
+      {!cel && sprawdzian ? (
+        <section className="dzis__recommendation" aria-label="Rekomendowana nauka">
+          <p className="dzis__activity">Sprawdzian działu</p>
+          <h2 className="dzis__lesson">{sprawdzian.nazwa}</h2>
+          <p className="dzis__description">Podstawa tego działu za Tobą. Kilka zadań bez limitu czasu — słabsze miejsca wrócą w powtórkach.</p>
+          <button type="button" className="btn btn--primary dzis__start" onClick={sprawdzian.onStart}>
+            Zrób sprawdzian <span aria-hidden>→</span>
+          </button>
+        </section>
+      ) : cel || nextCourse ? (
         <section className="dzis__recommendation" aria-label="Rekomendowana nauka">
           <p className="dzis__activity">{cel?.tryb === 'powtorka' ? 'Powtórka na dziś' : wToku && cel?.l === wToku ? 'Wracamy do lekcji' : 'Następna lekcja'}</p>
           <h2 className="dzis__lesson">{cel?.l.tytul ?? nextCourse!.name}</h2>
