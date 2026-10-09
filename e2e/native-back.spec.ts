@@ -7,7 +7,8 @@ test('systemowe wstecz zamyka panel, wraca o kartę i potem do mapy', async ({ p
   await page.getByRole('button', { name: 'Mapa', exact: true }).click();
   await page.getByRole('button', { name: /^Trenuj: Ułamki i kolejność działań/ }).click();
   // Compare the stable DOM text: KaTeX visual lines vary after a rerender.
-  const first = await page.locator('.karta__pytanie').textContent();
+  const first = await page.locator('.karta__pytanie').textContent() ?? '';
+  expect(first.trim()).not.toBe('');
   await page.getByRole('button', { name: 'Pomiń', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Seria skończona', exact:true })).toBeVisible();
   await otworzWyklad(page);
