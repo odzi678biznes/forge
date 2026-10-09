@@ -340,7 +340,7 @@ const NEW_QUESTIONS: Question[] = [
       return my - aPerp * mx;
     },
     hints: ['Jakie dwie własności ma symetralna?', 'Przechodzi przez środek odcinka i jest do niego prostopadła.', r`Środek $(3, 2)$, $a_{AB} = \frac{3 - 1}{5 - 1}$.`, r`Symetralna ma $a = -2$ — wstaw środek.`],
-    steps: [r`$2 = -2 \cdot 3 + b$.`, r`$b = 8$.`],
+    steps: [r`Środek odcinka to $(3,2)$. Prosta $AB$ ma nachylenie $(3-1)/(5-1)=1/2$, więc prostopadła symetralna ma $a=-2$.`, r`Podstawiamy środek: $2=-2\cdot3+b$, stąd $b=8$.`],
     errors: [['0.5', r`Użyty współczynnik prostej $AB$ zamiast prostopadłego.`, 'Symetralna jest prostopadła do odcinka.']],
   }),
 
@@ -406,7 +406,7 @@ const NEW_QUESTIONS: Question[] = [
     answer: 6,
     verify: () => 1 + 6 - 5 + (1 + 5 - 2),
     hints: ['Co wiesz o przekątnych równoległoboku?', 'Dzielą się na pół — mają wspólny środek.', r`$A + C = B + D$, więc $D = A + C - B$.`, r`$D = (1 + 6 - 5,\ 1 + 5 - 2)$.`],
-    steps: [r`$D = (2, 4)$.`, r`Suma: $6$.`],
+    steps: [r`Przekątne $AC$ i $BD$ mają wspólny środek, więc $A+C=B+D$. Stąd $D=A+C-B=(1+6-5,1+5-2)=(2,4)$.`, r`Suma: $6$.`],
     errors: [['16', r`Policzone $B + C - A$ — zła kolejność wierzchołków.`, 'D leży naprzeciw B: D = A + C − B.']],
   }),
   numeric({
@@ -616,7 +616,7 @@ export const GEO_CARDS: Flashcard[] = [
   card('c-geo-d-1', 'geo-distance', 'wzor', 'Długość odcinka AB?', r`$\sqrt{(x_B - x_A)^2 + (y_B - y_A)^2}$`),
   card('c-geo-d-2', 'geo-distance', 'wzor', 'Środek odcinka AB?', r`$\left(\frac{x_A + x_B}{2}, \frac{y_A + y_B}{2}\right)$`),
 
-  card('c-geo-l-1', 'geo-line', 'wzor', 'Współczynnik kierunkowy z dwóch punktów?', r`$a = \frac{y_B - y_A}{x_B - x_A}$`),
+  card('c-geo-l-1', 'geo-line', 'wzor', 'Współczynnik kierunkowy z dwóch punktów?', r`$a=\frac{y_B-y_A}{x_B-x_A}$, gdy $x_B\ne x_A$. Dwa różne punkty o tym samym $x$ wyznaczają prostą pionową, bez współczynnika kierunkowego.`),
   card('c-geo-l-2', 'geo-line', 'metoda', 'Symetralna odcinka AB?', 'Przez środek AB, prostopadła do AB.'),
 
   card('c-geo-f-1', 'geo-figures', 'metoda', 'Czwarty wierzchołek równoległoboku ABCD?', r`$D = A + C - B$`),

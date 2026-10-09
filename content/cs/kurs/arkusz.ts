@@ -240,14 +240,14 @@ export const SHEET_QUESTIONS: Question[] = [
     kind: 'foundation',
     difficulty: 1,
     prompt: 'Który wykres najlepiej pokaże, jak zmieniała się średnia temperatura w kolejnych miesiącach roku?',
-    choices: ['liniowy', 'kołowy', 'punktowy bez linii, z losową kolejnością miesięcy', 'żaden — to dane tylko do tabeli'],
+    choices: ['liniowy', 'kołowy', 'histogram', 'skrzynkowy'],
     answer: 'A',
     hints: ['Co leży na osi poziomej?', 'Czas: kolejne miesiące.', 'Jaki wykres pokazuje zmianę w czasie?', 'Taki, w którym punkty połączone są w kolejności.'],
     steps: ['Dane zmieniają się w czasie.', 'Zmianę w czasie najlepiej pokazuje wykres liniowy.'],
     errors: [
       ['B', 'Kołowy pokazuje udział części w całości.', 'Tu chodzi o zmianę w czasie.'],
-      ['C', 'Losowa kolejność niszczy informację o czasie.', 'Miesiące muszą iść po kolei.'],
-      ['D', 'Wykres ułatwia dostrzeżenie trendu.', 'Dane w czasie dobrze pokazuje wykres liniowy.'],
+      ['C', 'Histogram pokazuje rozkład wartości w przedziałach, a nie ich kolejność w czasie.', 'Miesiące muszą pozostać w kolejności.'],
+      ['D', 'Wykres skrzynkowy podsumowuje medianę i rozrzut danych.', 'Przebieg zmian w kolejnych miesiącach pokazuje wykres liniowy.'],
     ],
   }),
   choice({

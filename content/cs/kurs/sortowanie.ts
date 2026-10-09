@@ -691,7 +691,7 @@ export const SORT_QUESTIONS: Question[] = [
 
 export const SORT_CARDS: Flashcard[] = [
   card('c-so-s-1', 'cs-search-sort', 'definicja', 'Co trafia na koniec po przebiegu sortowania bąbelkowego?', 'Największy z nieposortowanych elementów.'),
-  card('c-so-s-2', 'cs-search-sort', 'wzor', 'Ile porównań wykonuje sortowanie bąbelkowe n elementów?', '$\\frac{n(n-1)}{2}$'),
+  card('c-so-s-2', 'cs-search-sort', 'wzor', 'Ile porównań wykonuje sortowanie bąbelkowe bez wcześniejszego kończenia, ze skracaniem każdego przebiegu o 1?', '$\\frac{n(n-1)}{2}$. Wariant z flagą może skończyć wcześniej, np. po n−1 porównaniach dla posortowanej listy.'),
 
   card('c-so-m-1', 'cs-sort-advanced', 'wzor', 'Złożoność sortowania przez scalanie?', '$n \\log n$ — zawsze, także w najgorszym razie.'),
   card('c-so-m-2', 'cs-sort-advanced', 'pulapka', 'Kiedy quicksort z pierwszym elementem jako osią jest wolny?', 'Dla danych już posortowanych — $n^2$.'),

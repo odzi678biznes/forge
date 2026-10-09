@@ -1,10 +1,19 @@
 /// <reference types="vitest" />
 import { defineConfig, type Plugin } from 'vitest/config';
+import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
-import { middleware as nauczyciel } from './server/nauczyciel';
+import { localTeacherMiddleware as nauczyciel } from './server/teacher-local-setup';
+import { lektorMiddleware } from './server/lektor-http';
+import { tutorMiddleware } from './server/tutor/http';
+
+// These values are server-only; Vite exposes only VITE_ variables to the client.
+const serverEnv = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
+for (const name of ['AZURE_SPEECH_KEY', 'AZURE_SPEECH_REGION', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'FORGE_TEACHER_ACCESS_CODE', 'FORGE_ALLOWED_ORIGINS', 'FORGE_TUTOR_DB', 'FORGE_TUTOR_MODEL', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN']) {
+  if (!process.env[name] && serverEnv[name]) process.env[name] = serverEnv[name];
+}
 
 /**
  * Pliki interpretera Pythona (Pyodide) kopiowane do public/pyodide, skad
@@ -20,11 +29,15 @@ function nauczycielApi(): Plugin {
   return {
     name: 'forge-nauczyciel-api',
     configureServer(server) {
+      server.middlewares.use((req, res, next) => { void tutorMiddleware(req, res, next); });
+      server.middlewares.use((req, res, next) => { void lektorMiddleware(req, res, next); });
       server.middlewares.use((req, res, next) => {
         void nauczyciel(req, res, next);
       });
     },
     configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => { void tutorMiddleware(req, res, next); });
+      server.middlewares.use((req, res, next) => { void lektorMiddleware(req, res, next); });
       server.middlewares.use((req, res, next) => {
         void nauczyciel(req, res, next);
       });
@@ -142,7 +155,8 @@ export default defineConfig({
       // src-tauri/target to artefakty kompilacji Rusta. Bez tego wykluczenia
       // obserwator Vite probuje czytac pliki .dll w trakcie ich zapisu przez
       // cargo i przewraca serwer deweloperski.
-      ignored: ['**/src-tauri/**'],
+      // Test traces and private validation logs must not reload a pupil's open lesson.
+      ignored: ['**/src-tauri/**', '**/test-results*/**', '**/.playwright-mcp/**', '**/.forge/**'],
     },
   },
   build: { target: 'chrome110', sourcemap: true },

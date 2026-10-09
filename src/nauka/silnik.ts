@@ -26,6 +26,8 @@ export interface WynikKarty {
   zaliczona?: boolean;
   /** Czas pierwszej odpowiedzi (ms); brak — przerwa w trakcie albo nieznany. */
   czas?: number;
+  /** Pomoc przed zaliczeniem kroku; brak pola zachowuje interpretację starszego zapisu. */
+  wspomagana?: boolean;
 }
 
 export interface StanLekcji {
@@ -33,7 +35,7 @@ export interface StanLekcji {
   /** Karty wstawione przed dalszą częścią serii: łatwiejszy krok i powtórzenie. */
   wstawione: string[];
   wyniki: Record<string, WynikKarty>;
-  /** Poprawne za pierwszym razem z rzędu. */
+  /** Samodzielne poprawne odpowiedzi za pierwszym razem z rzędu. */
   seria: number;
   /** 0 — pełne prowadzenie, 1 — bez rusztowań, 2 — od razu całe zadanie. */
   samodzielnosc: 0 | 1 | 2;
@@ -64,11 +66,12 @@ export interface StanPowtorki {
   /** Ostatni kontakt z umiejętnością (koniec serii albo powtórki). */
   ostatnio: number;
   /** Trwająca sesja powtórki: pozycja i liczba błędów. */
-  sesja: { pozycja: number; bledy: number; wstawione: string[] } | null;
+  sesja: { pozycja: number; bledy: number; wstawione: string[]; wspomagana?: boolean } | null;
 }
 
 export interface StanNauki {
   wersja: 1;
+  practiceRevision?: 1;
   lekcje: Record<string, StanLekcji>;
   powtorki: Record<string, StanPowtorki>;
   /** Ostatnie pokazanie karty treningowej; nie wpływa na FSRS. */
@@ -89,7 +92,7 @@ export const ODLOZ_PO = 3;
 
 const planista = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
 
-export const nowyStan = (): StanNauki => ({ wersja: 1, lekcje: {}, powtorki: {} });
+export const nowyStan = (): StanNauki => ({ wersja: 1, practiceRevision: 1, lekcje: {}, powtorki: {} });
 
 export const DZIEN_MS = 24 * 3600_000;
 
@@ -198,12 +201,16 @@ export function odpowiedz(
   teraz: number,
   /** Ile trwała odpowiedź; powyżej PRZERWA_KARTY_MS traktujemy to jako przerwę. */
   czasMs?: number,
+  /** Podpowiedź lub odsłonięte rozwiązanie; sam brudnopis/kalkulator nie są pomocą. */
+  assisted = false,
 ): { stan: StanNauki; zdarzenie: Zdarzenie } {
   const s: StanLekcji = structuredClone(stanLekcji(stan, l.skillId));
   const k = karta(l, kartaId);
   const w = s.wyniki[kartaId] ?? { proby: 0, pierwsza: null };
   const pierwszaProba = w.pierwsza === null;
   const czas = czasMs !== undefined && czasMs >= 0 && czasMs <= PRZERWA_KARTY_MS ? czasMs : undefined;
+  // Assistance sticks across retries, but must not rewrite an earlier independent success.
+  if (assisted && !w.zaliczona) w.wspomagana = true;
   w.proby += 1;
   if (pierwszaProba) {
     w.pierwsza = poprawna;
@@ -233,8 +240,9 @@ export function odpowiedz(
   }
 
   if (poprawna) {
-    // Szybka i poprawna odpowiedź za pierwszym razem przyspiesza podwójnie.
-    if (pierwszaProba) s.seria += czas !== undefined && czas <= SZYBKO_MS ? 2 : 1;
+    // Only unaided recall is evidence for removing the next scaffolding steps.
+    if (assisted || w.wspomagana) s.seria = 0;
+    else if (pierwszaProba) s.seria += czas !== undefined && czas <= SZYBKO_MS ? 2 : 1;
     przesun(s, l, kartaId);
     if (s.seria >= PRZYSPIESZ_PO && s.samodzielnosc < 2 && k.etap !== 'zadanie') {
       s.samodzielnosc = (s.samodzielnosc + 1) as 1 | 2;
@@ -285,6 +293,8 @@ export function pomin(stan: StanNauki, l: Lekcja, kartaId: string): StanNauki {
 
 /** Ocena całej serii dla planisty powtórek — o wyniku decyduje całe zadanie. */
 function ocenaSerii(s: StanLekcji, l: Lekcja): Grade {
+  // A correct answer after seeing help is useful practice, not successful recall.
+  if (Object.values(s.wyniki).some(w => w.wspomagana)) return Rating.Again;
   const zadanie = l.seria.map((id) => karta(l, id)).find((k) => k.etap === 'zadanie');
   const wynik = zadanie ? s.wyniki[zadanie.id] : undefined;
   if (!wynik || wynik.pierwsza === null) return Rating.Again;
@@ -345,10 +355,14 @@ export function odpowiedzPowtorka(
   kartaId: string,
   poprawna: boolean,
   teraz: number,
+  /** Preserve this flag in the UI checkpoint until the answer has been recorded. */
+  assisted = false,
 ): { stan: StanNauki; zdarzenie: Zdarzenie } {
   const prev = stan.powtorki[l.skillId];
   if (!prev) return { stan, zdarzenie: { komunikat: null, stop: false, koniecSerii: false } };
   const sesja = structuredClone(prev.sesja ?? { pozycja: 0, bledy: 0, wstawione: [] });
+  // Session-wide latch: later unaided clicks cannot erase earlier help, even on reload.
+  if (assisted) sesja.wspomagana = true;
   const k = karta(l, kartaId);
   let komunikat: string | null = null;
   if (sesja.wstawione[0] === kartaId) {
@@ -364,9 +378,10 @@ export function odpowiedzPowtorka(
   const koniec = sesja.wstawione.length === 0 && sesja.pozycja >= l.powtorka.length;
   let nowa: StanPowtorki;
   if (koniec) {
-    const ocena: Grade = sesja.bledy === 0 ? Rating.Good : sesja.bledy === 1 ? Rating.Hard : Rating.Again;
+    const ocena: Grade = sesja.wspomagana ? Rating.Again : sesja.bledy === 0 ? Rating.Good : sesja.bledy === 1 ? Rating.Hard : Rating.Again;
     nowa = zaplanuj(prev, ocena, teraz, true);
-    komunikat = ocena >= Rating.Good ? 'Powtórka udana — kolejna za kilka dni.' : 'Powtórka wróci szybciej.';
+    komunikat = sesja.wspomagana ? 'Powtórka z pomocą — wróci szybciej. Spróbuj wtedy samodzielnie.'
+      : ocena >= Rating.Good ? 'Powtórka udana — kolejna za kilka dni.' : 'Powtórka wróci szybciej.';
   } else {
     nowa = { ...prev, sesja };
   }

@@ -898,7 +898,7 @@ export const DATA_CARDS: Flashcard[] = [
   card('c-dt-s-2', 'cs-strings', 'metoda', 'Jak odwrócić napis s?', '`s[::-1]`'),
 
   card('c-dt-d-1', 'cs-dicts', 'metoda', 'Zliczanie słownikiem w jednej linii?', '`d[x] = d.get(x, 0) + 1`'),
-  card('c-dt-d-2', 'cs-dicts', 'pulapka', '`x in lista` czy `x in zbior`?', 'Zbiór — sprawdza w czasie stałym, lista przegląda wszystko.'),
+  card('c-dt-d-2', 'cs-dicts', 'pulapka', '`x in lista` czy `x in zbior` — złożoność?', 'Zbiór: średnio O(1). Lista: O(n) w najgorszym przypadku; kończy szukanie po znalezieniu elementu. Czas stały dla zbioru nie jest gwarancją każdego przypadku.'),
 
   card('c-dt-f-1', 'cs-files', 'metoda', 'Jak wczytać dwie liczby z wiersza?', '`a, b = map(int, linia.split())`'),
   card('c-dt-f-2', 'cs-files', 'pulapka', 'Dlaczego `"10" > "9"` daje False?', 'Napisy porównuje się znak po znaku — zamień na int.'),

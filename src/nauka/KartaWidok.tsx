@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode }  from 'react';
+import type { StoragePort } from '@/data/storage-port';
+import { isCardDraft, resumeCardDraft, useLessonDraft, type CardDraft } from './lesson-draft';
 import { MathInput } from '@/components/MathInput';
 import { AnswerAction } from './AnswerAction';
 import { Math as Tex } from '@/components/Math';
@@ -21,6 +23,11 @@ export interface Wynik {
 }
 
 interface Props {
+  answerFromCalculator?: { cardId: string; value: string; id: number };
+  onHelp?: () => void;
+  draftKey?: string;
+  skillId?: string;
+  storage?: () => StoragePort;
   karta: Karta;
   zadanie: ZadanieCke | undefined;
   /** Wynik już udzielonej odpowiedzi (informacja zwrotna / podgląd wstecz). */
@@ -45,21 +52,65 @@ function tasuj<T>(xs: T[], ziarno: string): number[] {
   return idx;
 }
 
-export function KartaWidok({ karta, zadanie, wynik, komputer, onWynik }: Props) {
+const DraftContext = createContext<{ fields: Record<string, unknown>; set: (key: string, value: unknown) => void; help: () => void } | null>(null);
+function useDraftField<T>(key: string, initial: T, validate?: (value: unknown) => boolean): [T, (value: T | ((old: T) => T)) => void] {
+  const context = useContext(DraftContext);
+  if (!context) throw new Error('Brak miejsca zapisu odpowiedzi.');
+  const saved = context.fields[key];
+  const matches = validate ? validate(saved) : typeof saved === typeof initial && (Array.isArray(initial)
+    ? Array.isArray(saved) && saved.length <= Math.max(initial.length, 100) : !Array.isArray(saved));
+  const value = saved !== undefined && matches ? saved as T : initial;
+  return [value, next => context.set(key, typeof next === 'function' ? (next as (old: T) => T)(value) : next)];
+}
+export function KartaWidok(props: Props) {
+  return <SavedCard key={props.draftKey ?? props.karta.id} {...props} />;
+}
+function SavedCard(props: Props) {
+  const saved = useLessonDraft(`card:${props.draftKey ?? props.karta.id}`, props.skillId ?? '', isCardDraft, props.storage);
+  if (!saved.ready) return <p role="status">Wczytuję Twoją odpowiedź…</p>;
+  return <CardDraftProvider initial={resumeCardDraft(saved.value, props.wynik !== null)} save={saved.save} onWynik={props.onWynik} {...(props.onHelp ? { onHelp: props.onHelp } : {})}>
+    {onWynik => <>{saved.warning && <p role="alert">{saved.warning}</p>}<CardContent {...props} onWynik={onWynik} /></>}
+  </CardDraftProvider>;
+}
+function CardDraftProvider({ initial, save, onWynik, children, onHelp }: {
+  onHelp?: () => void;
+  initial: CardDraft; save: (value: CardDraft) => void; onWynik: (value: Wynik) => void;
+  children: (onWynik: (value: Wynik) => void) => ReactNode;
+}) {
+  const [draft, setDraft] = useState(initial);
+  const latest = useRef(draft);
+  const update = (next: CardDraft) => { latest.current = next; setDraft(next); save(next); };
+  return <DraftContext.Provider value={{ fields: draft.fields, help: () => onHelp?.(), set: (key, value) => { if (latest.current.fields[key] !== value) update({ ...latest.current, fields: { ...latest.current.fields, [key]: value } }); } }}>
+    {children(result => {
+      if (latest.current.submitted) return;
+      update({ ...latest.current, submitted: true });
+      onWynik(result);
+    })}
+  </DraftContext.Provider>;
+}
+function CardContent({ karta, zadanie, wynik, komputer, onWynik, onHelp, answerFromCalculator }: Props) {
   const zablokowana = wynik !== null;
+  const mathFinal = karta.rodzaj === 'zadanie' && zadanie?.przedmiot === 'math';
+  const draftContext = useContext(DraftContext);
+  const setField = useRef(draftContext?.set); setField.current = draftContext?.set;
+  useEffect(() => {
+    if (!zablokowana && karta.rodzaj === 'wpis' && answerFromCalculator?.cardId === karta.id)
+      setField.current?.('text', answerFromCalculator.value);
+  }, [answerFromCalculator, karta.id, karta.rodzaj, zablokowana]);
+  const [hintOpen, setHintOpen] = useDraftField('hint-open', false);
   return (
     <div className={`karta karta--${karta.rodzaj}${karta.etap === 'pomocnicze' ? ' karta--pomocnicza' : ''}`}>
-      {karta.kontekst && (
+      {karta.kontekst && !mathFinal && (
         <p className="karta__kontekst">
           <Tex>{karta.kontekst}</Tex>
         </p>
       )}
-      {karta.rodzaj === 'zadanie' && zadanie && <PelneZadanie zadanie={zadanie} />}
+      {karta.rodzaj === 'zadanie' && zadanie && !mathFinal && <PelneZadanie zadanie={zadanie} />}
       <h2 className="karta__pytanie" tabIndex={-1}>
-        <Tex>{karta.pytanie}</Tex>
+        <Tex>{mathFinal && zadanie ? zadanie.tresc : karta.pytanie}</Tex>
       </h2>
       {karta.podpowiedz && !wynik && (
-        <details className="karta__pomoc karta__pomoc--mala">
+        <details className="karta__pomoc karta__pomoc--mala" open={hintOpen} onToggle={e => { setHintOpen(e.currentTarget.open); if (e.currentTarget.open && !zablokowana) onHelp?.(); }}>
           <summary>💡 Podpowiedź</summary>
           <p><Tex>{karta.podpowiedz}</Tex></p>
         </details>
@@ -163,10 +214,11 @@ function Interakcja({ karta, zadanie, zablokowana, komputer, onWynik }: Interakc
             </li>
           ))}
         </ol>
-        <Wybor id={karta.id} opcje={karta.linie.map((_, i) => `Wiersz ${i + 1}`)}
+        {karta.givenFirstLine && <p className="karta__uwaga">Wiersz 1 to zapis początkowy. Oceń przekształcenia w kolejnych wierszach.</p>}
+        <Wybor id={karta.id} opcje={karta.linie.slice(karta.givenFirstLine ? 1 : 0).map((_, i) => `Wiersz ${i + (karta.givenFirstLine ? 2 : 1)}`)}
           wiersze
-          poprawna={karta.bledna} decyzja={false} zablokowana={zablokowana}
-          onWynik={(i) => onWynik({ poprawna: i === karta.bledna, tekst: `wiersz ${i + 1}`,
+          poprawna={karta.bledna - (karta.givenFirstLine ? 1 : 0)} decyzja={false} zablokowana={zablokowana}
+          onWynik={(i) => onWynik({ poprawna: i + (karta.givenFirstLine ? 1 : 0) === karta.bledna, tekst: `wiersz ${i + (karta.givenFirstLine ? 2 : 1)}`,
             przyczyna: `Sprawdź wiersz ${karta.bledna + 1}.` })} />
         </>
       );
@@ -248,7 +300,7 @@ function Wybor({
   kodowe?: boolean;
 }) {
   const kolejnosc = useMemo(() => (wiersze || stalaKolejnosc) ? opcje.map((_, i) => i) : tasuj(opcje, id), [opcje, id, wiersze, stalaKolejnosc]);
-  const [wybrana, setWybrana] = useState<number | null>(null);
+  const [wybrana, setWybrana] = useDraftField<number | null>('choice', null, value => value === null || (Number.isInteger(value) && Number(value) >= 0 && Number(value) < opcje.length));
   return (
     <div className={`opcje${decyzja ? ' opcje--decyzja' : ''}${wiersze ? ' opcje--wiersze' : ''}`} role="group" aria-label={stalaKolejnosc ? "Odpowiedzi A–D" : "Odpowiedzi"}>
       {kolejnosc.map((i, n) => (
@@ -260,6 +312,7 @@ function Wybor({
           disabled={zablokowana}
           onClick={() => {
             setWybrana(i);
+            if (!stalaKolejnosc) onWynik(i);
           }}
         >
           <span className="opcja__litera">{LITERY[n]}.</span> {kodowe ? <pre className="opcja__kod">{opcje[i] ?? ''}</pre> : <Tex>{opcje[i] ?? ''}</Tex>}
@@ -267,7 +320,7 @@ function Wybor({
           {zablokowana && wybrana === i && i !== poprawna && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
         </button>
       ))}
-      {!zablokowana && <AnswerAction disabled={wybrana === null} onClick={() => { if (wybrana !== null) onWynik(wybrana); }} />}
+      {!zablokowana && stalaKolejnosc && <AnswerAction disabled={wybrana === null} onClick={() => { if (wybrana !== null) onWynik(wybrana); }} />}
     </div>
   );
 }
@@ -284,29 +337,36 @@ function Kolejnosc({
   onWynik: (w: Wynik) => void;
 }) {
   const start = useMemo(() => tasuj(elementy, id), [elementy, id]);
-  const [ulozone, setUlozone] = useState<number[]>([]);
+  const [ulozone, setUlozone] = useDraftField<number[]>('order', [], value => Array.isArray(value) && new Set(value).size === value.length && value.every(i => Number.isInteger(i) && i >= 0 && i < elementy.length));
+  const [feedback, setFeedback] = useDraftField('order-feedback', '');
+  const draft = useContext(DraftContext);
   const zostaly = start.filter((i) => !ulozone.includes(i));
   return (
     <div className="kolejnosc" data-bez-gestu>
       <ol className="kolejnosc__ulozone" aria-label="Twoja kolejność">
         {ulozone.map((i, n) => (
           <li key={i}>
-            <button type="button" disabled={zablokowana} onClick={() => setUlozone(ulozone.filter((x) => x !== i))}>
+            <button type="button" disabled={zablokowana} onClick={() => { setUlozone(ulozone.slice(0,n)); setFeedback('Wróciłeś do wcześniejszego miejsca w kolejności.'); }}>
               <span className="linie__nr">{n + 1}</span>
               <Tex>{elementy[i] ?? ''}</Tex>
             </button>
           </li>
         ))}
       </ol>
-      {zostaly.length > 0 && <p className="karta__uwaga">Dotknij w kolejności wykonywania. Dotknięcie ułożonego — cofa.</p>}
+      {zostaly.length > 0 && <p className="karta__uwaga">Wybierz następną czynność. Od razu sprawdzę jej miejsce w rozwiązaniu.</p>}
+      {feedback && <p role="status">{feedback}</p>}
       <div className="kolejnosc__pula">
         {zostaly.map((i) => (
-          <button key={i} type="button" className="opcja" disabled={zablokowana} onClick={() => setUlozone([...ulozone, i])}>
+          <button key={i} type="button" className="opcja" disabled={zablokowana} onClick={() => {
+            if (i !== ulozone.length) { setFeedback('Jeszcze nie — ta czynność wymaga wcześniejszego kroku. Spróbuj ponownie.'); draft?.help(); return; }
+            const next = [...ulozone, i]; setUlozone(next); setFeedback('Dobrze — czynność jest na właściwym miejscu.');
+            if (next.length === elementy.length) onWynik({poprawna:true,tekst:next.map(index => elementy[index]).join(' → ')});
+          }}>
             <Tex>{elementy[i] ?? ''}</Tex>
           </button>
         ))}
       </div>
-      {!zablokowana && (
+      {!zablokowana && zostaly.length === 0 && (
         <AnswerAction
           disabled={zostaly.length > 0}
           onClick={() =>
@@ -333,8 +393,9 @@ function Wpis({
   onWpis: (t: string) => void;
   podpowiedz?: string;
 }) {
-  const [t, setT] = useState('');
-  const [hint, setHint] = useState(false);
+  const [t, setT] = useDraftField('text', '');
+  const [hint, setHint] = useDraftField('hint', false);
+  const draft = useContext(DraftContext);
   return (
     <form
       className="wpis"
@@ -361,7 +422,7 @@ function Wpis({
         <div className="wpis__akcje">
           <AnswerAction disabled={t.trim() === ''} />
           {podpowiedz && !hint && (
-            <button type="button" className="btn" onClick={() => setHint(true)}>
+            <button type="button" className="btn" onClick={() => { setHint(true); draft?.help(); }}>
               Podpowiedź
             </button>
           )}
@@ -377,7 +438,7 @@ function Wpis({
 }
 
 function WpisKodu({ zablokowana, onWpis }: { zablokowana: boolean; onWpis: (t: string) => void }) {
-  const [t, setT] = useState('');
+  const [t, setT] = useDraftField('text', '');
   return (
     <form
       className="wpis"
@@ -420,8 +481,8 @@ function Otwarta({
   zablokowana: boolean;
   onWynik: (w: Wynik) => void;
 }) {
-  const [t, setT] = useState('');
-  const [etap, setEtap] = useState<'pisz' | 'ocen'>('pisz');
+  const [t, setT] = useDraftField('text', '');
+  const [etap, setEtap] = useDraftField<'pisz' | 'ocen'>('open-stage', zablokowana ? 'ocen' : 'pisz', value => value === 'pisz' || value === 'ocen');
   const ocena = useMemo(() => ocenOtwarta(t, slowa), [t, slowa]);
   if (etap === 'pisz') {
     return (
@@ -494,12 +555,13 @@ function KoniecZadania({
   onWynik: (w: Wynik) => void;
 }) {
   const k = karta.koniec;
+  const [notes, setNotes] = useDraftField('work', '');
   return (
     <>
-      {komputer && k.typ !== 'otwarta' && !karta.python && (
+      {komputer && zadanie?.przedmiot !== 'math' && k.typ !== 'otwarta' && !karta.python && (
         <label className="brudnopis">
           <span>Brudnopis — pełne obliczenia (nie jest oceniany automatycznie)</span>
-          <textarea rows={5} spellCheck={false} data-bez-gestu placeholder="Zapisz obliczenia jak na egzaminie" />
+          <textarea rows={5} spellCheck={false} data-bez-gestu value={notes} onChange={e => setNotes(e.target.value)} placeholder="Zapisz obliczenia jak na egzaminie" />
         </label>
       )}
       {karta.python && <EdytorPython python={karta.python} komputer={komputer} />}
@@ -527,7 +589,7 @@ function PrawdaFalsz({
   zablokowana: boolean;
   onWynik: (w: Wynik) => void;
 }) {
-  const [odp, setOdp] = useState<(boolean | null)[]>(zdania.map(() => null));
+  const [odp, setOdp] = useDraftField<(boolean | null)[]>('true-false', zdania.map(() => null), value => Array.isArray(value) && value.length === zdania.length && value.every(x => x === null || typeof x === 'boolean'));
   return (
     <div className="pf">
       {zdania.map((z, i) => (
@@ -580,7 +642,7 @@ function WieleWpisow({
   zablokowana: boolean;
   onWynik: (w: Wynik) => void;
 }) {
-  const [t, setT] = useState<string[]>(oczekiwane.map(() => ''));
+  const [t, setT] = useDraftField<string[]>('answers', oczekiwane.map(() => ''), value => Array.isArray(value) && value.length === oczekiwane.length && value.every(x => typeof x === 'string'));
   return (
     <form
       className="wpis"
@@ -620,8 +682,8 @@ function WieleWpisow({
 }
 
 function EdytorPython({ python, komputer }: { python: NonNullable<KartaZadanie['python']>; komputer: boolean }) {
-  const [otwarty, setOtwarty] = useState(komputer);
-  const [kod, setKod] = useState(python.szablon);
+  const [otwarty, setOtwarty] = useDraftField('python-open', komputer);
+  const [kod, setKod] = useDraftField('python-code', python.szablon);
   const [wynik, setWynik] = useState<{ tekst: string; ok: boolean | null } | null>(null);
   const [pracuje, setPracuje] = useState(false);
 

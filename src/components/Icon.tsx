@@ -15,6 +15,7 @@ export type IconName =
   | 'ai'
   | 'data'
   | 'play'
+  | 'pause'
   | 'check'
   | 'lock'
   | 'clock'
@@ -37,6 +38,7 @@ const PATHS: Record<IconName, string> = {
   ai: 'M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3ZM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z',
   data: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3ZM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6',
   play: 'M8 5v14l11-7L8 5Z',
+  pause: 'M8 5v14M16 5v14',
   check: 'M5 12.5 10 17 19 7',
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6v-9Z',
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7v5l3 2',

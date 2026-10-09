@@ -1,5 +1,25 @@
 /* --- Panel AI w arenie ---------------------------------------------------- */
 
+.teacher-companion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-block: var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-deep);
+}
+.teacher-companion p { margin: .3rem 0 0; color: var(--text-muted); font-size: var(--t-small); }
+.teacher-connection { display: grid; gap: .75rem; }
+.teacher-connection label { display: grid; gap: .35rem; }
+.teacher-connection input { min-width: 0; width: 100%; padding: .7rem; }
+.teacher-connection p { overflow-wrap: anywhere; }
+.nauczyciel__pytanie { flex-wrap: wrap; }
+.nauczyciel__pytanie textarea { flex: 1 1 100%; min-height: 4.5rem; resize: vertical; padding: .75rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--bg-deep); color: var(--text); font: inherit; }
+
 .ai {
   display: flex;
   flex-direction: column;
@@ -261,3 +281,6 @@
   margin: var(--space-3) 0 0 !important;
   color: var(--progress);
 }
+.nauczyciel__extra { padding: 8px 0; }
+.nauczyciel__actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.nauczyciel__notation code { white-space: pre-wrap; overflow-wrap: anywhere; }

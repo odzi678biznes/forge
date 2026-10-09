@@ -973,8 +973,8 @@ export const EXP_CARDS: Flashcard[] = [
   card('c-log-b-1', 'log-basic', 'definicja', r`$\log_a b = c$ oznacza…`, r`$a^c = b$ ($a > 0$, $a \ne 1$, $b > 0$).`),
   card('c-log-b-2', 'log-basic', 'wzor', r`$\log_a 1$ i $\log_a a$?`, r`$0$ i $1$.`),
 
-  card('c-log-p-1', 'log-properties', 'wzor', 'Logarytm iloczynu i ilorazu?', r`$\log_a xy = \log_a x + \log_a y$, $\log_a \frac{x}{y} = \log_a x - \log_a y$`),
-  card('c-log-p-2', 'log-properties', 'wzor', 'Logarytm potęgi i zamiana podstawy?', r`$\log_a x^k = k\log_a x$, $\log_a b = \frac{\log_c b}{\log_c a}$`),
+  card('c-log-p-1', 'log-properties', 'wzor', 'Logarytm iloczynu i ilorazu — wzory i warunki?', r`Dla $x,y>0$, $a>0$, $a\ne1$: $\log_a(xy)=\log_a x+\log_a y$, $\log_a(x/y)=\log_a x-\log_a y$.`),
+  card('c-log-p-2', 'log-properties', 'wzor', 'Logarytm potęgi i zamiana podstawy — wzory i warunki?', r`Dla $x>0$: $\log_a(x^k)=k\log_a x$. Dla $b>0$: $\log_a b=\frac{\log_c b}{\log_c a}$. Podstawy $a,c>0$ i różne od 1. Dla $x\ne0$: $\log_a(x^2)=2\log_a|x|$.`),
   card('c-log-p-3', 'log-properties', 'pulapka', r`$\log (x + y) = \log x + \log y$?`, 'NIE. Wzór dotyczy iloczynu, nie sumy.'),
 
   card('c-log-f-1', 'log-function', 'definicja', r`Dziedzina i miejsce zerowe $\log_a x$?`, r`$(0, +\infty)$; zero w $x = 1$.`),

@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLessonDraft } from './lesson-draft';
+import { feedEngineStamp, isFeedSession, resumeFeedSession, type FeedSession } from './feed-session';
 import { useNativeBack } from '@/platform/back-navigation';
 import { Math as Tex } from '@/components/Math';
 import { ETAP_NAZWA, type Karta, type Lekcja } from './typy';
-import { karta as kartaLekcji, LEKCJE } from './lekcje';
+import { karta as kartaLekcji } from './lekcje';
+import { PRACTICE_LEKCJE as LEKCJE, knownWorkedSteps } from './practice-course';
+import { getWorkedPlan } from './worked-plans';
+import { WorkedCalculation } from './WorkedCalculation';
 import { etykietaZrodla, zadanieCke } from './zadania-cke';
 import {
   biezaca,
@@ -22,11 +27,15 @@ import {
 } from './silnik';
 import { KartaWidok, type Wynik } from './KartaWidok';
 import { NauczycielPanel } from './NauczycielPanel';
-import type { KontekstNauczyciela } from './nauczyciel-kontekst';
+import type { Odpowiedz } from './nauczyciel-klient';
+import type { KontekstNauczyciela, Prosba } from './nauczyciel-kontekst';
 import { kiedy } from './czas';
 import { raportKorepetytora, zapytajKorepetytora } from './korepetytor';
 import './nauka.css';
 import { ModalPanel } from '@/components/ModalPanel';
+import { CourseWorkspace } from '@/features/workspace/CourseWorkspace';
+import { readWorkspaceNotes } from '@/features/workspace/workspace-draft';
+import type { StoragePort } from '@/data/storage-port';
 
 export type Tryb = 'nauka' | 'powtorka' | 'trening';
 
@@ -41,9 +50,11 @@ interface Props {
   onInna: (skillId: string, tryb: Tryb) => void;
   onNastepna: () => void;
   treningDostepny: boolean;
+  storage?: () => StoragePort;
 }
 
 interface Pozycja {
+  pomoc?: boolean;
   id: string;
   wynik: Wynik | null;
 }
@@ -60,11 +71,25 @@ function useKomputer(): boolean {
   return k;
 }
 
-export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyklad, onInna, onNastepna, treningDostepny }: Props) {
+export function FeedView(props: Props) {
+  return <SavedFeed key={`${props.lekcja.skillId}:${props.tryb}`} {...props} />;
+}
+function SavedFeed(props: Props) {
+  const saved = useLessonDraft(`feed:${props.tryb}:${props.lekcja.skillId}`, props.lekcja.skillId, isFeedSession, props.storage);
+  if (!saved.ready) return <p role="status">Wznawiam Twoją lekcję…</p>;
+  return <FeedSessionView {...props} initial={resumeFeedSession(saved.value, props.stan, props.lekcja)}
+    onCheckpoint={saved.save} saveWarning={saved.warning} />;
+}
+function FeedSessionView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyklad, onInna, onNastepna, treningDostepny, storage, initial, onCheckpoint, saveWarning }: Props & {
+  initial: FeedSession | null; onCheckpoint: (session: FeedSession) => void; saveWarning: string;
+}) {
   const komputer = useKomputer();
-  const [trening, setTrening] = useState(0);
-  const [kolejkaTreningu] = useState(() => kartyTreningu(stan, l, Date.now()));
-  const [dobrzeTrening, setDobrzeTrening] = useState(0);
+  const [directTasks, setDirectTasks] = useState<string[]>(initial?.directTasks ?? []);
+  const [reviewWorked, setReviewWorked] = useState(false);
+  const [helpedTasks, setHelpedTasks] = useState<string[]>(initial?.helpedTasks ?? []);
+  const [trening, setTrening] = useState(initial?.trening ?? 0);
+  const [kolejkaTreningu] = useState(() => initial?.kolejkaTreningu ?? kartyTreningu(stan, l, Date.now()));
+  const [dobrzeTrening, setDobrzeTrening] = useState(initial?.dobrzeTrening ?? 0);
   const obecna = useCallback(
     (s: StanNauki, t = trening): Karta | null => {
       if (tryb === 'nauka') return biezaca(s, l);
@@ -76,28 +101,37 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
   );
 
   const [biez, setBiez] = useState<Pozycja | null>(() => {
+    if (initial) return initial.biez;
     const k = obecna(stan);
     return k ? { id: k.id, wynik: null } : null;
   });
-  const [ekran, setEkran] = useState<'karta' | 'stop' | 'koniec' | 'odlozona'>(() => (obecna(stan) ? 'karta' : 'koniec'));
-  const [historia, setHistoria] = useState<Pozycja[]>([]);
-  const [podglad, setPodglad] = useState<number | null>(null);
+  const [ekran, setEkran] = useState<'karta' | 'stop' | 'koniec' | 'odlozona'>(() => initial?.ekran ?? (obecna(stan) ? 'karta' : 'koniec'));
+  const [historia, setHistoria] = useState<Pozycja[]>(initial?.historia ?? []);
+  const [podglad, setPodglad] = useState<number | null>(initial?.podglad ?? null);
   const [licznik, setLicznik] = useState(0);
   const [kierunek, setKierunek] = useState<'gora' | 'dol'>('gora');
   const [komunikat, setKomunikat] = useState<string | null>(null);
   const [nauczyciel, setNauczyciel] = useState(false);
   const [wykladOtwarty, setWykladOtwarty] = useState(false);
   const [arkusz, setArkusz] = useState(false);
-  const zdarzenie = useRef<Zdarzenie | null>(null);
-  const [wynikSerii, setWynikSerii] = useState<string | null>(null);
+  const [rachunki, setRachunki] = useState(false);
+  const [calcAnswer, setCalcAnswer] = useState<{cardId:string;value:string;id:number} | undefined>();
+  const [workedProgress, setWorkedProgress] = useState<{tex:string;completed:number;total:number;phase:string;prompt:string;options:string[]} | null>(null);
+  const zdarzenie = useRef<Zdarzenie | null>(initial?.zdarzenie ?? null);
+  const [wynikSerii, setWynikSerii] = useState<string | null>(initial?.wynikSerii ?? null);
   // Korepetytor w tle: notatka o tempie (null — jeszcze nic nie powiedział).
-  const [nota, setNota] = useState<string | null>(null);
+  const [nota, setNota] = useState<string | null>(initial?.nota ?? null);
   const [notaCzeka, setNotaCzeka] = useState(false);
   const stanRef = useRef(stan);
   stanRef.current = stan;
   // Od kiedy uczeń widzi bieżącą kartę — do pomiaru czasu odpowiedzi.
   const pokazanoOd = useRef(Date.now());
   useEffect(() => { pokazanoOd.current = Date.now(); }, [biez?.id, licznik]);
+
+  useEffect(() => {
+    onCheckpoint({ directTasks, helpedTasks, engineStamp: feedEngineStamp(stan, l), trening, kolejkaTreningu, dobrzeTrening,
+      biez, ekran, historia, podglad, zdarzenie: zdarzenie.current, wynikSerii, nota });
+  }, [directTasks, helpedTasks, stan, l, trening, kolejkaTreningu, dobrzeTrening, biez, ekran, historia, podglad, wynikSerii, nota, onCheckpoint]);
 
   const korepetytor = (s: StanNauki) => {
     setNotaCzeka(true);
@@ -111,24 +145,36 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
   const widoczna: Pozycja | null = podglad !== null ? (historia[podglad] ?? null) : biez;
   const k = widoczna ? kartaLekcji(l, widoczna.id) : null;
   const z = k?.zadanieId ? zadanieCke(k.zadanieId) : undefined;
+  const availableWorkedPlan = tryb === 'nauka' && k?.etap === 'zadanie' && z ? getWorkedPlan(z.id) : null;
+  const workedPlan = availableWorkedPlan && !directTasks.includes(availableWorkedPlan.id) ? availableWorkedPlan : null;
+  const notebookId = `feed:${l.skillId}:${tryb}:${z?.id ?? 'practice'}:${tryb === 'nauka' ? 'course' : stan.powtorki[l.skillId]?.ostatnio ?? 'first'}`;
   const p = postep(stan, l);
-  const pasekRazem = tryb === 'trening' ? kolejkaTreningu.length : tryb === 'powtorka' ? l.powtorka.length : p.razem;
-  const pasekZrobione = tryb === 'trening' ? trening + (biez?.wynik ? 1 : 0)
+  const pasekRazem = workedPlan ? workedPlan.steps.length : tryb === 'trening' ? kolejkaTreningu.length : tryb === 'powtorka' ? l.powtorka.length : p.razem;
+  const pasekZrobione = workedPlan ? (workedProgress?.completed ?? knownWorkedSteps(stan,l.skillId)) : tryb === 'trening' ? trening + (biez?.wynik ? 1 : 0)
     : tryb === 'powtorka' ? stan.powtorki[l.skillId]?.sesja?.pozycja ?? 0 : p.zrobione;
+
+  const markHelp = (wholeTask = false) => {
+    if (wholeTask && k) setHelpedTasks(previous => [...new Set([...previous, k.zadanieId ?? k.id])]);
+    if (podglad !== null || !biez || biez.wynik) return;
+    setBiez(previous => previous && !previous.pomoc ? { ...previous, pomoc: true } : previous);
+  };
+  const onTeacherHelp = (response: Odpowiedz, request: Prosba) => {
+    if (request !== 'zapis' && response.tekst.trim()) markHelp(request === 'pelne' || response.struktura?.ujawniaWynik === true);
+  };
 
   const pokazKomunikat = (t: string | null) => {
     setKomunikat(t);
     if (t) window.setTimeout(() => setKomunikat((x) => (x === t ? null : x)), 3500);
   };
 
-  const onWynik = (w: Wynik) => {
+  const onWynik = (w: Wynik, guided = false) => {
     if (!biez || podglad !== null || biez.wynik) return;
     const teraz = Date.now();
-    const nowa = { ...biez, wynik: w };
+    const nowa = { ...biez, wynik: w, pomoc: guided || Boolean(biez.pomoc) };
     setBiez(nowa);
     setHistoria((h) => [...h, nowa]);
     if (tryb === 'nauka') {
-      const r = odpowiedz(stan, l, biez.id, w.poprawna, teraz, teraz - pokazanoOd.current);
+      const r = odpowiedz(stan, l, biez.id, w.poprawna, teraz, teraz - pokazanoOd.current, Boolean(nowa.pomoc));
       zmien(r.stan);
       zdarzenie.current = r.zdarzenie;
       pokazKomunikat(r.zdarzenie.komunikat);
@@ -140,7 +186,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
         setWynikSerii(wz?.pierwsza === null || !wz ? null : wz.zaliczona ? 'rozwiązane' : 'jeszcze nie');
       }
     } else if (tryb === 'powtorka') {
-      const r = odpowiedzPowtorka(stan, l, biez.id, w.poprawna, teraz);
+      const r = odpowiedzPowtorka(stan, l, biez.id, w.poprawna, teraz, Boolean(biez.pomoc));
       zmien(r.stan);
       zdarzenie.current = r.zdarzenie;
       pokazKomunikat(r.zdarzenie.komunikat);
@@ -161,14 +207,15 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
       setEkran('koniec');
       return;
     }
-    setBiez({ id: nast.id, wynik: null });
+    setBiez({ id: nast.id, wynik: null, pomoc: helpedTasks.includes(nast.zadanieId ?? nast.id) });
     setEkran('karta');
   };
 
   const dalej = () => {
     if (nauczyciel) return;
     if (podglad !== null) {
-      setPodglad(null);
+      const lastPast = historia.length - (biez?.wynik ? 2 : 1);
+      setPodglad(podglad < lastPast ? podglad + 1 : null);
       setKierunek('gora');
       setLicznik((n) => n + 1);
       return;
@@ -265,15 +312,15 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
         etap: ETAP_NAZWA[k.etap],
         numer: nr.krok,
         z: nr.z,
-        pytanie: k.pytanie,
-        ...(k.kontekst ? { kontekst: k.kontekst } : {}),
+        pytanie: workedPlan && workedProgress ? workedProgress.prompt : k.pytanie,
+        kontekst: [k.kontekst, workedPlan && workedProgress ? `Aktualny zapis po ${workedProgress.completed} z ${workedProgress.total} operacji: $${workedProgress.tex}$. Uczeń wybiera metodę; rachunki wykonuje kalkulator. Opcje tego kroku: ${(workedProgress.options ?? []).map((option,index)=>`${'ABCD'[index]}: ${option}`).join(' | ')}.` : ''].filter(Boolean).join('\n'),
         wyjasnienie: k.wyjasnienie,
       },
       odpowiedzUcznia: widoczna?.wynik?.tekst ?? null,
       czyPoprawna: widoczna?.wynik?.poprawna ?? null,
       trudnosci: trudnosci(stan, l),
     };
-  }, [k, z, stan, l, przedmiot, widoczna]);
+  }, [k, z, stan, l, przedmiot, widoczna, notebookId, nauczyciel, rachunki, workedPlan, workedProgress]);
 
   const relacja = (() => {
     if (!k) return '';
@@ -288,6 +335,8 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
   })();
 
   const odpowiedziano = Boolean(widoczna?.wynik);
+  const calculationTarget = k?.rodzaj === 'wpis' && !odpowiedziano && podglad === null
+    ? { onUseAnswer: (value:string) => { setCalcAnswer({cardId:k.id,value,id:Date.now()}); setRachunki(false); } } : {};
   const previousIndex = podglad !== null ? podglad - 1 : historia.length - (biez?.wynik ? 2 : 1);
   const scene = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -298,30 +347,36 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
   }, [widoczna?.id, licznik, ekran]);
   const inna = LEKCJE.find((x) => x.przedmiot === l.przedmiot && x.skillId !== l.skillId);
 
+  const widocznyEkran = podglad !== null ? 'karta' : ekran;
   return (
-    <div className={`feed${komputer ? ' feed--komputer' : ''}`}>
+    <div className={`feed feed--simple${komputer ? ' feed--komputer' : ''}`}>
       <header className="feed__gora">
         <button type="button" className="feed__wyjdz" onClick={onWyjdz} aria-label="Wyjdź z lekcji">
           ✕ <span>Wyjdź</span>
         </button>
         <div className="feed__tytul">
           <p>{tryb === 'nauka' ? l.tytul : tryb === 'powtorka' ? `Powtórka: ${l.tytul}` : `Trening dodatkowy: ${l.tytul}`}</p>
+          <div className="feed__progress-line">
           <div
             className="feed__pasek"
             role="progressbar"
-            aria-label={tryb === 'nauka' ? 'Postęp serii (pominięte się nie liczą)' : 'Postęp sesji'}
+            aria-label={workedPlan ? 'Postęp obliczeń zadania' : tryb === 'nauka' ? 'Postęp serii (pominięte się nie liczą)' : 'Postęp sesji'}
             aria-valuemin={0}
             aria-valuemax={pasekRazem}
             aria-valuenow={pasekZrobione}
           >
             <span style={{ width: `${pasekRazem ? (100 * pasekZrobione) / pasekRazem : 0}%` }} />
           </div>
+          <span className="feed__percent">{Math.round(pasekRazem ? 100*pasekZrobione/pasekRazem : 0)}%</span>
+          </div>
+          {workedPlan && <span className="feed__phase">{pasekZrobione >= pasekRazem ? 'Gotowe' : workedProgress?.phase ?? workedPlan.phases[0]}</span>}
         </div>
-        <button type="button" className="feed__ikona" onClick={() => setArkusz(true)} aria-label="Zadanie i wykład" title="Zadanie, źródło, rozwiązanie i wykład">
+        <button type="button" className="feed__ikona" onClick={() => setArkusz(true)} aria-label="Zadanie i wykład" title={z ? `CKE ${z.rok} · zadanie ${z.numer} · źródło i wykład` : 'Zadanie, źródło i wykład'}>
           📄
         </button>
       </header>
 
+      {saveWarning && <p role="alert">{saveWarning}</p>}
       <div className="feed__uklad">
         <main ref={scene} className="feed__scena">
           {komunikat && (
@@ -329,20 +384,30 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
               {komunikat}
             </p>
           )}
-          {tryb === 'trening' && ekran === 'karta' && <p className="karta__uwaga">Trening dodatkowy — nie zmienia terminu powtórki.</p>}
+          {tryb === 'trening' && widocznyEkran === 'karta' && <p className="karta__uwaga">Trening dodatkowy — nie zmienia terminu powtórki.</p>}
 
-          {ekran === 'karta' && k && widoczna && (
+          {widocznyEkran === 'karta' && k && widoczna && (
             <section key={`${widoczna.id}-${licznik}`} className={`feed__karta feed__karta--${kierunek}`} aria-label={relacja}>
-              {podglad !== null && <p className="feed__podglad">Poprzednia karta — podgląd. „Dalej” wraca do bieżącej.</p>}
-              <p className={`feed__krok${z ? '' : ' feed__krok--pomoc'}`}>
-                {tryb === 'nauka' && l.seria.includes(k.id) ? `Krok ${numerKroku(stan,l,k.id).krok}/${numerKroku(stan,l,k.id).z}` : tryb === 'nauka' ? 'Łatwiejszy krok' : tryb === 'trening' ? 'Trening' : 'Powtórka'}
+              {podglad !== null && <p className="feed__podglad">Historia</p>}
+              {!workedPlan && <p className={`feed__krok${z ? '' : ' feed__krok--pomoc'}`}>
+                {tryb === 'nauka' && l.seria.includes(k.id) ? `Krok ${numerKroku(stan,l,k.id).krok}/${numerKroku(stan,l,k.id).z}` : tryb === 'nauka' ? 'Przypomnienie do tego kroku' : tryb === 'trening' ? 'Trening' : 'Powtórka'}
                 {z ? ` · CKE ${z.rok}` : ' · ćwiczenie FORGE (nie CKE)'}
-              </p>
-              <KartaWidok karta={k} zadanie={z} wynik={widoczna.wynik} komputer={komputer} onWynik={onWynik} />
+              </p>}
+
+              {workedPlan ? <WorkedCalculation plan={workedPlan} storageKey={`worked:${notebookId}`}
+                {...(storage ? {storage} : {})} initialCompletedSteps={knownWorkedSteps(stan,l.skillId)}
+                completed={Boolean(widoczna.wynik)} onProgress={setWorkedProgress} onHelp={() => markHelp()}
+                onComplete={result => onWynik({poprawna:result.poprawna,tekst:result.tekst}, true)} />
+                : <KartaWidok {...(calcAnswer ? {answerFromCalculator:calcAnswer} : {})} onHelp={() => markHelp()} draftKey={`feed:${tryb}:${l.skillId}:${k.id}:${podglad ?? Math.max(0, historia.length - (biez?.wynik ? 1 : 0))}`} skillId={l.skillId} {...(storage ? { storage } : {})} karta={k} zadanie={z} wynik={widoczna.wynik} komputer={komputer} onWynik={onWynik} />}
+              {workedPlan && !widoczna.wynik && <button type="button" className="link feed__know" onClick={() => {
+                if ((workedProgress?.completed ?? 0)>0) markHelp();
+                setDirectTasks(ids=>[...new Set([...ids,workedPlan.id])]);
+              }}>Znam odpowiedź</button>}
+              {availableWorkedPlan && !workedPlan && widoczna.wynik?.poprawna === false && <button type="button" className="link" onClick={() => setReviewWorked(true)}>Rozwiąż krokami</button>}
             </section>
           )}
 
-          {ekran === 'stop' && (
+          {widocznyEkran === 'stop' && (
             <section key={`stop-${licznik}`} className="feed__karta feed__stop">
               <h2>
                 {historia.length > 0 && kartaLekcji(l, historia[historia.length - 1]!.id).etap === 'zadanie'
@@ -361,7 +426,7 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
             </section>
           )}
 
-          {ekran === 'odlozona' && (
+          {widocznyEkran === 'odlozona' && (
             <section key="odlozona" className="feed__karta feed__stop">
               <h2>Ten temat na dziś odpuszczamy</h2>
               <p>Trzy potknięcia z rzędu to sygnał, że lepiej wrócić tu na świeżo. Jutro zaczniemy od łatwiejszego kroku.</p>
@@ -372,8 +437,8 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
             </section>
           )}
 
-          {ekran === 'koniec' && <NotaKorepetytora nota={nota} czeka={notaCzeka} />}
-          {ekran === 'koniec' && (
+          {widocznyEkran === 'koniec' && <NotaKorepetytora nota={nota} czeka={notaCzeka} />}
+          {widocznyEkran === 'koniec' && (
             <Koniec
               lekcja={l}
               tryb={tryb}
@@ -390,29 +455,41 @@ export function FeedView({ lekcja: l, tryb, stan, zmien, przedmiot, onWyjdz, wyk
           )}
         </main>
 
-        {komputer && <PanelZadania lekcja={l} stan={stan} tryb={tryb} aktualna={k?.id ?? null} />}
+
       </div>
 
-      {ekran === 'karta' && (
+      {widocznyEkran === 'karta' && (
         <footer className="feed__dol">
-          <div id="feed-primary-action" className="feed__primary">
+          <div id="feed-primary-action" className="feed__primary" hidden={Boolean(workedPlan && !odpowiedziano && podglad === null)}>
             {(odpowiedziano || podglad !== null) && <button type="button" className="btn btn--primary" onClick={dalej}>Dalej →</button>}
           </div>
           <div className="feed__tools">
             <button type="button" className="btn btn--quiet" onClick={wstecz} disabled={previousIndex < 0} aria-label="Wstecz" title="Poprzednia karta">←</button>
-            <button type="button" className="btn btn--quiet" onClick={() => setNauczyciel(true)} disabled={!kontekstAI} aria-label="Zapytaj nauczyciela" title="Zapytaj nauczyciela">💬 Zapytaj</button>
+            {podglad !== null && <button type="button" className="btn btn--quiet" onClick={dalej} aria-label="Następny zapisany krok">Dalej →</button>}
+            <button type="button" className="btn btn--quiet" onClick={() => setNauczyciel(true)} disabled={!kontekstAI} aria-label="Zapytaj nauczyciela" title="Zapytaj nauczyciela">Nauczyciel</button>
+
+            {l.przedmiot === 'math' && <button type="button" className="btn btn--quiet" onClick={() => setRachunki(true)} aria-label="Rachunki i kalkulator">Kalkulator</button>}
             {!odpowiedziano && podglad === null && <button type="button" className="btn btn--quiet" onClick={dalej} title="Pominięcie nie zwiększa postępu">Pomiń</button>}
           </div>
         </footer>
       )}
 
+      {reviewWorked && availableWorkedPlan && <ModalPanel label="Rozwiąż krokami" onClose={() => setReviewWorked(false)}>
+        <button type="button" className="btn btn--small" onClick={() => setReviewWorked(false)}>Wróć do oceny</button>
+        <WorkedCalculation plan={availableWorkedPlan} storageKey={`review:${notebookId}`} {...(storage ? {storage} : {})} onComplete={() => setReviewWorked(false)} />
+      </ModalPanel>}
       {arkusz && (
         <ModalPanel label="Zadanie" className="arkusz-zadania" onClose={() => setArkusz(false)}>
           <ArkuszZadania zadanie={z} onWyklad={() => { setArkusz(false); setWykladOtwarty(true); }} onZamknij={() => setArkusz(false)} />
         </ModalPanel>
       )}
       {wykladOtwarty && <ModalPanel label="Wykład" className="modal-lesson" onClose={() => setWykladOtwarty(false)}>{wyklad(() => setWykladOtwarty(false))}</ModalPanel>}
-      {nauczyciel && kontekstAI && <NauczycielPanel kontekst={kontekstAI} onZamknij={() => setNauczyciel(false)} />}
+      {nauczyciel && kontekstAI && <NauczycielPanel onOdpowiedz={onTeacherHelp} conversationId={notebookId} kontekst={{ ...kontekstAI, krok: { ...kontekstAI.krok, kontekst: [kontekstAI.krok.kontekst, readWorkspaceNotes(notebookId) ? `Brudnopis ucznia (niesprawdzony):\n${readWorkspaceNotes(notebookId).slice(-6000)}` : ''].filter(Boolean).join('\n') } }} onZamknij={() => setNauczyciel(false)} />}
+      {rachunki && kontekstAI && <ModalPanel label="Rachunki w lekcji" className="course-notebook" onClose={() => setRachunki(false)}>
+        <button type="button" className="btn btn--small" onClick={() => setRachunki(false)}>Wróć do kroku</button>
+
+        <CourseWorkspace {...calculationTarget} onHelp={onTeacherHelp} context={kontekstAI} skillId={l.skillId} storageKey={notebookId} {...(storage ? { storage } : {})} />
+      </ModalPanel>}
     </div>
   );
 }
@@ -556,49 +633,5 @@ function Koniec({
         )}
       </div>
     </section>
-  );
-}
-
-function PanelZadania({ lekcja: l, stan, tryb, aktualna }: { lekcja: Lekcja; stan: StanNauki; tryb: Tryb; aktualna: string | null }) {
-  const aktualnaKarta = aktualna ? kartaLekcji(l, aktualna) : null;
-  const z = aktualnaKarta?.zadanieId ? zadanieCke(aktualnaKarta.zadanieId) : undefined;
-  const s = stan.lekcje[l.skillId];
-  return (
-    <aside className="panel-zadania" aria-label="Zadanie CKE, do którego prowadzi seria">
-      {z && (
-        <>
-          <p className="panel-zadania__etykieta">
-            {etykietaZrodla(z)} · {z.rok} · zad. {z.numer}
-          </p>
-          {aktualnaKarta?.etap !== 'zadanie' && <p className="panel-zadania__tresc">
-            <Tex>{z.tresc}</Tex>
-          </p>}
-          {aktualnaKarta?.etap !== 'zadanie' && z.odpowiedzi && (
-            <p className="panel-zadania__abcd">
-              {z.odpowiedzi.map((o, i) => (
-                <span key={i}>
-                  {'ABCD'[i]}. <Tex>{o}</Tex>
-                </span>
-              ))}
-            </p>
-          )}
-        </>
-      )}
-      {tryb === 'nauka' && (
-        <ol className="panel-zadania__kroki">
-          {l.seria.map((id) => {
-            const k = kartaLekcji(l, id);
-            const w = s?.wyniki[id];
-            const znak = w?.pominieta ? '–' : w?.pierwsza === true ? '✓' : w?.pierwsza === false ? '↺' : '·';
-            return (
-              <li key={id} className={id === aktualna ? 'on' : ''}>
-                <span className="panel-zadania__znak">{znak}</span> {ETAP_NAZWA[k.etap]}
-              </li>
-            );
-          })}
-        </ol>
-      )}
-      <p className="karta__uwaga">Wybierz odpowiedź, a potem ją sprawdź. Do kolejnego kroku przejdziesz przyciskiem „Dalej”.</p>
-    </aside>
   );
 }

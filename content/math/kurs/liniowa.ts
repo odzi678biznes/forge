@@ -911,15 +911,15 @@ export const LINEAR_CARDS: Flashcard[] = [
   card('c-lin-for-2', 'lin-formula', 'wzor', 'Miejsce zerowe funkcji liniowej?', r`$x = -\frac{b}{a}$ (dla $a \ne 0$).`),
   card('c-lin-for-3', 'lin-formula', 'pulapka', 'Co decyduje o monotoniczności funkcji liniowej?', r`Tylko znak $a$: dodatni — rosnąca, ujemny — malejąca, zero — stała.`),
 
-  card('c-lin-two-1', 'lin-two-points', 'wzor', 'Nachylenie prostej przez dwa punkty?', r`$a = \frac{y_2 - y_1}{x_2 - x_1}$`),
-  card('c-lin-two-2', 'lin-two-points', 'metoda', 'Jak wyznaczyć prostą przez dwa punkty?', r`Najpierw $a$ ze wzoru na nachylenie, potem $b$ z jednego punktu, na koniec sprawdzenie drugim punktem.`),
+  card('c-lin-two-1', 'lin-two-points', 'wzor', 'Nachylenie prostej przez dwa różne punkty?', r`$a=\frac{y_2-y_1}{x_2-x_1}$ dla $x_2\ne x_1$. Gdy $x_2=x_1$, prosta jest pionowa i nie ma współczynnika kierunkowego.`),
+  card('c-lin-two-2', 'lin-two-points', 'metoda', 'Jak wyznaczyć prostą przez dwa różne punkty?', r`Jeśli $x_1\ne x_2$: oblicz nachylenie $a$, potem $b$ z jednego punktu i sprawdź drugim. Jeśli $x_1=x_2$, równanie prostej to $x=x_1$.`),
 
   card('c-lin-par-1', 'lin-parallel', 'wzor', 'Warunek równoległości prostych?', r`$a_1 = a_2$`),
-  card('c-lin-par-2', 'lin-parallel', 'wzor', 'Warunek prostopadłości prostych?', r`$a_1 \cdot a_2 = -1$, czyli $a_2 = -\frac{1}{a_1}$.`),
+  card('c-lin-par-2', 'lin-parallel', 'wzor', 'Warunek prostopadłości dwóch prostych niepionowych y = ax + b?', r`$a_1a_2=-1$. Osobny przypadek: prosta pionowa jest prostopadła do poziomej.`),
   card('c-lin-par-3', 'lin-parallel', 'pulapka', r`Nachylenie prostopadłe do $a = 2$?`, r`$-\frac{1}{2}$, a nie $-2$.`),
 
   card('c-lin-mod-1', 'lin-model', 'metoda', 'Jak rozpoznać a i b w zadaniu z treścią?', r`$b$ — wartość na starcie (opłata stała), $a$ — zmiana na jednostkę (stawka).`),
-  card('c-lin-mod-2', 'lin-model', 'pulapka', '„Od ilu” w porównaniu ofert?', 'Przy równości oferty kosztują tyle samo — odpowiedzią jest pierwsza liczba, dla której nierówność jest ostra.'),
+  card('c-lin-mod-2', 'lin-model', 'pulapka', '„Od ilu” w porównaniu ofert — czy nierówność jest ostra?', 'Zależy od pytania: „taniej” daje <, „nie drożej” daje ≤. Dla ilości całkowitych wybierz pierwszą dopuszczalną liczbę. Dla wielkości ciągłej odpowiedzią może być przedział bez najmniejszej wartości.'),
 
   card('c-lin-prm-1', 'lin-param', 'metoda', 'Zadanie z parametrem w funkcji liniowej?', r`Własność → warunek na współczynniki → równanie lub nierówność z niewiadomą $m$. Osobno przypadek $a = 0$.`),
   card('c-lin-prm-2', 'lin-param', 'pulapka', 'Rosnąca: a > 0 czy a ≥ 0?', r`$a > 0$ — dla $a = 0$ funkcja jest stała.`),

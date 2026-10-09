@@ -18,7 +18,7 @@ import {
   type StanNauki,
 } from './silnik';
 import { spojnyPostep } from './spojny-postep';
-import { MasteryLevel } from '@/data/types';
+import { emptySkillState, MasteryLevel } from '@/data/types';
 
 const L = lekcja('num-order')!;
 const T0 = Date.UTC(2026, 8, 26, 10);
@@ -42,11 +42,11 @@ it('trening rotuje karty i nie zmienia harmonogramu FSRS', () => {
 });
 
 /** Odpowiada na kolejne karty serii tak, jak każe `dobrze`. */
-function przejdz(stan: StanNauki, dobrze: (id: string) => boolean, teraz = T0): StanNauki {
+function przejdz(stan: StanNauki, dobrze: (id: string) => boolean, teraz = T0, assisted: (id: string) => boolean = () => false): StanNauki {
   for (let i = 0; i < 40; i++) {
     const k = biezaca(stan, L);
     if (!k) return stan;
-    stan = odpowiedz(stan, L, k.id, dobrze(k.id), teraz).stan;
+    stan = odpowiedz(stan, L, k.id, dobrze(k.id), teraz, undefined, assisted(k.id)).stan;
   }
   throw new Error('seria się nie kończy');
 }
@@ -81,6 +81,96 @@ describe('treść prototypu', () => {
         expect('ABCD'[k.koniec.poprawna], k.id).toBe(z.oficjalnaOdpowiedz);
       }
     }
+  });
+});
+
+describe('rzetelna nauka z pomocą nauczyciela', () => {
+  function powtorz(stan: StanNauki, teraz: number, assisted: (id: string, index: number) => boolean = () => false) {
+    for (let i = 0; i < 40; i++) {
+      const k = biezacaPowtorka(stan, L);
+      if (!k) throw new Error('brak oczekiwanej karty powtórki');
+      const result = odpowiedzPowtorka(stan, L, k.id, true, teraz, assisted(k.id, i));
+      // Simulate closing/reopening between cards: metadata must survive storage.
+      stan = JSON.parse(JSON.stringify(result.stan)) as StanNauki;
+      if (result.zdarzenie.koniecSerii) return stan;
+    }
+    throw new Error('powtórka się nie kończy');
+  }
+
+  it('pomoc zalicza poprawny krok i pozwala iść dalej, ale przerywa szybką serię', () => {
+    const first = odpowiedz(nowyStan(), L, 'm1-polecenie', true, T0, 1000).stan;
+    expect(first.lekcje[L.skillId]?.seria).toBe(2);
+    const before = JSON.stringify(first);
+    const result = odpowiedz(first, L, 'm1-kolejnosc', true, T0, 1000, true);
+    const lesson = result.stan.lekcje[L.skillId]!;
+    expect(lesson.wyniki['m1-kolejnosc']).toMatchObject({ pierwsza: true, zaliczona: true, wspomagana: true });
+    expect(lesson.seria).toBe(0);
+    expect(lesson.samodzielnosc).toBe(0);
+    expect(biezaca(result.stan, L)?.id).toBe('m1-potega');
+    expect(postep(result.stan, L).zrobione).toBe(2);
+    expect(result.zdarzenie.komunikat ?? '').not.toMatch(/pomijam|od razu/);
+    expect(JSON.stringify(first)).toBe(before);
+  });
+
+  it('pomoc pozostaje przy kroku po błędzie, ponowieniu i serializacji', () => {
+    let state = odpowiedz(nowyStan(), L, 'm1-polecenie', false, T0, 1000, true).stan;
+    state = JSON.parse(JSON.stringify(state)) as StanNauki;
+    state = odpowiedz(state, L, 'm1-polecenie', true, T0, 1000).stan;
+    expect(state.lekcje[L.skillId]?.wyniki['m1-polecenie']).toMatchObject({ pierwsza: false, zaliczona: true, wspomagana: true, proby: 2 });
+    expect(state.lekcje[L.skillId]?.seria).toBe(0);
+  });
+
+  it('pełna seria z pomocą daje Assisted i krótsze FSRS, bez kasowania ukończenia', () => {
+    const aided = przejdz(nowyStan(), () => true, T0, () => true);
+    const independent = przejdz(nowyStan(), () => true);
+    expect(aided.lekcje[L.skillId]?.ukonczona).toBe(T0);
+    expect(aided.lekcje[L.skillId]?.samodzielnosc).toBe(0);
+    expect(postep(aided, L).zrobione).toBe(L.seria.length);
+    expect(spojnyPostep(aided, new Map(), []).states.get(L.skillId)?.level).toBe(MasteryLevel.Assisted);
+    expect(spojnyPostep(aided, new Map(), []).lessons).toContainEqual({ skillId: L.skillId, completedAt: T0 });
+    expect(Number(aided.powtorki[L.skillId]?.fsrs.stability)).toBeLessThan(Number(independent.powtorki[L.skillId]?.fsrs.stability));
+    expect(aided.powtorki[L.skillId]?.udanePoPrzerwie).toBe(0);
+  });
+
+  it('pomoc choćby w jednym wcześniejszym kroku nie znika przy końcowej odpowiedzi', () => {
+    const aided = przejdz(nowyStan(), () => true, T0, id => id === 'm1-polecenie');
+    expect(spojnyPostep(aided, new Map(), []).states.get(L.skillId)?.level).toBe(MasteryLevel.Assisted);
+  });
+
+  it('pomoc w pierwszej karcie powtórki obniża ocenę całej sesji i nie nabija utrwalenia', () => {
+    const original = przejdz(nowyStan(), () => true);
+    const later = Math.max(terminPowtorki(original, L.skillId)!, T0 + PRZERWA_MS);
+    const assisted = powtorz(original, later, (_id, i) => i === 0);
+    const independent = powtorz(original, later);
+    expect(assisted.powtorki[L.skillId]?.udanePoPrzerwie).toBe(0);
+    expect(independent.powtorki[L.skillId]?.udanePoPrzerwie).toBe(1);
+    expect(Number(assisted.powtorki[L.skillId]?.fsrs.stability)).toBeLessThan(Number(independent.powtorki[L.skillId]?.fsrs.stability));
+    expect(assisted.powtorki[L.skillId]?.sesja).toBeNull();
+  });
+
+  it('późniejsza samodzielna powtórka pozwala awansować po nauce z pomocą', () => {
+    const aided = przejdz(nowyStan(), () => true, T0, () => true);
+    const later = Math.max(terminPowtorki(aided, L.skillId)!, T0 + PRZERWA_MS);
+    const afterReview = powtorz(aided, later);
+    expect(spojnyPostep(afterReview, new Map(), []).states.get(L.skillId)?.level).toBe(MasteryLevel.Independent);
+    const laterAgain = Math.max(terminPowtorki(afterReview, L.skillId)!, later + PRZERWA_MS);
+    const retained = powtorz(afterReview, laterAgain);
+    expect(spojnyPostep(retained, new Map(), []).states.get(L.skillId)?.level).toBe(MasteryLevel.Retained);
+  });
+
+  it('zachowuje wcześniejsze opanowanie i nie przepisuje historycznych wyników', () => {
+    const historical = przejdz(nowyStan(), () => true);
+    const historyBefore = JSON.stringify(historical);
+    expect(spojnyPostep(historical, new Map(), []).states.get(L.skillId)?.level).toBe(MasteryLevel.Independent);
+    expect(JSON.stringify(historical)).toBe(historyBefore);
+    const aided = przejdz(nowyStan(), () => true, T0, () => true);
+    const previous = { ...emptySkillState(L.skillId), level: MasteryLevel.Retained, independentStreak: 5 };
+    const originalMap = new Map([[L.skillId, previous]]);
+    expect(spojnyPostep(aided, originalMap, []).states.get(L.skillId)).toBe(previous);
+    expect(originalMap.get(L.skillId)).toBe(previous);
+    // Asking for help after a previously completed independent card doesn't erase it.
+    const repeated = odpowiedz(historical, L, 'm1-polecenie', true, T0, 1000, true).stan;
+    expect(repeated.lekcje[L.skillId]?.wyniki['m1-polecenie']?.wspomagana).toBeUndefined();
   });
 });
 

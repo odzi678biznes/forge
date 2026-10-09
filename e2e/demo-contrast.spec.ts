@@ -1,5 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {open,expectNoSideScroll} from './helpers';
+import {M1,operation,mockLearningApis} from './worked-helpers';
+
+test.beforeEach(async({page})=>mockLearningApis(page));
 
 test('kontrast faktycznych styli tekstu i kontrolki oraz powiększenie układu',async({page},info)=>{
   test.skip(info.project.name !== 'komputer','Obliczenia styli wystarczą w jednym projekcie.');
@@ -40,24 +43,23 @@ test('kontrast faktycznych styli tekstu i kontrolki oraz powiększenie układu',
   await page.getByRole('button',{name:'Dziś',exact:true}).click();
   await page.getByRole('button',{name:'Rozpocznij lekcję',exact:true}).click();
   await audit('Karta bez wyboru');
-  await page.locator('.opcja').first().click();
-  await expect(page.getByRole('button',{name:'Sprawdź odpowiedź'})).toHaveCSS('background-color','rgb(103, 212, 245)');
-  await audit('Zaznaczona odpowiedź');
-  await page.getByRole('button',{name:'Sprawdź odpowiedź'}).click();
-  await audit('Błędna odpowiedź i wyjaśnienie');
+  await operation(page,M1,0,false);
+  await audit('Błędna operacja i wyjaśnienie');
+  await operation(page,M1,0);
+  await audit('Poprawna operacja i aktualny wzór');
   await page.getByRole('button',{name:'Zadanie i wykład',exact:true}).click();
   await audit('Arkusz zadania');
   await page.getByRole('button',{name:/Wykład do lekcji/}).click();
   await audit('Wykład');
   await page.keyboard.press('Escape');
-  await page.getByRole('button',{name:'Zapytaj nauczyciela'}).click();
+  await page.locator('.feed__dol').getByRole('button',{name:'Zapytaj nauczyciela',exact:true}).click();
   await audit('Nauczyciel');
   await page.keyboard.press('Escape');
   await page.setViewportSize({width:768,height:1000});
   await page.addStyleTag({content:'html {zoom:2}'});
   await expectNoSideScroll(page,'Powiększenie układu 200%');
-  await page.getByRole('button',{name:/Dalej/}).scrollIntoViewIfNeeded();
+  await page.locator('.worked-calculation__option').first().scrollIntoViewIfNeeded();
   await page.screenshot({path:info.outputPath('zoom-200.png')});
-  await expect(page.getByRole('button',{name:/Dalej/})).toBeInViewport();
+  await expect(page.locator('.worked-calculation__option').first()).toBeInViewport();
   await info.attach('kontrast.json',{body:JSON.stringify(readings,null,2),contentType:'application/json'});
 });

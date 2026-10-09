@@ -481,7 +481,7 @@ export const MARKET_QUESTIONS: Question[] = [
     skill: 'biz-price-controls',
     kind: 'transfer',
     difficulty: 5,
-    prompt: 'Miasto wprowadziło maksymalny czynsz za wynajem mieszkań, niższy od rynkowego. Który skutek jest NAJMNIEJ prawdopodobny?',
+    prompt: 'Miasto wprowadziło maksymalny czynsz za wynajem mieszkań, niższy od ceny równowagi. Przy pozostałych warunkach niezmienionych, który skutek jest sprzeczny z przewidywaniami modelu podaży i popytu?',
     choices: ['wzrost liczby mieszkań oferowanych do wynajęcia', 'dłuższe poszukiwanie mieszkania przez najemców', 'nieoficjalne dopłaty „pod stołem”', 'mniejsze nakłady właścicieli na remonty'],
     answer: 'A',
     hints: ['Jak cena maksymalna poniżej równowagi wpływa na ilość oferowaną?', 'Właścicielom mniej opłaca się wynajmować.', 'Które skutki wynikają z niedoboru?', 'Kolejki, czarny rynek i spadek jakości — a nie większa oferta.'],

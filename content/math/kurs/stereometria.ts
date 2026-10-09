@@ -840,7 +840,7 @@ export const STEREO_CARDS: Flashcard[] = [
   card('c-st-py-2', 'stereo-pyramids', 'metoda', 'Ostrosłup prawidłowy czworokątny: które odcinki do h, a które do krawędzi bocznej?', 'Wysokość ściany: H i połowa krawędzi podstawy. Krawędź boczna: H i połowa przekątnej.'),
 
   card('c-st-an-1', 'stereo-angles', 'definicja', 'Kąt nachylenia odcinka do płaszczyzny?', 'Kąt między odcinkiem a jego rzutem na tę płaszczyznę.'),
-  card('c-st-an-2', 'stereo-angles', 'pulapka', 'Kąt ściany bocznej z podstawą — gdzie jest wierzchołek?', 'W środku krawędzi podstawy (M): ramiona SM i OM, oba prostopadłe do krawędzi.'),
+  card('c-st-an-2', 'stereo-angles', 'pulapka', 'W ostrosłupie prawidłowym: gdzie jest wierzchołek kąta ściany bocznej z podstawą?', 'W środku M wspólnej krawędzi. Ramiona to SM i OM, oba prostopadłe do tej krawędzi; S to wierzchołek ostrosłupa, O — środek podstawy.'),
 
   card('c-st-so-1', 'stereo-solids', 'wzor', 'Objętość walca, stożka, kuli?', r`$\pi r^2 h$; $\frac13 \pi r^2 h$; $\frac43 \pi r^3$`),
   card('c-st-so-2', 'stereo-solids', 'wzor', 'Pole boczne stożka i pole kuli?', r`$\pi r l$; $4\pi r^2$`),

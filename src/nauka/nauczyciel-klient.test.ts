@@ -41,3 +41,37 @@ it('kod dostępu odblokowuje połączenie bez zmiany adresu strony',async()=>{
   expect((await client.statusNauczyciela()).dostepny).toBe(true);
   expect(fetch.mock.calls[1]?.[1]?.headers.Authorization).toBe('Bearer private-access-code');
 });
+
+it('zmiana serwera usuwa kod poprzedniego serwera, a adres pozostaje zapisany', async () => {
+  const saved = new Map<string, string>();
+  vi.stubGlobal('localStorage', { getItem: (k: string) => saved.get(k) ?? null, setItem: (k: string, v: string) => saved.set(k, v) });
+  const client = await import('./nauczyciel-klient');
+  client.ustawKodNauczyciela('previous-server-private-code');
+  client.ustawAdresNauczyciela('https://teacher.example/api/nauczyciel');
+  expect(client.kodNauczyciela()).toBe('');
+  expect(saved.get('forge.teacher.endpoint')).toBe('https://teacher.example/api/nauczyciel');
+  expect([...saved.values()].join()).not.toContain('previous-server-private-code');
+  vi.resetModules();
+  expect((await import('./nauczyciel-klient')).adresNauczyciela()).toBe('https://teacher.example/api/nauczyciel');
+});
+
+it('odrzuca niezabezpieczony adres i sekret w adresie serwera', async () => {
+  const client = await import('./nauczyciel-klient');
+  expect(() => client.ustawAdresNauczyciela('http://teacher.example/api/nauczyciel')).toThrow();
+  expect(() => client.ustawAdresNauczyciela('https://user:secret@teacher.example/api')).toThrow();
+  expect(() => client.ustawAdresNauczyciela('https://teacher.example/api?key=secret')).toThrow();
+});
+
+it('nowe rachunki nie dostają starej odpowiedzi z pamięci', async () => {
+  const fetch = vi.fn().mockImplementation((url: string) => Promise.resolve(reply(url.endsWith('/status')
+    ? { dostepny: true, model: 'test', powod: null }
+    : { tekst: 'Sprawdź zapis nawiasu.', model: 'test' })));
+  vi.stubGlobal('fetch', fetch);
+  const client = await import('./nauczyciel-klient');
+  const context = { przedmiot: 'Matematyka', lekcja: 'Delta', zadanie: null, krok: { etap: 'Rachunki', numer: 1, z: 1, pytanie: 'Oblicz deltę', kontekst: 'b=6', wyjasnienie: 'Odczytaj dane' }, odpowiedzUcznia: null, czyPoprawna: null, trudnosci: [] };
+  await client.zapytajNauczyciela(context, 'nastepny-krok', []);
+  expect((await client.zapytajNauczyciela(context, 'nastepny-krok', [])).zPamieci).toBe(true);
+  context.krok.kontekst = 'b=-6';
+  expect((await client.zapytajNauczyciela(context, 'nastepny-krok', [])).zPamieci).not.toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(3);
+});

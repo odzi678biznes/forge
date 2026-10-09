@@ -445,3 +445,15 @@
   line-height: 1.65;
   color: var(--text);
 }
+.arena__tools { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+.arena__micro { display:grid; gap:12px; margin-bottom:20px; }
+.arena__micro h2 { font-size:clamp(1.3rem,4vw,1.8rem); margin:0; }
+.arena__micro-count { color:var(--text-muted); margin:0; font-size:.85rem; }
+.arena__micro .choice__text { font-size:1.25rem; }
+.arena__answer > details { margin-top:14px; color:var(--text-muted); }
+
+.arena__micro > .link,
+.feed__know { align-self:flex-start; min-height:44px; border:1px solid var(--line-strong); border-radius:10px; padding:8px 14px; width:fit-content; color:var(--text-muted); }
+
+.arena__micro .choice__text .katex { font-size:1.125rem; white-space:nowrap; }
+@media(max-width:640px) { .arena__micro .choice__text .katex { font-size:1.125rem; } }

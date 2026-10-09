@@ -388,7 +388,7 @@ export const WORK_QUESTIONS: Question[] = [
     ],
     answer: 'A',
     hints: ['Co oznaczają litery S, T, A, R?', 'Sytuacja, zadanie, działanie, rezultat.', 'Czy ogólne zapewnienia są dowodem kompetencji?', 'Nie — liczą się konkrety i efekty.'],
-    steps: ['STAR: sytuacja, zadanie, działanie, rezultat.', 'Odpowiedź A zawiera wszystkie elementy i pokazuje własną rolę kandydata.'],
+    steps: ['STAR: sytuacja, zadanie, działanie, rezultat.', 'Poprawna odpowiedź opisuje wszystkie cztery elementy i pokazuje własną rolę kandydata.'],
     errors: [
       ['B', 'Ogólnik bez przykładu.', 'STAR wymaga konkretnej historii.'],
       ['C', 'Brak własnego działania i rezultatu.', 'STAR pokazuje rolę kandydata.'],
@@ -601,7 +601,7 @@ export const WORK_QUESTIONS: Question[] = [
       return Math.round((brutto - spoleczne - zdrowotna - zaliczka) * 100) / 100;
     },
     hints: ['Jakie trzy potrącenia odejmuje się od brutto?', 'Składki społeczne, składkę zdrowotną i zaliczkę na podatek.', 'Policz je po kolei według zasad z treści, pilnując zaokrągleń.', 'Zaliczka: 12% z zaokrąglonej podstawy minus 300 zł, zaokrąglona do złotych.'],
-    steps: ['Składki społeczne 822,60 zł; zdrowotna 9% · 5177,40 = 465,97 zł.', 'Podstawa: 6000 − 822,60 − 250 ≈ 4927 zł; zaliczka: 12% · 4927 − 300 ≈ 291 zł; netto: 6000 − 822,60 − 465,97 − 291 = 4420,43 zł.'],
+    steps: ['Składki społeczne 822,60 zł; zdrowotna 9% · 5177,40 = 465,966 zł, po zaokrągleniu 465,97 zł.', 'Podstawa: 6000 − 822,60 − 250 = 4927,40 zł, po zaokrągleniu 4927 zł. Zaliczka: 12% · 4927 − 300 = 291,24 zł, po zaokrągleniu 291 zł.', 'Netto: 6000 − 822,60 − 465,97 − 291 = 4420,43 zł.'],
     errors: [['4711,43', 'Pominięta zaliczka na podatek.', 'Netto = brutto − składki społeczne − zdrowotna − zaliczka.']],
   }),
   choice({

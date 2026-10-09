@@ -19,11 +19,27 @@ export async function chooseSubject(page: Page, name: SubjectName): Promise<void
  * sprawdza przepływ, a nie wiedzę.
  */
 export async function answerAnything(page: Page): Promise<void> {
-  const input = page.locator('#answer');
+  await enterArenaAnswer(page);
+  const input = page.locator('.arena__answer #answer');
   if (await input.isVisible()) await input.fill('1');
-  else await page.locator('button.choice').first().click();
-  await page.getByRole('button', { name: /^Sprawdź/ }).click();
+  else {
+    const options = page.locator('.arena__answer button.choice');
+    const count = await options.count();
+    expect(count, 'Odpowiedź ma od jednej do czterech opcji').toBeGreaterThan(0);
+    expect(count).toBeLessThanOrEqual(4);
+    await options.first().click();
+  }
+  await page.getByRole('button', { name: /^Sprawdź odpowiedź/ }).click();
+  await expect(page.locator('.fb')).toBeVisible();
   await page.getByRole('button', { name: /^Dalej/ }).click();
+}
+
+/** Skip optional micro-training when the test concerns the final answer flow. */
+export async function enterArenaAnswer(page: Page): Promise<void> {
+  await expect(page.locator('.arena__answer, .arena__micro').first()).toBeVisible();
+  const skip = page.getByRole('button', { name: 'Znam odpowiedź', exact: true });
+  if (await skip.isVisible()) await skip.click();
+  await expect(page.locator('.arena__answer')).toBeVisible();
 }
 
 /** Strona nie przewija się w bok - na telefonie to znak rozjechanego układu. */

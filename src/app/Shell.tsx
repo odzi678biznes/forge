@@ -24,6 +24,7 @@ interface NavItem {
 const PRIMARY: NavItem[] = [
   { screen: 'command-center', label: 'Dziś', icon: 'today' },
   { screen: 'course', label: 'Kurs', icon: 'course' },
+  { screen: 'tutor', label: 'AI Tutor', icon: 'ai' },
 ];
 
 const SECONDARY: NavItem[] = [

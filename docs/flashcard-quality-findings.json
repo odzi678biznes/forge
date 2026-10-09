@@ -1,0 +1,199 @@
+{
+  "reviewedAt": "2026-10-08",
+  "scope": "Semantyczny odczyt front/back wszystkich 359 jawnych wywołań card w content/math, content/cs, content/biz. Bez zewnętrznych modeli/API. Dwa zagadnienia prawno-finansowe dodatkowo sprawdzone w publicznych materiałach UOKiK. Nie jest to pełny audyt aktualności całego prawa ani certyfikacja braku błędów.",
+  "findings": [
+    {
+      "id": "c-fn-gr-3",
+      "decision": "fix",
+      "note": "Policzenie punktów daje liczbę rozwiązań, nie rozwiązania. Po narysowaniu y=c należy odczytać współrzędne x wszystkich punktów wspólnych.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-seq-ge-1",
+      "decision": "fix",
+      "note": "Wzór sumy wymaga q≠1; dla q=1 S_n=n·a_1. Obecna ogólna fiszka dla ciągu stałego prowadzi do 0/0.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-seq-ge-2",
+      "decision": "fix",
+      "note": "b²=ac jest warunkiem koniecznym, ale bez warunków nie wystarcza: (0,0,1) go spełnia i nie jest geometryczny. Najprościej ograniczyć pytanie do trzech niezerowych wyrazów; albo podać istnienie q: b=aq, c=bq.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-seq-bas-2",
+      "decision": "clarify",
+      "note": "n=7,5 należy odrzucić, ale sama obecność takiego rozwiązania nie wyklucza innych naturalnych rozwiązań równania. Zamiast Żaden wyraz: To rozwiązanie odrzucasz; numer wyrazu musi być naturalny. Albo zaznaczyć, że to jedyne rozwiązanie.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-lin-mod-2",
+      "decision": "fix",
+      "note": "„Od ilu” samo nie przesądza ostrości: nie drożej daje ≤, taniej daje <. Pierwsza liczba istnieje dla ilości całkowitych, nie w otwartej półprostej rzeczywistej. Dodać zależność od sformułowania i dziedziny.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-der-ext-1",
+      "decision": "fix",
+      "note": "Warunek ekstremum przedstawiony jako ogólna definicja wyklucza np. |x| w 0. Nazwać go wystarczającym kryterium dla funkcji różniczkowalnej i zmiany znaku pochodnej, zaznaczyć potrzebę sprawdzenia miejsc bez pochodnej.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-st-an-2",
+      "decision": "fix",
+      "note": "Środek krawędzi M i odcinki SM, OM działają dla ostrosłupa prawidłowego; obecne pytanie nie określa bryły ani S/O. Doprecyzować ostrosłup prawidłowy, S wierzchołek, O środek podstawy.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-trig-e-2",
+      "decision": "fix",
+      "note": "Kategoryczne Nie jest fałszywe: można dzielić po sprawdzeniu przypadku cos x=0 i ograniczeniu się do cos x≠0. Nie każde równanie daje się wyłączyć przed nawias.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-num-root-2",
+      "decision": "clarify",
+      "note": "Dopisać a>0, m całkowite i n naturalne dodatnie. Bez warunku na podstawę forma sqrt[n](a^m) zmienia sens po skróceniu wykładnika, np. a=-1,m=2,n=2.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-log-p-1",
+      "decision": "clarify",
+      "note": "Dopisać x,y>0 oraz a>0,a≠1. Np. log((-1)(-1)) istnieje, lecz suma log(-1)+log(-1) nie jest rzeczywista.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-log-p-2",
+      "decision": "clarify",
+      "note": "Dopisać x>0 i warunki podstaw a,c>0 oraz ≠1; log(x²)=2log(x) bez x>0 odrzuca prawidłowe ujemne argumenty x. Wersja dla x≠0: log(x²)=2log|x|.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-quad-opt-1",
+      "decision": "clarify",
+      "note": "Porównanie wartości na końcach wymaga przedziału domkniętego i ograniczonego. Na (0,1) końce nie należą, maksimum/minimum nie muszą istnieć. Dopisać typ przedziału w pytaniu.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-geo-l-1",
+      "decision": "clarify",
+      "note": "Dopisać x_B≠x_A; przy równych x prosta jest pionowa i nie ma współczynnika kierunkowego.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-lin-two-1",
+      "decision": "clarify",
+      "note": "Dopisać x_2≠x_1, osobno prosta pionowa.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-lin-two-2",
+      "decision": "clarify",
+      "note": "Obecny algorytm nie obsługuje dwóch różnych punktów o tym samym x. Dodać wtedy x=x_1.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-lin-par-2",
+      "decision": "clarify",
+      "note": "Warunek a1*a2=-1 dotyczy dwóch prostych niepionowych y=ax+b. Pionowa i pozioma też są prostopadłe. Doprecyzować pytanie.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-alg-irr-2",
+      "decision": "fix",
+      "note": "Mnożenie przez sqrt(a)+b wymaga, aby ten czynnik nie był zerem. Np. a=1,b=-1: oryginalny mianownik to 2, ale sprzężenie to 0. Najprościej ograniczyć pytanie do a>0,b>0,a≠b² albo dodać jawny warunek niezerowego sprzężenia.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-db-j-1",
+      "decision": "fix",
+      "note": "NOT IN z podzapytaniem zawierającym NULL nie jest równoważnym zamiennikiem antyzłączenia: 1 NOT IN (NULL) jest UNKNOWN i nie przepuszcza wiersza. Użyć NOT EXISTS lub jawnie filtrować NULL. Prawa.id w LEFT JOIN musi być kolumną nie-NULL dla dopasowanych rekordów.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-dt-d-2",
+      "decision": "clarify",
+      "note": "Zbiór ma średnio O(1), nie gwarantowany czas stały; lista kończy się po znalezieniu elementu, więc nie zawsze przegląda wszystko. Zalecane: zbiór średnio O(1), lista O(n) w najgorszym przypadku.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-so-s-2",
+      "decision": "clarify",
+      "note": "Dokładne n(n-1)/2 dotyczy określonego wariantu bez wcześniejszego zakończenia z malejącym zakresem. Wariant z flagą dla posortowanej listy wykonuje n-1. Dopisać wariant w pytaniu.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-py-b-2",
+      "decision": "clarify",
+      "note": "// nie gwarantuje typu int: 10.0//2 daje float 5.0. Napisać: dla dwóch liczb całkowitych // zwraca int; / w przykładzie daje float.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-py-l-2",
+      "decision": "clarify",
+      "note": "Pętla obsługuje tylko n>0, dla 0 pomija jedyną cyfrę, dla ujemnych nic nie robi. Doprecyzować dodatnie n lub podać abs(n) i osobny przypadek 0.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-bf-b-1",
+      "decision": "clarify",
+      "note": "RRSO to procent całkowitej kwoty kredytu w stosunku rocznym, nie kwota kosztu. „Wszystkie opłaty/ubezpieczenia” za szerokie: dodatkowe usługi są wliczane, jeśli wymagane do kredytu/oferowanych warunków; wyjątek opłat notarialnych. Doprecyzować zamiast utrwalać absolutne wszystkie.",
+      "source": "https://uokik.gov.pl/download/13506",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-bf-b-2",
+      "decision": "clarify",
+      "note": "Wzór liniowy wymaga stałej rocznej stopy r i braku kapitalizacji w trakcie okresu; nie jest ogólnym wzorem dowolnej lokaty. Podać uproszczone naliczanie bez kapitalizacji i pomijanie zaokrągleń.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-bf-k-1",
+      "decision": "clarify",
+      "note": "Dodać „co do zasady” oraz ustawowe wyjątki (np. personalizowany towar). Obecna absolutna odpowiedź uczy powszechnego prawa zwrotu każdej umowy na odległość.",
+      "source": "https://prawakonsumenta.uokik.gov.pl/prawo-odstapienia-od-umowy/wylaczenia-prawa-do-odstapienia/",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    },
+    {
+      "id": "c-bp-r-1",
+      "decision": "clarify",
+      "note": "Próg ilościowy wymaga c>k_zm i standardowego modelu liniowego; dla c=k_zm mianownik znika, dla c<k_zm dodatnie koszty stałe nie dają dodatniego progu. Dopisać założenie.",
+      "applied": true,
+      "verification": "Ponowny odczyt warunku i korekta treści z zachowaniem ID; testy renderowania korpusu zaliczone."
+    }
+  ],
+  "appliedAt": "2026-10-08",
+  "applicationSummary": {
+    "findings": 26,
+    "applied": 26,
+    "fix": 9,
+    "clarify": 17,
+    "preservedIds": true,
+    "verification": "157/157 testów korpusów, Python, SQLite i jakości lekcji po wszystkich poprawkach."
+  }
+}

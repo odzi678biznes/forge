@@ -121,6 +121,8 @@ export interface KartaWpis extends KartaBaza {
 
 export interface KartaBlad extends KartaBaza {
   rodzaj: 'blad';
+  /** First line only repeats the given expression; do not offer it as a fake error candidate. */
+  givenFirstLine?: boolean;
   /** Linijki cudzego rozwiązania — jedna jest błędna. */
   linie: string[];
   bledna: number;

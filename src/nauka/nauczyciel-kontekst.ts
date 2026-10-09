@@ -11,6 +11,9 @@ export type Prosba =
   | 'inaczej'
   | 'pelne'
   | 'pytanie'
+  /** Przepisanie wypowiedzi ucznia, bez rozwiązywania zadania. */
+  | 'zapis'
+  | 'sprawdz-rachunek'
   /** Sesja matematyki: kolejny szczebel podpowiedzi (bez wyniku). */
   | 'podpowiedz'
   | 'prosciej'
@@ -19,7 +22,7 @@ export type Prosba =
   /** Korepetytor w tle: decyzja o tempie na podstawie raportu z odpowiedzi. */
   | 'korepetytor';
 
-export const PROSBY: readonly Prosba[] = ['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie', 'podpowiedz', 'prosciej', 'podobny', 'co-zle', 'korepetytor'];
+export const PROSBY: readonly Prosba[] = ['nastepny-krok', 'nie-rozumiem', 'skad', 'inaczej', 'pelne', 'pytanie', 'zapis', 'sprawdz-rachunek', 'podpowiedz', 'prosciej', 'podobny', 'co-zle', 'korepetytor'];
 
 export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   'nastepny-krok': 'Pomóż mi zrobić następny krok.',
@@ -32,6 +35,8 @@ export const PROSBA_TEKST: Record<Exclude<Prosba, 'pytanie'>, string> = {
   prosciej: 'Wytłumacz mi to prościej.',
   podobny: 'Pokaż podobny przykład.',
   'co-zle': 'Co zrobiłem źle?',
+  zapis: 'Zapisz moją wypowiedź matematycznie, bez liczenia i podawania wyniku.',
+  'sprawdz-rachunek': 'Sprawdź, czy ostatni zatwierdzony rachunek pasuje do tego zadania. Sam wynik obliczył kalkulator. Krótko oceń metodę, bez kolejnego wyniku.',
 };
 
 /**
@@ -69,6 +74,8 @@ export interface KontekstSesji {
   rozwiazanieUcznia: string[];
   /** Identyfikatory błędów, które AI może wskazać (pamięć błędów). */
   znaneBledy: string[];
+  /** Meaning of each category, so AI need not infer it from an identifier. */
+  opisyBledow?: Record<string, string>;
   /** Diagnoza aplikacji dla ostatniej odpowiedzi, jeśli ją rozpoznała. */
   diagnoza?: string;
 }
@@ -84,6 +91,8 @@ export interface StrukturaOdpowiedzi {
   pytanieKontrolne: string;
   /** Rozpoznany błąd z listy `znaneBledy` albo pusty tekst. */
   misconception: string;
+  /** Only a faithful transcription; empty when the spoken notation is ambiguous. */
+  zapisKalkulatora?: string;
 }
 
 export interface KontekstNauczyciela {
@@ -138,9 +147,16 @@ export interface OdpowiedzNauczyciela {
   tekst: string;
   model: string;
   struktura?: StrukturaOdpowiedzi;
+  /** Provider-reported tokens for explicit, budgeted validation; contains no credentials. */
+  usage?: { inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number };
 }
 
 export interface StatusNauczyciela {
+  /** Set exclusively by the loopback-only Vite backend. */
+  localSetupAvailable?: boolean;
+  persisted?: boolean;
+  providerVerified?: boolean;
+  storageError?: string | null;
   wymagaKodu?: boolean;
   dostepny: boolean;
   model: string | null;

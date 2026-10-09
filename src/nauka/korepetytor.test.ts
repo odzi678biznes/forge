@@ -7,11 +7,11 @@ import type { RaportKorepetytora } from './nauczyciel-kontekst';
 const L = lekcja('num-order')!;
 const T0 = Date.UTC(2026, 9, 2, 10);
 
-function odpowiadaj(stan: StanNauki, wyniki: boolean[], czasMs?: number): { stan: StanNauki; odlozona: boolean } {
+function odpowiadaj(stan: StanNauki, wyniki: boolean[], czasMs?: number, assisted = false): { stan: StanNauki; odlozona: boolean } {
   let odlozona = false;
   for (const w of wyniki) {
     const k = biezaca(stan, L)!;
-    const r = odpowiedz(stan, L, k.id, w, T0, czasMs);
+    const r = odpowiedz(stan, L, k.id, w, T0, czasMs, assisted);
     stan = r.stan;
     odlozona ||= r.zdarzenie.odlozona === true;
   }
@@ -34,6 +34,24 @@ describe('nie męczymy po serii błędów', () => {
 });
 
 describe('czas odpowiedzi', () => {
+  it('szybkie odpowiedzi z pomocą nie są dowodem samodzielności ani szybkości dla korepetytora', () => {
+    const s = odpowiadaj(nowyStan(), [true, true, true], 1000, true).stan;
+    const r = raportKorepetytora(s, L, 'Matematyka');
+    expect(r.odpowiedzi).toHaveLength(3);
+    expect(r.odpowiedzi.every(w => !w.poprawnaZaPierwszym && w.czasS === null)).toBe(true);
+    expect(stanLekcji(s, L.skillId).samodzielnosc).toBe(0);
+    expect(decyzjaRegul(r, T0).tempo).toBe('latwiej');
+    // Correctness and timing remain in the factual history, only the adaptation excludes them.
+    expect(Object.values(stanLekcji(s, L.skillId).wyniki).every(w => w.pierwsza && w.czas === 1000)).toBe(true);
+  });
+
+  it('stary zapis bez znacznika pomocy nadal zachowuje swój wynik i czas', () => {
+    const s = odpowiadaj(nowyStan(), [true], 8000).stan;
+    const before = JSON.stringify(s);
+    expect(raportKorepetytora(s, L, 'Matematyka').odpowiedzi[0]).toMatchObject({ poprawnaZaPierwszym: true, czasS: 8 });
+    expect(JSON.stringify(s)).toBe(before);
+  });
+
   it('szybkie poprawne odpowiedzi przyspieszają wcześniej niż wolne', () => {
     const szybko = odpowiadaj(nowyStan(), [true, true], 8_000).stan;
     const wolno = odpowiadaj(nowyStan(), [true, true], 60_000).stan;

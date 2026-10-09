@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { chooseSubject, open } from './helpers';
 
 test('kod dostępu łączy nauczyciela i wysyła kontekst aktualnej karty', async ({ page }) => {
+  await page.route('**/api/nauczyciel/setup', route => route.fulfill({json:{localSetupAvailable:false}}));
   await page.route('**/api/nauczyciel/status', async route => {
     const authorized = route.request().headers().authorization === 'Bearer test-private-code';
     await route.fulfill({status:authorized ? 200 : 401,contentType:'application/json',body:JSON.stringify({dostepny:authorized,model:authorized ? 'test-model' : null,powod:null,wymagaKodu:!authorized})});
@@ -17,9 +18,10 @@ test('kod dostępu łączy nauczyciela i wysyła kontekst aktualnej karty', asyn
   await open(page);
   await chooseSubject(page,'Matematyka');
   await page.getByRole('button',{name:/Rozpocznij lekcję|Kontynuuj lekcję/}).click();
-  await page.getByRole('button',{name:'Zapytaj nauczyciela'}).click();
-  await page.getByLabel('Twój kod dostępu do nauczyciela').fill('test-private-code');
-  await page.getByRole('button',{name:'Połącz z nauczycielem'}).click();
+  await page.locator('.feed__dol').getByRole('button',{name:'Zapytaj nauczyciela',exact:true}).click();
+  await page.getByText('Połączenie i ustawienia nauczyciela', { exact:true }).click();
+  await page.getByLabel('Kod dostępu do nauczyciela', { exact:true }).fill('test-private-code');
+  await page.getByRole('button',{name:'Zapisz i sprawdź połączenie'}).click();
   await expect(page.getByText('Nauczyciel AI · test-model')).toBeVisible();
   await page.getByRole('textbox',{name:'Własne pytanie do nauczyciela'}).fill('Od czego zacząć?');
   await page.getByRole('button',{name:'Wyślij',exact:true}).click();

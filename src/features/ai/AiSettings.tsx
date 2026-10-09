@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MAX_PRIOR_ERRORS } from '@/learning-engine/ai-context';
 import type { AiTutor } from './tutor';
+import { TeacherConnection } from './TeacherConnection';
 import './ai.css';
 
 /**
@@ -52,16 +53,21 @@ export function AiSettings({ tutor, onChange, onBack }: Props) {
         <button type="button" className="ai-settings__back" onClick={onBack}>
           &larr; Plan dnia
         </button>
-        <p className="ai-settings__eyebrow">Opcjonalne</p>
+        <p className="ai-settings__eyebrow">Pomoc podczas nauki</p>
         <h1 className="ai-settings__title">Nauczyciel AI</h1>
         <p className="ai-settings__lead">
-          Aplikacja działa w pełni bez AI: drabina podpowiedzi, ocenianie, plan i raporty są lokalne.
-          AI może dać dodatkową podpowiedź i ocenić tok rozumowania.
+          Nauczyciel jest przy lekcji i zadaniu. Widzi bieżący kontekst oraz brudnopis, pomaga jednym
+          krokiem i może przepisać Twoje słowa na matematykę. Rachunki i notatki działają także bez AI.
         </p>
       </header>
 
+      <section className="ai-settings__box">
+        <h2>Nauczyciel w przeglądarce i na telefonie</h2>
+        <TeacherConnection onStatus={status => onChange(status.dostepny)} />
+      </section>
+
       {tutor.unavailableReason ? (
-        <p className="ai-settings__box">{tutor.unavailableReason}</p>
+        <p className="ai-settings__box">Po połączeniu korzystaj z przycisku nauczyciela bezpośrednio w lekcji lub zadaniu. Nie musisz konfigurować go osobno dla każdej lekcji.</p>
       ) : (
         <>
           <section className="ai-settings__box">

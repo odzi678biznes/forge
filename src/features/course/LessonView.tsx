@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Lesson, LessonBlock, Skill, Topic, WorkedExample } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import { Icon } from '@/components/Icon';
 import { Figure } from '@/components/Figure';
-import { useSpeech } from '@/features/ai/useSpeech';
+import { LessonSpeechPlayer } from './LessonSpeechPlayer';
+import { lessonAudio, lessonDigest } from './lesson-audio';
 import { formulaParts } from './formula-parts';
+import { TeacherCompanion } from '@/features/ai/TeacherCompanion';
+import { teacherLessonContext } from '@/features/ai/teacher-context';
 import '@/features/ai/ai.css';
 import './course.css';
 
@@ -26,30 +29,35 @@ interface Props {
   backLabel?: string;
 }
 
-export function LessonView({ lesson, skill, topic, onPractice, onBack, backLabel = 'Kurs' }: Props) {
-  const speech = useSpeech();
+function useReadingState<T>(key: string, initial: T): [T, (value: T | ((old: T) => T)) => void] {
+  const [value, setValue] = useState<T>(() => {
+    try { const saved = localStorage.getItem(key); return saved === null ? initial : JSON.parse(saved) as T; }
+    catch { return initial; }
+  });
+  return [value, next => setValue(old => {
+    const updated = typeof next === 'function' ? (next as (old: T) => T)(old) : next;
+    try { localStorage.setItem(key, JSON.stringify(updated)); } catch { /* Reading position is optional. */ }
+    return updated;
+  })];
+}
+
+export function LessonView(props: Props) {
+  return <LessonReading key={props.lesson.skillId} {...props} />;
+}
+function LessonReading({ lesson, skill, topic, onPractice, onBack, backLabel = 'Kurs' }: Props) {
+  const readingKey = `forge.lesson-reading.v1:${lesson.skillId}`;
+  const [compact, setCompact] = useReadingState(`${readingKey}:compact`, false);
+  const digest = useMemo(() => lessonDigest(lesson), [lesson]);
+  const audio = useMemo(() => lessonAudio(lesson, compact ? digest : undefined), [lesson, compact, digest]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, [lesson.skillId]);
-
-  const readAloud = () => {
-    const text = [
-      lesson.intro,
-      ...(lesson.idea ?? []),
-      ...lesson.blocks.map((b) =>
-        b.kind === 'formula'
-          ? `$${b.tex}$`
-          : b.kind === 'figure'
-            ? b.figure.alt
-            : b.kind === 'code'
-              ? `Przykład kodu${b.caption ? `: ${b.caption}` : ''}.`
-              : b.body,
-      ),
-      ...(lesson.method ? ['Jak to zrobić.', ...lesson.method.map((m, i) => `Krok ${i + 1}. ${m}`)] : []),
-    ].join(' ');
-    return speech.speaking ? speech.stop() : speech.speak(text);
-  };
+    let position = 0;
+    try { position = Number(localStorage.getItem(`${readingKey}:scroll`)) || 0; } catch { /* optional */ }
+    const frame = requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, position) }));
+    const save = () => { try { localStorage.setItem(`${readingKey}:scroll`, String(window.scrollY)); } catch { /* optional */ } };
+    window.addEventListener('scroll', save, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', save); };
+  }, [readingKey]);
 
   return (
     <main className="page lesson">
@@ -58,27 +66,32 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack, backLabel
           &larr; {backLabel}
         </button>
         <p className="page__eyebrow">
-          {topic?.name ?? 'Lekcja'} · {skill.level === 'PR' ? 'rozszerzenie' : 'podstawa'} · {lesson.minutes} min
+          {topic?.name ?? 'Lekcja'} · {skill.level === 'PR' ? 'rozszerzenie' : 'podstawa'} · {compact ? 'krótkie przypomnienie' : `${lesson.minutes} min`}
         </p>
         <h1 className="page__title">{skill.name}</h1>
-        <p className="lesson__intro">
+        {!compact && <p className="lesson__intro">
           <Tex>{lesson.intro}</Tex>
-        </p>
-        <button
-          type="button"
-          className="speak"
-          disabled={speech.unavailableReason !== null}
-          title={speech.unavailableReason ?? undefined}
-          onClick={readAloud}
-        >
-          {speech.unavailableReason
-            ? 'Odczyt na głos niedostępny'
-            : speech.speaking
-              ? 'Zatrzymaj odczyt'
-              : 'Przeczytaj lekcję na głos'}
-        </button>
+        </p>}
+        <div className="lesson__mode" role="group" aria-label="Długość lekcji">
+          <button type="button" aria-pressed={!compact} onClick={() => setCompact(false)}>Cała lekcja</button>
+          <button type="button" aria-pressed={compact} onClick={() => setCompact(true)}>W pigułce</button>
+        </div>
       </header>
 
+      <TeacherCompanion context={teacherLessonContext(lesson, skill)} />
+
+      {compact && <section className="lesson__digest card" aria-labelledby="lesson-digest">
+        <h2 className="lesson__h2" id="lesson-digest">W pigułce</h2>
+        <p className="lesson__digest-note">Szybkie przypomnienie przed ćwiczeniami.</p>
+        {digest.map((sentence, i) => <p className="lesson__p" key={i}><Tex>{sentence}</Tex></p>)}
+        <button type="button" className="btn btn--primary" onClick={onPractice}>
+          <Icon name="play" size={18} /> To już wiem — przejdź do ćwiczeń
+        </button>
+      </section>}
+
+      <LessonSpeechPlayer key={`${lesson.skillId}-${compact}`} audio={audio} compact={compact} />
+
+      {!compact && <>
       {lesson.idea && (
         <section className="lesson__body lesson__idea" aria-labelledby="lesson-idea">
           <h2 className="lesson__h2" id="lesson-idea">
@@ -114,12 +127,12 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack, backLabel
         </section>
       )}
 
-      {lesson.check && <Check key={lesson.skillId} check={lesson.check} />}
+      {lesson.check && <Check key={lesson.skillId} check={lesson.check} storageKey={`${readingKey}:check`} />}
 
       <section aria-label="Przykłady rozwiązane krok po kroku" className="lesson__examples">
         <h2 className="lesson__h2">Rozwiązujemy razem</h2>
         {lesson.examples.map((e, i) => (
-          <Example key={i} example={e} index={i + 1} />
+          <Example key={i} example={e} index={i + 1} storageKey={`${readingKey}:example:${i}`} />
         ))}
       </section>
 
@@ -146,6 +159,7 @@ export function LessonView({ lesson, skill, topic, onPractice, onBack, backLabel
           <Icon name="play" size={18} /> Przejdź do ćwiczeń
         </button>
       </section>
+      </>}
     </main>
   );
 }
@@ -203,8 +217,8 @@ function Block({ block }: { block: LessonBlock }) {
  * Pytanie sprawdzające: najpierw myślisz sam, potem odsłaniasz odpowiedź.
  * Nie jest oceniane - to przypomnienie z pamięci, a nie sprawdzian.
  */
-function Check({ check }: { check: { question: string; answer: string } }) {
-  const [open, setOpen] = useState(false);
+function Check({ check, storageKey }: { check: { question: string; answer: string }; storageKey: string }) {
+  const [open, setOpen] = useReadingState(storageKey, false);
   return (
     <section className="lesson__check card" aria-labelledby="lesson-check">
       <h2 className="lesson__h2" id="lesson-check">
@@ -226,8 +240,8 @@ function Check({ check }: { check: { question: string; answer: string } }) {
   );
 }
 
-function Example({ example, index }: { example: WorkedExample; index: number }) {
-  const [shown, setShown] = useState(0);
+function Example({ example, index, storageKey }: { example: WorkedExample; index: number; storageKey: string }) {
+  const [shown, setShown] = useReadingState(storageKey, 0);
   const all = shown >= example.steps.length;
 
   return (

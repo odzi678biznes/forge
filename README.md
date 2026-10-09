@@ -3,8 +3,9 @@
 Aplikacja do samodzielnej nauki do matury 2027: **matematyka** (podstawa
 i rozszerzenie, cel: 100% na rozszerzeniu), **informatyka** (Python i SQL)
 oraz **biznes i zarządzanie**. Działa na komputerze (aplikacja Tauri) i na
-telefonie (aplikacja webowa z pracą offline). Dane zostają na urządzeniu —
-nie ma konta ani serwera. Założenia projektu: `docs/blueprint-v2.md`.
+telefonie (aplikacja webowa z pracą offline). Tradycyjny kurs przechowuje dane
+na urządzeniu. Opcjonalny **AI Tutor** korzysta z Claude oraz backendu zapisującego
+sesje i zdjęcia. Założenia projektu: `docs/blueprint-v2.md`.
 
 Plan kursu: cały materiał do **31 stycznia 2027**, potem arkusze i szlifowanie.
 
@@ -65,6 +66,11 @@ bywa przybliżone.
 
 ### Ekrany
 
+- **AI Tutor** — praktyczne korepetycje z Claude: zadania na kartce, telefon jako
+  skaner, analiza rozumowania, model ucznia, pamięć błędów, miniwykłady i zadania
+  sprawdzające, mapa wiedzy, historia oraz sześć trybów z egzaminem treningowym.
+  Start: **Rozpocznij korepetycje** na ekranie Dziś lub `…/#tutor`.
+  Wymaga backendu i klucza po stronie serwera: [konfiguracja i testy](docs/ai-tutor.md).
 - **Nowy tryb nauki matematyki (demo)** — „Dziś” → *Kontynuuj matematykę* albo
   link `…/#sesja`: pełne zadanie maturalne krok po kroku, mikro-zadania, fiszki
   swipe, klocki „ułóż rozwiązanie”, ⚡ szybka powtórka i nauczyciel AI na każdym
@@ -86,16 +92,23 @@ bywa przybliżone.
   umiejętności kosztowały najwięcej punktów i co powtórzyć.
 - **Zadania z kodem** — edytor, testy widoczne i ukryte, Python uruchamiany
   lokalnie (Pyodide), zapytania SQL na bazach SQLite z podglądem tabel.
-- **Nauczyciel AI** (opcjonalny, tylko na komputerze) — podpowiedzi i ocena
-  odpowiedzi opisowych z jawnym kontekstem. Klucz API trzymany wyłącznie
-  w pamięci aplikacji, znika po zamknięciu.
-- **Czytanie na głos** — treść zadania razem ze wzorami (głosy systemu).
+- **Nauczyciel AI** — pomoc w aktualnym kroku, z dostępem do zadania i rachunków.
+  Lokalny serwer Windows automatycznie odczytuje zapisany klucz Claude
+  z magazynu poświadczeń; klucz pozostaje po zamknięciu aplikacji.
+  Telefon korzysta z prywatnego serwera: [konfiguracja](docs/teacher-deployment.md).
+- **Czytanie na głos** — naturalny lektor online (Zofia lub Marek, Azure Speech) z odtwarzaczem nagrania: pauza, wznowienie w tym samym czasie, przewijanie, wybór fragmentu i tempa. Wymaga podłączenia usługi na serwerze — [instrukcja](docs/lektor.md). Można też użyć polskich głosów urządzenia, w tym lokalnych offline. Zadania nadal używają głosów lokalnych.
+- **W pigułce** — kilka najważniejszych zdań z lekcji, razem ze wzorem i pułapką; skrót można odsłuchać i od razu przejść do ćwiczeń.
 - **Twoje dane** — eksport JSON/CSV, import, synchronizacja z drugim
   urządzeniem, kopie bezpieczeństwa, usuwanie, praca offline na telefonie.
 
 ---
 
 ## Uruchomienie
+
+Na tym stanowisku **START Z NAUCZYCIELEM.bat** uruchamia lub otwiera FORGE pod
+stałym adresem `http://localhost:4186/`, zachowując zapisany postęp przeglądarki.
+Korzysta z klucza już zapisanego w magazynie Windows, bez ponownego wpisywania.
+Serwer pracuje w tle po zamknięciu okna uruchamiania.
 
 ```bash
 npm install
@@ -111,9 +124,12 @@ npm run tauri:dev
 | `npm test` | testy (Vitest), w tym wzorcowe rozwiązania w Pythonie i SQL |
 | `npm run test:e2e` | build i testy E2E (Playwright) w Edge: lekcja, diagnoza, Python w przeglądarce, układ telefonu, offline |
 | `npm run typecheck` | kontrola typów |
+| `npm run typecheck:tutor` | kontrola typów backendu AI Tutor |
+| `npm run test:tutor:e2e` | sesje AI Tutor na komputerze i telefonie z testowym dostawcą AI |
 
 Wymagania: Node 20+, Rust stable, Visual Studio Build Tools z workloadem C++
 (tylko dla aplikacji desktopowej).
+Lokalny backend AI Tutor z SQLite wymaga Node 22.13+.
 
 ---
 
@@ -150,8 +166,8 @@ umiejętnościach i fiszkach zostawia nowszy stan. Potem w drugą stronę.
 *Odśwież* na pasku u góry — nie przerywa nauki.
 
 **Różnice względem komputera.** Dane są w przeglądarce (IndexedDB), a nie
-w pliku SQLite. Nauczyciel AI jest niedostępny: w przeglądarce klucz API
-musiałby być w JavaScripcie. Safari na iPhonie potrafi usunąć dane strony po
+w pliku SQLite. Nauczyciel AI wymaga prywatnego serwera i sieci;
+klucz API nie trafia do JavaScriptu przeglądarki. Safari na iPhonie potrafi usunąć dane strony po
 tygodniu bez wizyty, jeśli nie jest dodana do ekranu początkowego — dlatego
 instalacja i kopia JSON od czasu do czasu.
 

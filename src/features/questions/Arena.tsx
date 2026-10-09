@@ -6,12 +6,24 @@ import {
   type Confidence,
   type HintLevel,
   type Question,
+  type SkillState,
+  type Attempt,
 } from '@/data/types';
 import { Math as Tex } from '@/components/Math';
 import { MathInput } from '@/components/MathInput';
 import { Figure } from '@/components/Figure';
+import type { ArenaDraft } from '@/app/mission-session';
+import type { StoragePort } from '@/data/storage-port';
+import { TaskWorkspace } from '@/features/workspace/TaskWorkspace';
+import { ModalPanel } from '@/components/ModalPanel';
+import { NauczycielPanel } from '@/nauka/NauczycielPanel';
+import { teacherQuestionContext } from '@/features/ai/teacher-context';
+import { readWorkspaceNotes, useWorkspaceDraft } from '@/features/workspace/workspace-draft';
+import { MicroStepQuiz } from './MicroStepQuiz';
+import type { MicroOption, MicroStep } from './math-learning-types';
 import type { AnsweredStep } from '@/app/useForge';
 import type { Selection } from '@/learning-engine/selector';
+import { grade } from '@/learning-engine/grading';
 import { CodeEditor } from '@/features/code/CodeEditor';
 import { CodeResults } from '@/features/code/CodeResults';
 import { AiPanel } from '@/features/ai/AiPanel';
@@ -28,6 +40,14 @@ import './arena.css';
  */
 
 interface Props {
+  sessionId?: string;
+  storage?: () => StoragePort;
+  skillState?: SkillState;
+  attempts?: Attempt[];
+  draft?: ArenaDraft | null;
+  onDraft?: (draft: ArenaDraft) => void;
+  onPause?: () => void;
+  saveError?: string | null;
   selection: Selection;
   step: number;
   total: number;
@@ -122,10 +142,11 @@ const LETTERS = ['A', 'B', 'C', 'D'] as const;
  * odpowiedź na nowe pytanie (i gubiły wpis zrobiony w tym momencie).
  */
 export function Arena(props: Props) {
-  return <ArenaPytania key={props.selection.question.id} {...props} />;
+  return <ArenaPytania key={`${props.sessionId ?? ''}:${props.selection.question.id}`} {...props} />;
 }
 
 function ArenaPytania({
+  sessionId, storage, draft, onDraft, onPause, saveError, skillState, attempts = [],
   selection,
   step,
   total,
@@ -139,41 +160,95 @@ function ArenaPytania({
   ai,
 }: Props) {
   const speech = useSpeech();
-  const [reasoning, setReasoning] = useState('');
+  const [reasoning, setReasoning] = useState(draft?.reasoning ?? '');
   const remaining = useCountdown(deadlineAt, onTimeUp);
   const { question } = selection;
   // Zadanie programistyczne startuje z kodem startowym, a nie z pustym polem.
-  const [answer, setAnswer] = useState(() => (question.format === 'code' ? question.code?.starterCode ?? '' : ''));
-  const [confidence, setConfidence] = useState<Confidence>('partial');
-  const [hintLevel, setHintLevel] = useState<HintLevel>(0);
+  const [answer, setAnswer] = useState(() => draft?.answer ?? feedback?.userAnswer ?? (question.format === 'code' ? question.code?.starterCode ?? '' : ''));
+  const [confidence, setConfidence] = useState<Confidence>(draft?.confidence ?? feedback?.confidence ?? 'partial');
+  const [hintLevel, setHintLevel] = useState<HintLevel>(draft?.hintLevel ?? feedback?.hintLevel ?? 0);
+  // Assistance accounting also includes micro-training; it must never open the
+  // answer-bearing hint cards by itself.
+  const [visibleHintLevel, setVisibleHintLevel] = useState<HintLevel>(draft?.visibleHintLevel ?? 0);
+  const [guidanceHelpUsed, setGuidanceHelpUsed] = useState(draft?.guidanceHelpUsed ?? false);
+  const [workingTex, setWorkingTex] = useState(draft?.workingTex ?? '');
   const [whyOpen, setWhyOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [teacherOpen, setTeacherOpen] = useState(false);
+  const [microSteps, setMicroSteps] = useState<MicroStep[]>([]);
+  const [microFinished, setMicroFinished] = useState(false);
+  const [guidedReview, setGuidedReview] = useState(false);
+  const [microContext, setMicroContext] = useState('');
+  const [microReachesAnswer, setMicroReachesAnswer] = useState(false);
+  const microSubmission = useRef(false);
+  const [numericOptions, setNumericOptions] = useState<MicroOption[]>([]);
+  const [directTags, setDirectTags] = useState<string[]>([]);
+  const stageEvidence = useWorkspaceDraft('micro-evidence', storage);
+  const [mathReady, setMathReady] = useState(!mathematical || question.format === 'code');
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isCode = question.format === 'code' && question.code !== undefined;
   const isChoice = question.format === 'choice' && question.choices !== undefined;
   const continueRef = useRef<HTMLButtonElement>(null);
+  const workspaceKey = `${sessionId ?? 'practice'}:${question.id}`;
+  const microActive = !feedback && !microFinished && microSteps.length > 0;
+  const needsTaskContext = microActive && /^([a-zA-Z](?:_\{?\w+\}?)?|\\[A-Za-z]+|[fghPV]'?\([a-z]\))$/.test(microSteps[0]?.lhs.replace(/\s/g,'') ?? '')
+    && !(microSteps[0]?.prompt?.includes('$'));
+  const answerOptions = isChoice ? question.choices!.slice(0, 4).map((tex, index) => ({ tex, answer: LETTERS[index]! })) : numericOptions;
+  useEffect(() => {
+    let live = true;
+    if (mathematical && !isCode) void import('./microsteps').then(module => {
+      if (live) {
+        const steps = module.microstepsForQuestion(question);
+        const terminal = steps.at(-1) as MicroStep | undefined;
+        setMicroSteps(steps); setMicroReachesAnswer(terminal?.finalAnswer !== undefined
+          ? grade(question, terminal.finalAnswer).correctness === 'correct'
+          : module.microstepsReachAnswer(question, steps));
+        setNumericOptions(module.numericChoices(question));
+        if ('directRoutineTags' in module && typeof module.directRoutineTags === 'function') setDirectTags(module.directRoutineTags(question) as string[]);
+      }
+    }).catch(() => { /* Unsupported/offline module: original task remains usable. */ }).finally(() => { if (live) setMathReady(true); });
+    return () => { live = false; };
+  }, [question, mathematical, isCode]);
+  const teacherContext = teacherQuestionContext(question, { skillName: selection.skill.name, answer,
+    notes: [readWorkspaceNotes(workspaceKey), microContext].filter(Boolean).join('\n'), hintLevel,
+    ...(microActive ? { step: 'Pomóż mi w bieżącym małym kroku, bez dalszego wyniku.' } : {}) });
+  const finishMicro = (solved: boolean, assisted = false, computedTex?: string) => {
+    if (computedTex) setWorkingTex(computedTex);
+    setMicroFinished(true);
+    if (solved && microReachesAnswer && !feedback && !microSubmission.current) {
+      microSubmission.current = true;
+      setAnswer(question.answer);
+      onSubmit(question.answer, Math.max(hintLevel, assisted ? 5 : 0) as HintLevel, confidence);
+    }
+  };
+
+  useEffect(() => {
+    onDraft?.({ questionId: question.id, answer, confidence, hintLevel, visibleHintLevel, guidanceHelpUsed, workingTex, reasoning });
+  }, [question.id, answer, confidence, hintLevel, visibleHintLevel, guidanceHelpUsed, workingTex, reasoning, onDraft]);
 
   // Nowe pytanie zaczyna z kursorem w polu odpowiedzi. Stan jest świeży, bo
   // ekran powstaje od nowa dla każdego pytania; czytanie na głos zatrzymuje
   // sprzątanie useSpeech przy odmontowaniu poprzedniego pytania.
   useEffect(() => {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
     if (question.format === 'code') editorRef.current?.focus();
     else inputRef.current?.focus();
   }, []);
 
   // Zadanie zamknięte: litera albo cyfra wybiera odpowiedź bez myszy.
   useEffect(() => {
-    if (!isChoice || feedback) return;
+    if (answerOptions.length === 0 || feedback || microActive || toolsOpen || teacherOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+      if ((e.target as HTMLElement).closest('[data-workspace],dialog') || ['TEXTAREA', 'INPUT'].includes((e.target as HTMLElement).tagName)) return;
       const k = e.key.toUpperCase();
       const byDigit = ['1', '2', '3', '4'].indexOf(k);
       const letter = byDigit >= 0 ? LETTERS[byDigit] : LETTERS.find((l) => l === k);
-      if (letter) setAnswer(letter);
+      if (letter) { const option = answerOptions[LETTERS.indexOf(letter)]; if (option) setAnswer(option.answer); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isChoice, feedback]);
+  }, [answerOptions, feedback, microActive, toolsOpen, teacherOpen]);
 
   // Po ocenie fokus idzie na "Dalej", zeby klawiatura wystarczyla (sek. 18).
   useEffect(() => {
@@ -181,22 +256,29 @@ function ArenaPytania({
   }, [feedback]);
 
   const shownHints = useMemo(
-    () => question.hints.filter((h) => h.level <= hintLevel),
-    [question.hints, hintLevel],
+    () => question.hints.filter((h) => h.level <= visibleHintLevel),
+    [question.hints, visibleHintLevel],
   );
 
-  const nextHint = question.hints.find((h) => h.level > hintLevel);
+  const nextHint = question.hints.find((h) => h.level > visibleHintLevel);
   const locked = feedback !== null;
 
   const submit = () => {
-    if (locked || running || answer.trim() === '') return;
+    if (locked || running || microActive || answer.trim() === '' || (directTags.length > 0 && !stageEvidence.ready)) return;
+    const recordKey = `direct:${workspaceKey}`;
+    if (directTags.length > 0 && !stageEvidence.draft.steps[recordKey]) stageEvidence.update({ steps: {
+      ...stageEvidence.draft.steps, [recordKey]: JSON.stringify({ questionId: question.id, tags: directTags,
+        correct: grade(question, answer).correctness === 'correct', assisted: hintLevel > 0 || guidanceHelpUsed, at: Date.now() }),
+    } });
     onSubmit(answer, hintLevel, confidence);
   };
 
   return (
     <main
       className="arena"
+      data-math-ready={mathReady}
       onKeyDown={(e) => {
+        if ((e.target as HTMLElement).closest('[data-workspace],dialog') || (e.target as HTMLElement).tagName === 'BUTTON' || toolsOpen || teacherOpen || microActive) return;
         if (e.key === 'Enter' && !e.shiftKey) {
           // W edytorze kodu Enter to nowa linia. Uruchomienie testow ma
           // wlasny skrot (Ctrl+Enter) obslugiwany przez sam edytor.
@@ -209,6 +291,7 @@ function ArenaPytania({
       }}
     >
       <header className="arena__bar">
+        {onPause && <button type="button" className="link" onClick={onPause}>Zapisz i wyjdź</button>}
         <span className="arena__count">
           Pytanie {step} z {total}
         </span>
@@ -226,15 +309,19 @@ function ArenaPytania({
         <button
           type="button"
           className="arena__why"
+          aria-label="Informacje o zadaniu"
+          title="Informacje o zadaniu"
           onClick={() => setWhyOpen((v) => !v)}
           aria-expanded={whyOpen}
         >
-          Dlaczego to pytanie?
+          ⋯
         </button>
       </header>
 
+      {saveError && <p role="alert">{saveError}</p>}
       {whyOpen && (
         <aside className="arena__reasons">
+          <strong>Dlaczego to pytanie?</strong>
           <ul>
             {selection.reasons.map((r) => (
               <li key={r}>{r}</li>
@@ -244,14 +331,15 @@ function ArenaPytania({
       )}
 
       <section className="arena__prompt">
-        <p className="arena__skill">{selection.skill.name}</p>
-        <h1 className="arena__question">
+        {!microActive && <p className="arena__skill">{selection.skill.name}</p>}
+        <h1 className={`arena__question${microActive && !needsTaskContext ? ' sr-only' : ''}`}>
           <Tex>{question.prompt}</Tex>
         </h1>
+        {microActive && !needsTaskContext && <details><summary>Dane zadania</summary><p><Tex>{question.prompt}</Tex></p></details>}
         {question.figure && <Figure figure={question.figure} />}
         {question.listing && <pre className="arena__listing">{question.listing}</pre>}
         {/* Odczyt tylko na żądanie i tylko lokalnym głosem (sek. 2 i 11). */}
-        <button
+        {!microActive && <button
           type="button"
           className="speak"
           disabled={speech.unavailableReason !== null}
@@ -263,10 +351,33 @@ function ArenaPytania({
             : speech.speaking
               ? 'Zatrzymaj odczyt'
               : 'Przeczytaj na głos'}
-        </button>
+        </button>}
       </section>
 
-      <section className="arena__answer">
+      {microActive && <MicroStepQuiz steps={microSteps} storageKey={workspaceKey} skillId={question.skillId} questionId={question.id} {...(storage ? {storage} : {})}
+        evidence={stageEvidence}
+        hintExposed={guidanceHelpUsed || visibleHintLevel > 0 || (hintLevel > 0 && hintLevel !== 5)}
+        {...(skillState ? {skillState} : {})} attempts={attempts}
+        onFinished={finishMicro} onHelp={() => setHintLevel(level => Math.max(level, 5) as HintLevel)}
+        onContext={setMicroContext} />}
+      {microActive && !isCode && mathematical && <div className="arena__tools">
+        <button type="button" className="btn btn--small" onClick={() => setToolsOpen(true)}>Kalkulator</button>
+        <button type="button" className="btn btn--small" onClick={() => setTeacherOpen(true)}>Nauczyciel</button>
+      </div>}
+      {toolsOpen && <ModalPanel label="Kalkulator" className="course-notebook" onClose={() => setToolsOpen(false)}>
+        <button type="button" className="btn btn--small" onClick={() => setToolsOpen(false)}>Wróć do zadania</button>
+        <TaskWorkspace simple question={question} skillName={selection.skill.name} answer={answer} hintLevel={hintLevel}
+          storageKey={workspaceKey} {...(storage ? { storage } : {})}
+          {...(!locked && !isChoice ? { onUseAnswer: (value:string) => { setAnswer(grade(question, value).correctness === 'correct' ? question.answer : value); setToolsOpen(false); } } : {})}
+          onHintShown={level => { if (level > 0) setGuidanceHelpUsed(true); setHintLevel(h => Math.max(h, level) as HintLevel); }}
+          onTeacherHelp={(_response, request) => { if (request !== 'zapis') { setGuidanceHelpUsed(true); setHintLevel(level => Math.max(level, request === 'pelne' ? 6 : 3) as HintLevel); } }} />
+      </ModalPanel>}
+      {teacherOpen && <NauczycielPanel kontekst={teacherContext} conversationId={workspaceKey} onZamknij={() => setTeacherOpen(false)}
+        onOdpowiedz={(_response, request) => { if (request !== 'zapis') { setGuidanceHelpUsed(true); setHintLevel(level => Math.max(level, request === 'pelne' ? 6 : 3) as HintLevel); } }} />}
+
+      {!microActive && mathReady && (!mathematical || !feedback) && <section className="arena__answer">
+        {stageEvidence.warning && <p role="alert">{stageEvidence.warning}</p>}
+        {workingTex && <p className="arena__working-result"><Tex>{`$${workingTex}$`}</Tex></p>}
         {isCode && question.code ? (
           <CodeEditor
             ref={editorRef}
@@ -277,28 +388,28 @@ function ArenaPytania({
             disabled={locked}
             running={running}
           />
-        ) : isChoice && question.choices ? (
+        ) : answerOptions.length > 0 ? (
           <fieldset className="choices" disabled={locked}>
-            <legend className="arena__label">Wybierz odpowiedź (A–D albo 1–4)</legend>
-            {question.choices.map((c, i) => {
+            <legend className="sr-only">Wybierz odpowiedź (A–D albo 1–4)</legend>
+            {answerOptions.map((option, i) => {
               const letter = LETTERS[i] ?? 'A';
               const classes = ['choice'];
-              if (answer === letter) classes.push('choice--picked');
-              if (locked && letter === question.answer) classes.push('choice--correct');
-              if (locked && answer === letter && letter !== question.answer) classes.push('choice--wrong');
+              if (answer === option.answer) classes.push('choice--picked');
+              if (locked && option.answer === question.answer) classes.push('choice--correct');
+              if (locked && answer === option.answer && option.answer !== question.answer) classes.push('choice--wrong');
               return (
                 <button
                   key={letter}
                   type="button"
                   className={classes.join(' ')}
-                  aria-pressed={answer === letter}
-                  onClick={() => setAnswer(letter)}
+                  aria-pressed={answer === option.answer}
+                  onClick={() => setAnswer(option.answer)}
                 >
                   <span className="choice__letter">{letter}</span>
                   <span className="choice__text">
-                    <Tex>{c}</Tex>
-                    {locked && letter === question.answer && <span className="opcja__status">✓ Poprawna odpowiedź</span>}
-                    {locked && answer === letter && letter !== question.answer && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
+                    <Tex>{isChoice ? option.tex : `$${option.tex}$`}</Tex>
+                    {locked && option.answer === question.answer && <span className="opcja__status">✓ Poprawna odpowiedź</span>}
+                    {locked && answer === option.answer && option.answer !== question.answer && <span className="opcja__status">↺ Twój wybór — sprawdź wyjaśnienie</span>}
                   </span>
                 </button>
               );
@@ -323,7 +434,7 @@ function ArenaPytania({
           </>
         )}
 
-        <fieldset className="arena__confidence" disabled={locked}>
+        <details><summary>Pewność odpowiedzi</summary><fieldset className="arena__confidence" disabled={locked}>
           <legend>Na ile jesteś pewny?</legend>
           {CONFIDENCE_OPTIONS.map((opt) => (
             <label key={opt.value} className="arena__chip">
@@ -337,20 +448,24 @@ function ArenaPytania({
               <span>{opt.label}</span>
             </label>
           ))}
-        </fieldset>
+        </fieldset></details>
 
         {!locked && !isCode && (
           <button
             type="button"
             className="arena__submit"
             onClick={submit}
-            disabled={answer.trim() === ''}
+            disabled={answer.trim() === '' || (directTags.length > 0 && !stageEvidence.ready)}
           >
             Sprawdź odpowiedź
             <kbd>Enter</kbd>
           </button>
         )}
-      </section>
+      </section>}
+      {!microActive && !isCode && mathematical && <div className="arena__tools">
+        <button type="button" className="btn btn--small" onClick={() => setToolsOpen(true)}>Kalkulator</button>
+        <button type="button" className="btn btn--small" onClick={() => setTeacherOpen(true)}>Nauczyciel</button>
+      </div>}
 
       <section className="arena__hints">
         {shownHints.map((h) => (
@@ -368,14 +483,9 @@ function ArenaPytania({
           <button
             type="button"
             className="arena__hint-more"
-            onClick={() => setHintLevel(nextHint.level)}
+            onClick={() => { setGuidanceHelpUsed(true); setVisibleHintLevel(nextHint.level); setHintLevel(level => Math.max(level, nextHint.level) as HintLevel); }}
           >
-            {hintLevel === 0 ? 'Potrzebuję podpowiedzi' : 'Kolejna podpowiedź'}
-            <span className="arena__hint-cost">
-              {hintLevel === 0
-                ? 'Odpowiedź przestanie liczyć się jako samodzielna'
-                : `Szczebel ${nextHint.level} z ${HINT_LADDER.length}`}
-            </span>
+            {visibleHintLevel === 0 ? 'Potrzebuję podpowiedzi' : 'Kolejna podpowiedź'}
           </button>
         )}
       </section>
@@ -392,15 +502,21 @@ function ArenaPytania({
             errorCatalogue: ai.catalogue,
           }}
           // Podpowiedź AI to pomoc jak każda inna - odpowiedź przestaje być samodzielna.
-          onHintShown={() =>
-            setHintLevel((h) => (h >= AI_HINT_LEVEL ? h : AI_HINT_LEVEL))
-          }
+          onHintShown={() => { setGuidanceHelpUsed(true); setHintLevel((h) => (h >= AI_HINT_LEVEL ? h : AI_HINT_LEVEL)); }}
         />
       )}
 
       {feedback && (
-        <Feedback step={feedback} question={question} onAdvance={onAdvance} buttonRef={continueRef} />
+        <Feedback step={feedback} question={question} onAdvance={onAdvance} buttonRef={continueRef} simple={mathematical} />
       )}
+      {feedback && feedback.grade.correctness !== 'correct' && microSteps.length > 0 &&
+        <button type="button" className="btn btn--small" onClick={() => setGuidedReview(true)}>Rozwiąż krokami</button>}
+      {guidedReview && feedback && <ModalPanel label="Rozwiąż krokami" onClose={() => setGuidedReview(false)}>
+        <MicroStepQuiz review steps={microSteps} storageKey={`review:${workspaceKey}`} skillId={question.skillId} questionId={question.id}
+          evidence={stageEvidence}
+          {...(storage ? {storage} : {})} onFinished={() => setGuidedReview(false)} onHelp={() => {}}
+          onContext={setMicroContext} />
+      </ModalPanel>}
 
       {ai?.enabled && feedback && !isCode && (
         <section className="ai">
@@ -443,11 +559,13 @@ function Feedback({
   question,
   onAdvance,
   buttonRef,
+  simple = false,
 }: {
   step: AnsweredStep;
   question: Question;
   onAdvance: () => void;
   buttonRef: React.RefObject<HTMLButtonElement>;
+  simple?: boolean;
 }) {
   const correct = step.grade.correctness === 'correct';
 
@@ -461,6 +579,11 @@ function Feedback({
         {correct ? 'Dobrze' : step.grade.correctness === 'partial' ? 'Częściowo' : 'Jeszcze nie'}
       </p>
 
+      {simple && correct && <p className="fb__answer-value"><Tex>{question.format === 'choice'
+        ? question.choices?.['ABCD'.indexOf(question.answer)] ?? question.answer
+        : `$${question.answer}$`}</Tex></p>}
+
+      <details open={!simple} className="fb__details"><summary className={simple ? undefined : 'sr-only'}>Wyjaśnienie</summary>
       {/*
         Notatka z uruchomienia kodu zawiera wartosci zwrocone przez kod ucznia.
         Pokazujemy ja jako zwykly tekst - bez renderera LaTeX, zeby znak $
@@ -497,6 +620,7 @@ function Feedback({
       ) : (
         <Solution question={question} correct={correct} />
       )}
+      </details>
 
       <button type="button" className="fb__next" onClick={onAdvance} ref={buttonRef}>
         Dalej

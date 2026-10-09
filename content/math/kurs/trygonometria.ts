@@ -1102,7 +1102,7 @@ const NEW_QUESTIONS: Question[] = [
       return sols.size;
     },
     hints: [r`Którą postać $\cos 2x$ wybrać, żeby została tylko jedna funkcja?`, r`$\cos 2x = 1 - 2\sin^2 x$.`, r`$2\sin^2 x - \sin x - 1 = 0$: $t = \sin x$.`, r`$t = 1$ lub $t = -\frac12$.`],
-    steps: [r`$\sin x = 1$: $x = \frac{\pi}{2}$; $\sin x = -\frac12$: $x = \frac{7\pi}{6}$ lub $\frac{11\pi}{6}$.`, 'Trzy rozwiązania.'],
+    steps: [r`$\cos2x=1-2\sin^2x$, więc $2\sin^2x-\sin x-1=0$, czyli $(2\sin x+1)(\sin x-1)=0$.`, r`$\sin x = 1$: $x = \frac{\pi}{2}$; $\sin x = -\frac12$: $x = \frac{7\pi}{6}$ lub $\frac{11\pi}{6}$.`, 'Trzy rozwiązania.'],
     errors: [['2', r`Pominięte jedno z rozwiązań $\sin x = -\frac12$.`, 'Sinus przyjmuje każdą wartość z (−1, 1) dwa razy w okresie.']],
   }),
 
@@ -1154,7 +1154,7 @@ const NEW_QUESTIONS: Question[] = [
     answer: 270,
     verify: () => [30, 90, 150].filter((x) => Math.abs(Math.sin(rad(2 * x)) - Math.cos(rad(x))) < 1e-9).reduce((a, b) => a + b, 0),
     hints: [r`Jak zapisać $\sin 2x$, żeby pojawił się wspólny czynnik?`, r`$2\sin x\cos x - \cos x = 0$.`, r`$\cos x\,(2\sin x - 1) = 0$ — nie dziel przez $\cos x$!`, r`$\cos x = 0$ lub $\sin x = \frac12$.`],
-    steps: [r`$x = 90^\circ$ oraz $x = 30^\circ$, $150^\circ$.`, r`Suma: $270^\circ$.`],
+    steps: [r`$2\sin x\cos x=\cos x$ daje $\cos x(2\sin x-1)=0$. Nie dzielimy przez $\cos x$, bo może być zerem.`, r`$\cos x=0$ daje $x=90^\circ$; $\sin x=1/2$ daje $x=30^\circ$ lub $150^\circ$ w zadanym przedziale.`, r`Suma: $270^\circ$.`],
     errors: [['180', r`Podzielono przez $\cos x$ — zgubione $x = 90^\circ$.`, 'Nie dziel przez wyrażenie, które może być zerem.']],
   }),
 ];
@@ -1188,5 +1188,5 @@ export const TRIG_CARDS: Flashcard[] = [
   card('c-trig-f-2', 'trig-formulas', 'pulapka', r`$\sin 2\alpha = 2\sin\alpha$?`, 'NIE. Sinus nie jest liniowy.'),
 
   card('c-trig-e-1', 'trig-equations', 'metoda', r`$\sin x = \sin a$ — wszystkie rozwiązania?`, r`$x = a + 2k\pi$ lub $x = \pi - a + 2k\pi$.`),
-  card('c-trig-e-2', 'trig-equations', 'pulapka', r`Czy wolno podzielić równanie przez $\cos x$?`, r`Nie — zgubisz rozwiązania z $\cos x = 0$. Wyłącz przed nawias.`),
+  card('c-trig-e-2', 'trig-equations', 'pulapka', r`Czy wolno podzielić równanie przez $\cos x$?`, r`Tak, ale tylko dla $\cos x\ne0$. Najpierw osobno sprawdź przypadek $\cos x=0$, aby nie zgubić rozwiązań. Gdy to możliwe, bezpieczniej wyłączyć wspólny czynnik przed nawias.`),
 ];

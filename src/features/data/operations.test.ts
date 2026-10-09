@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { IndexedDbStorage } from '@/data/indexeddb-storage';
 import { SnapshotValidationError } from '@/data/storage-port';
 import { MasteryLevel, emptySkillState, type Attempt, type Mission } from '@/data/types';
+import { beginTeacherRequest, changeTeacherConversation, finishTeacherRequest, isTeacherRequestCurrent, readTeacherConversation } from '@/nauka/teacher-conversation';
 import { planDeletion } from '@/learning-engine/data-control';
 import {
   deleteEverything,
@@ -155,5 +156,50 @@ describe('synchronizacja dwoch urzadzen', () => {
     // W druga strone: telefon dostaje wszystko z komputera.
     await syncFromSnapshot(telefon, parseImportFile(JSON.stringify(await komputer.exportAll())));
     expect(await telefon.loadAttempts()).toHaveLength(3);
+  });
+});
+
+
+describe('notatki i lokalne kopie stanu', () => {
+  it('import usuwa nowszy cień brudnopisu, żeby nie nadpisał importowanej kopii', async () => {
+    const values = new Map([['forge.workspace.v1:m-1:q-1', 'stale'], ['forge.lesson-draft.v1:card:feed:math', 'stale'], ['forge.lesson-reading.v1:math-1:scroll', '100'], ['unrelated', 'keep']]);
+    vi.stubGlobal('localStorage', {
+      get length() { return values.size; }, key: (i: number) => [...values.keys()][i] ?? null,
+      getItem: (key: string) => values.get(key) ?? null, removeItem: (key: string) => values.delete(key),
+    });
+    try {
+      const conversation = 'forge.teacher.chat:m-import:q-1';
+      changeTeacherConversation(conversation, () => [{ rola: 'uczen', tekst: 'Stare pytanie tylko w pamięci' }]);
+      beginTeacherRequest(conversation, 'before-import');
+      const port = await seeded();
+      const snapshot = await port.exportAll();
+      await importSnapshot(port, snapshot);
+      expect([...values]).toEqual([['unrelated', 'keep']]);
+      expect(await port.loadAttempts()).toHaveLength(2);
+      expect(readTeacherConversation(conversation)).toEqual([]);
+      expect(isTeacherRequestCurrent(conversation, 'before-import')).toBe(false);
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('usunięcie jednej sesji czyści tylko jej brudnopis', async () => {
+    const port = await seeded();
+    const removedChat = 'forge.teacher.chat:m-1:q-1';
+    const keptChat = 'forge.teacher.chat:m-2:q-1';
+    changeTeacherConversation(removedChat, () => [{ rola: 'uczen', tekst: 'Usuń pytanie' }]);
+    changeTeacherConversation(keptChat, () => [{ rola: 'uczen', tekst: 'Zachowaj pytanie' }]);
+    beginTeacherRequest(removedChat, 'removed'); beginTeacherRequest(keptChat, 'kept');
+    await port.setPreference('forge.workspace.v1:m-1:q-1', JSON.stringify({ skillId: 'math-1' }));
+    await port.setPreference('forge.workspace.v1:m-2:q-1', JSON.stringify({ skillId: 'cs-1' }));
+    const plan = planDeletion({ kind: 'mission', missionId: 'm-1' }, toDataSnapshot(await port.exportAll()));
+    await deleteSelection(port, plan, false, 'test');
+    const preferences = await port.loadPreferences();
+    expect(preferences.find(p => p.key === 'forge.workspace.v1:m-1:q-1')?.value).toBe('null');
+    expect(preferences.find(p => p.key === 'forge.workspace.v1:m-2:q-1')?.value).toContain('cs-1');
+    expect(await port.loadAttempts()).toHaveLength(1);
+    expect(readTeacherConversation(removedChat)).toEqual([]);
+    expect(isTeacherRequestCurrent(removedChat, 'removed')).toBe(false);
+    expect(readTeacherConversation(keptChat)[0]?.tekst).toBe('Zachowaj pytanie');
+    expect(isTeacherRequestCurrent(keptChat, 'kept')).toBe(true);
+    finishTeacherRequest(keptChat, 'kept');
   });
 });

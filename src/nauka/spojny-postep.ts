@@ -24,9 +24,11 @@ export function spojnyPostep(
     }
 
     const poprzedni = states.get(lekcja.skillId) ?? emptySkillState(lekcja.skillId);
+    const wspomagana = Object.values(wynik.wyniki).some(w => w.wspomagana === true);
+    const samodzielnaPowtorka = (stan.powtorki[lekcja.skillId]?.udanePoPrzerwie ?? 0) >= 1;
     const poziom = postep(stan, lekcja).status === 'utrwalona'
       ? MasteryLevel.Retained
-      : MasteryLevel.Independent;
+      : wspomagana && !samodzielnaPowtorka ? MasteryLevel.Assisted : MasteryLevel.Independent;
     if (poprzedni.level < poziom) {
       states.set(lekcja.skillId, {
         ...poprzedni,

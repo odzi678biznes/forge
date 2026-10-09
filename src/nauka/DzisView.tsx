@@ -1,10 +1,11 @@
-import { LEKCJE } from './lekcje';
+import { PRACTICE_LEKCJE as LEKCJE } from './practice-course';
 import { biezaca, numerKroku, odlozonaTeraz, postep, powtorkaNaTeraz, terminPowtorki, type StanNauki } from './silnik';
 import { kiedy } from './czas';
 import type { Przedmiot } from './typy';
 import type { Tryb } from './FeedView';
 import './nauka.css';
 import { Math as Tex } from '@/components/Math';
+import { TeacherStartup } from '@/features/ai/TeacherConnection';
 
 /**
  * Nowa strona „Dziś”: jedna główna decyzja — „Kontynuuj”. Obok tylko
@@ -12,12 +13,14 @@ import { Math as Tex } from '@/components/Math';
  */
 
 interface Props {
+  resume?: { title: string; onResume: () => void } | null;
   przedmiot: Przedmiot;
   przedmiotNazwa: string;
   stan: StanNauki | null;
   onStart: (skillId: string, tryb: Tryb) => void;
   onWiecej: () => void;
   onKurs: () => void;
+  onTutor?: () => void;
   nextCourse: { id: string; name: string } | null;
   onCourseLesson: (skillId: string) => void;
   descriptions: Record<string, string>;
@@ -27,7 +30,7 @@ interface Props {
   sesja?: { temat: string; opanowanie: number; wToku: boolean; onStart: () => void } | null;
 }
 
-export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, nextCourse, onCourseLesson, descriptions, sprawdzian = null, sesja }: Props) {
+export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, onKurs, onTutor, nextCourse, onCourseLesson, descriptions, sprawdzian = null, sesja, resume }: Props) {
   const teraz = Date.now();
   const lekcje = LEKCJE.filter((l) => l.przedmiot === przedmiot);
   const data = new Date(teraz).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -62,6 +65,14 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
         <p className="dzis__subtitle">Jedna lekcja. Kolejny krok w Twoim tempie.</p>
       </header>
 
+      <TeacherStartup />
+      {resume && <section className="dzis__recommendation" aria-label="Przerwana lekcja">
+        <p className="dzis__activity">Twoja praca jest zapisana</p>
+        <h2 className="dzis__lesson">{resume.title}</h2>
+        <p className="dzis__description">Wróć do tej samej karty, swojej odpowiedzi i zapisanych rachunków.</p>
+        <button type="button" className="btn btn--primary dzis__start" onClick={resume.onResume}>Wznów przerwaną lekcję</button>
+      </section>}
+
       {!cel && sprawdzian ? (
         <section className="dzis__recommendation" aria-label="Rekomendowana nauka">
           <p className="dzis__activity">Sprawdzian działu</p>
@@ -84,6 +95,7 @@ export function DzisView({ przedmiot, przedmiotNazwa, stan, onStart, onWiecej, o
       ) : <section className="dzis__recommendation"><h2 className="dzis__lesson">Dostępne lekcje przerobione</h2><p className="dzis__description">Możesz zakończyć naukę na dziś, wrócić do wybranej lekcji w kursie albo przećwiczyć materiał w treningu dodatkowym.</p><button className="btn" onClick={onKurs}>Otwórz kurs</button></section>}
 
       {/* Demo nowego trybu matematyki — drugorzędne, pod główną rekomendacją. */}
+      {przedmiot === 'math' && onTutor && <section className="dzis__sesja dzis__sesja--mala"><div><span className="dzis__sesja-nad">FORGE AI Tutor · praca na kartce i analiza zdjęć</span><p>Nauczyciel dobierze dzisiejszą sesję do Twoich postępów.</p></div><button className="btn btn--primary" onClick={onTutor}>Rozpocznij korepetycje</button></section>}
       {sesja && (
         <button type="button" className="dzis__sesja dzis__sesja--mala" onClick={sesja.onStart}>
           <span className="dzis__sesja-nad">Kontynuuj matematykę · nowy tryb (demo) · {sesja.temat} · {sesja.opanowanie}%</span>

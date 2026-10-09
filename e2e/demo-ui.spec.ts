@@ -1,54 +1,54 @@
 import { test, expect } from '@playwright/test';
 import { open, expectNoSideScroll, otworzWyklad } from './helpers';
+import { M1, operation, mockLearningApis } from './worked-helpers';
+
+test.beforeEach(async ({ page }) => mockLearningApis(page));
 
 const start = /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/;
 
-test('wybór wymaga zatwierdzenia, scroll nie pomija, wynik czeka na Dalej', async ({ page }) => {
+test('operacja odpowiada natychmiast, scroll nie wykonuje kolejnych działań', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: start }).click();
-  const check = page.getByRole('button', { name: 'Sprawdź odpowiedź' });
-  await expect(check).toBeDisabled();
-  const question = await page.locator('.karta__pytanie').textContent();
-  await page.locator('.opcja').first().click();
-  await expect(page.locator('.info')).toHaveCount(0);
-  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','0');
-  await page.getByRole('button', { name: /Potęgę.*w nawiasie/ }).click();
+  await expect(page.locator('.worked-calculation h2')).toBeVisible();
+  await expect(page.locator('.worked-calculation__option')).toHaveCount(4);
+  await expect(page.locator('.worked-calculation__letter')).toHaveText(['A', 'B', 'C', 'D']);
+  await expect(page.locator('.worked-calculation__history')).not.toHaveAttribute('open', '');
+  await expect(page.getByRole('button', { name: 'Teoria — przypomnij regułę', exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: '← Poprzedni zapis', exact: true })).toBeHidden();
+  await expect(page.getByRole('complementary', { name: 'Rachunki obok zadania', exact: true })).toHaveCount(0);
+  const formula = page.getByLabel('Aktualny zapis wyrażenia', { exact:true });
+  const initial = await formula.textContent();
+  await operation(page, M1, 0, false);
+  await expect(page.locator('.worked-calculation__feedback')).toHaveText('Spróbuj jeszcze raz');
+  await expect(formula).toHaveText(initial!);
+  await operation(page, M1, 0);
+  await expect(formula).not.toHaveText(initial!);
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','1');
+  const after = await formula.textContent();
   const scene = page.locator('.feed__scena');
-  await scene.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 180, clientY: 600 });
-  await scene.dispatchEvent('pointerup', { pointerType: 'touch', clientX: 180, clientY: 120 });
+  await scene.dispatchEvent('pointerdown', { pointerType:'touch',clientX:180,clientY:600 });
+  await scene.dispatchEvent('pointerup', { pointerType:'touch',clientX:180,clientY:120 });
   await page.mouse.wheel(0,600);
-  await expect(page.locator('.karta__pytanie')).toHaveText(question!);
-  await check.click();
-  await expect(page.locator('.info')).toContainText('Dobrze');
-  await expect(page.locator('.opcja--poprawna')).toContainText('Poprawna odpowiedź');
-  await expect(check).toHaveCount(0);
-  await page.mouse.wheel(0,600);
-  await expect(page.locator('.karta__pytanie')).toHaveText(question!);
-  await page.getByRole('button', { name: /Dalej/ }).click();
-  await expect(page.locator('.karta__pytanie')).not.toHaveText(question!);
-  await expect(page.getByRole('button', { name: 'Sprawdź odpowiedź' })).toBeDisabled();
+  await expect(formula).toHaveText(after!);
+  await expect(page.getByRole('button', { name:'Sprawdź odpowiedź',exact:true })).toHaveCount(0);
 });
 
-test('wybór zachowuje się po arkuszu zadania i modalnej pomocy, Escape przywraca fokus', async ({ page }) => {
+test('obliczenia zostają po arkuszu i modalnej pomocy, Escape przywraca fokus', async ({ page }) => {
   await open(page);
-  await page.getByRole('button', { name: start }).click();
-  for (let i=0;i<2;i++) await page.getByRole('button', { name: 'Pomiń' }).click();
-  // Zamiast wpisywania — wybór jednego z wariantów (na telefonie nie liczymy w głowie).
-  await expect(page.getByRole('textbox', { name: 'Twoja odpowiedź' })).toHaveCount(0);
-  const answer = page.locator('.opcja').filter({ hasText: '1' }).first();
-  await answer.click();
-  await expect(answer).toHaveClass(/opcja--wybrana/);
-  const lecture = page.getByRole('button', { name: 'Zadanie i wykład', exact:true });
+  await page.getByRole('button', { name:start }).click();
+  await operation(page, M1, 0);
+  const formula=page.getByLabel('Aktualny zapis wyrażenia',{exact:true});
+  const after=await formula.textContent();
+  const lecture=page.getByRole('button',{name:'Zadanie i wykład',exact:true});
   await lecture.click();
-  await expect(page.getByRole('dialog', { name: 'Zadanie', exact:true })).toBeVisible();
+  await expect(page.getByRole('dialog',{name:'Zadanie',exact:true})).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(lecture).toBeFocused();
-  await expect(answer).toHaveClass(/opcja--wybrana/);
-  const help = page.getByRole('button', { name: 'Zapytaj nauczyciela' });
+  await expect(formula).toHaveText(after!);
+  const help=page.locator('.feed__dol').getByRole('button',{name:'Zapytaj nauczyciela',exact:true});
   await help.click();
-  const dialog = page.getByRole('dialog', { name: 'Nauczyciel' });
-  await expect(dialog).toBeVisible();
-  for (let i=0;i<14;i++) {
+  const dialog=page.getByRole('dialog',{name:'Nauczyciel',exact:true});
+  for(let i=0;i<14;i++) {
     await page.keyboard.press('Tab');
     expect(await dialog.evaluate(el=>el.contains(document.activeElement))).toBe(true);
   }
@@ -56,9 +56,19 @@ test('wybór zachowuje się po arkuszu zadania i modalnej pomocy, Escape przywra
   expect(await dialog.evaluate(el=>el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press('Escape');
   await expect(help).toBeFocused();
-  await expect(answer).toHaveClass(/opcja--wybrana/);
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await expect(page.locator('.info')).toBeVisible();
+  await expect(formula).toHaveText(after!);
+  const calculator=page.getByRole('button',{name:'Rachunki i kalkulator',exact:true});
+  await calculator.click();
+  const notebook=page.getByRole('dialog',{name:'Rachunki w lekcji',exact:true});
+  await expect(notebook).toBeVisible();
+  for(let i=0;i<14;i++) {
+    await page.keyboard.press('Tab');
+    expect(await notebook.evaluate(el=>el.contains(document.activeElement))).toBe(true);
+  }
+  await page.keyboard.press('Escape');
+  await expect(notebook).toHaveCount(0);
+  await expect(calculator).toBeFocused();
+  await expect(formula).toHaveText(after!);
 });
 
 test('menu Więcej ma fokus modalny i wraca do przycisku', async ({ page }) => {
@@ -98,7 +108,7 @@ test('układ na sześciu szerokościach, większy tekst i odstępy', async ({ pa
   await expectNoSideScroll(page,'Dziś powiększony tekst');
   await page.getByRole('button',{name:start}).click();
   await expectNoSideScroll(page,'Karta powiększony tekst');
-  await page.getByRole('button',{name:'Sprawdź odpowiedź'}).scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button',{name:'Sprawdź odpowiedź'})).toBeInViewport();
+  await page.locator('.worked-calculation__option').first().scrollIntoViewIfNeeded();
+  await expect(page.locator('.worked-calculation__option').first()).toBeInViewport();
   await page.screenshot({path:info.outputPath('tekst-200.png')});
 });

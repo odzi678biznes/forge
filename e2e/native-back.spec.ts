@@ -6,13 +6,14 @@ test('systemowe wstecz zamyka panel, wraca o kartę i potem do mapy', async ({ p
   await otworzPlan(page);
   await page.getByRole('button', { name: 'Mapa', exact: true }).click();
   await page.getByRole('button', { name: /^Trenuj: Ułamki i kolejność działań/ }).click();
-  const first = await page.locator('.karta__pytanie').innerText();
+  // Compare the stable DOM text: KaTeX visual lines vary after a rerender.
+  const first = await page.locator('.karta__pytanie').textContent();
   await page.getByRole('button', { name: 'Pomiń', exact: true }).click();
-  await expect(page.locator('.karta__pytanie')).not.toHaveText(first);
+  await expect(page.getByRole('heading', { name: 'Seria skończona', exact:true })).toBeVisible();
   await otworzWyklad(page);
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Wykład' })).toHaveCount(0);
-  await expect(page.locator('.karta__pytanie')).not.toHaveText(first);
+  await expect(page.getByRole('heading', { name: 'Seria skończona', exact:true })).toBeVisible();
   await page.goBack();
   await expect(page.locator('.karta__pytanie')).toHaveText(first);
   await page.goBack();

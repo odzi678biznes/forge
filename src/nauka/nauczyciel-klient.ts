@@ -16,15 +16,32 @@ import type {
  */
 
 // Public server address only. Provider API keys must never use a VITE_ variable.
-const API = (import.meta.env.VITE_NAUCZYCIEL_API_URL?.trim() || `${import.meta.env.BASE_URL}api/nauczyciel`).replace(/\/$/, '');
+const DEFAULT_API = (import.meta.env.VITE_NAUCZYCIEL_API_URL?.trim() || `${import.meta.env.BASE_URL}api/nauczyciel`).replace(/\/$/, '');
+let API = DEFAULT_API;
+try { API = localStorage.getItem('forge.teacher.endpoint') || DEFAULT_API; } catch { /* optional storage */ }
+export function adresNauczyciela(): string { return API; }
+export function ustawAdresNauczyciela(value: string): void {
+  const next = value.trim().replace(/\/$/, '') || DEFAULT_API;
+  const url = new URL(next, globalThis.location?.origin ?? 'http://localhost');
+  if (url.username || url.password || url.search || url.hash ||
+    (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))) {
+    throw new Error('Podaj adres HTTPS serwera nauczyciela (bez hasła i parametrów).');
+  }
+  if (next !== API) ustawKodNauczyciela('');
+  API = next;
+  try { localStorage.setItem('forge.teacher.endpoint', API); } catch { /* memory fallback */ }
+  pamiec.clear(); statusCache = null; statusExpires = 0;
+}
 let accessCode = '';
 try { accessCode = sessionStorage.getItem('forge.teacher.access') ?? ''; } catch { /* optional storage */ }
 function authorization(): Record<string, string> { return accessCode ? { Authorization: `Bearer ${accessCode}` } : {}; }
+export function kodNauczyciela(): string { return accessCode; }
 export function ustawKodNauczyciela(code: string): void {
   accessCode = code.trim();
   try { sessionStorage.setItem('forge.teacher.access', accessCode); } catch { /* keep in memory */ }
   statusCache = null;
   statusExpires = 0;
+  pamiec.clear();
 }
 
 export interface Odpowiedz {
@@ -50,7 +67,7 @@ const MAX_PAMIECI = 60;
 
 function kluczPamieci(k: KontekstNauczyciela, prosba: Prosba, historia: WiadomoscCzatu[], pytanie?: string): string | null {
   if (historia.length > 0) return null;
-  return JSON.stringify([k.lekcja, k.krok.pytanie, k.odpowiedzUcznia, k.sesja?.podpowiedziPokazane.length ?? 0, k.sesja?.proby ?? [], prosba, pytanie ?? '']);
+  return JSON.stringify([k, prosba, pytanie ?? '']);
 }
 
 let statusCache: Promise<StatusNauczyciela> | null = null;
@@ -124,6 +141,10 @@ export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
   let tekst = '';
   switch (prosba) {
     case 'nastepny-krok':
+      if (k.sesja) {
+        tekst = k.sesja.podpowiedzi[k.sesja.podpowiedziPokazane.length] ?? k.sesja.podpowiedzi[0] ?? 'Zapisz dane i nazwij szukaną wielkość. Jaki jeden krok możesz wykonać?';
+        break;
+      }
       tekst = k.odpowiedzUcznia !== null && k.czyPoprawna === false
         ? `Twoja odpowiedź „${k.odpowiedzUcznia}” nie pasuje. ${k.krok.wyjasnienie}`
         : `Spróbuj tak: ${krokRozw || k.krok.wyjasnienie}`;
@@ -135,15 +156,18 @@ export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
       tekst = z ? `W rozwiązaniu tego zadania ten krok wygląda tak: ${krokRozw}` : k.krok.wyjasnienie;
       break;
     case 'inaczej':
-      tekst = z ? `Całe rozwiązanie w skrócie: ${z.rozwiazanie.join(' ')}` : k.krok.wyjasnienie;
+      tekst = k.sesja?.podpowiedzi[1] ?? 'Nazwij szukaną wielkość i zapisz dane osobno. Które dwie wielkości potrafisz ze sobą powiązać?';
       break;
     case 'pelne':
       tekst = z
-        ? `${z.rozwiazanie.map((r, i) => `${i + 1}. ${r}`).join('\n')}\nOficjalna odpowiedź (klucz CKE): ${z.oficjalnaOdpowiedz}`
+        ? `${z.rozwiazanie.map((r, i) => `${i + 1}. ${r}`).join('\n')}\nOdpowiedź z klucza zadania: ${z.oficjalnaOdpowiedz}`
         : k.krok.wyjasnienie;
       break;
     case 'pytanie':
       tekst = k.sesja ? `Bez AI mogę odpowiedzieć tylko tym, co zapisane przy kroku: ${k.sesja.podpowiedzi[1] ?? k.krok.wyjasnienie}` : 'W trybie demonstracyjnym nie odpowiem na własne pytanie — do tego potrzebny jest prawdziwy nauczyciel AI na serwerze.';
+      break;
+    case 'zapis':
+      tekst = 'Do zamiany dowolnej wypowiedzi na matematykę potrzebne jest połączenie z AI. W brudnopisie możesz zachować własne słowa; kalkulator obsługuje zapis działań.';
       break;
     case 'podpowiedz': {
       // Kolejny szczebel lokalnej drabiny — bez wyniku.
@@ -169,5 +193,10 @@ export function demo(k: KontekstNauczyciela, prosba: Prosba): Odpowiedz {
       tekst = '';
       break;
   }
-  return { tekst, tryb: 'demo', model: null };
+  return { tekst, tryb: 'demo', model: null, struktura: {
+    rodzaj: prosba === 'pelne' ? 'rozwiazanie' : 'podpowiedz',
+    // Older cards may contain a solved step in their explanation. Do not reveal it silently offline.
+    ujawniaWynik: prosba === 'pelne' || (!k.sesja && !['pytanie', 'zapis', 'inaczej', 'co-zle', 'korepetytor'].includes(prosba)),
+    pytanieKontrolne: '', misconception: '',
+  } };
 }

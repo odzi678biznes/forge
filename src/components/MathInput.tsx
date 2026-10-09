@@ -19,13 +19,15 @@ export const MathInput = forwardRef<HTMLInputElement, {
   value: string; onChange: (value: string) => void; disabled?: boolean;
   id?: string; label?: string; placeholder?: string; className?: string;
   focusOnly?: boolean;
+  /** A quiet toolbar and an explicitly opened keypad for the course workpad. */
+  compact?: boolean;
   /** Dodatkowy rząd klawiszy: [napis, nazwa dla czytnika, wstawiany tekst]. */
   extraKeys?: ReadonlyArray<readonly [string, string, string]>;
-}>(function MathInput({value,onChange,disabled=false,id,label='Twoja odpowiedź',placeholder='np. 3/4',className='wpis__pole',focusOnly=false,extraKeys=[]}, forwarded) {
+}>(function MathInput({value,onChange,disabled=false,id,label='Twoja odpowiedź',placeholder='np. 3/4',className='wpis__pole',focusOnly=false,compact=false,extraKeys=[]}, forwarded) {
   const field=useRef<HTMLInputElement>(null);
   useImperativeHandle(forwarded,()=>field.current!,[]);
-  const [math,setMath]=useState(readMode);
-  const [open,setOpen]=useState(!focusOnly);
+  const [math,setMath]=useState(()=>compact ? false : readMode());
+  const [open,setOpen]=useState(!compact && !focusOnly);
   const [cleared,setCleared]=useState<string|null>(null);
   const padId=useId();
   const edit=(key:string,insertText?:string)=>{
@@ -50,9 +52,9 @@ export const MathInput = forwardRef<HTMLInputElement, {
   const switchMode=()=>{
     const selection=[field.current?.selectionStart??value.length,field.current?.selectionEnd??value.length];
     const next=!math;
-    try{sessionStorage.setItem(preference,next?'math':'system');}catch{/* Ephemeral mode still works. */}
+    try{if(!compact)sessionStorage.setItem(preference,next?'math':'system');}catch{/* Ephemeral mode still works. */}
     field.current?.blur();
-    flushSync(()=>{setMath(next);setOpen(true);});
+    flushSync(()=>{setMath(next);setOpen(compact ? next : true);});
     field.current?.focus({preventScroll:true});
     field.current?.setSelectionRange(selection[0]!,selection[1]!);
   };
@@ -63,14 +65,15 @@ export const MathInput = forwardRef<HTMLInputElement, {
       onChange={e=>onChange(e.target.value)} disabled={disabled}
       inputMode={math?'none':'text'} autoComplete="off" autoCapitalize="off" spellCheck={false}
       enterKeyHint="done" aria-label={label} placeholder={placeholder}
-      onFocus={()=>setOpen(true)} />
+      onFocus={()=>{if(!compact)setOpen(true);}} />
     {!disabled&&<>
       <div className="math-entry__tools">
-        <button type="button" className="math-entry__mode" onClick={switchMode}>
-          {math?'Klawiatura telefonu':'Klawiatura matematyczna'}
+        <button type="button" className="math-entry__mode" onClick={switchMode}
+          aria-label={math?'Klawiatura telefonu':'Klawiatura matematyczna'} title={math?'Klawiatura telefonu':'Klawiatura matematyczna'}>
+          {compact ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M5 9h2m3 0h2m3 0h4M5 12h2m3 0h2m3 0h4M7 16h10"/></svg> : math?'Klawiatura telefonu':'Klawiatura matematyczna'}
         </button>
         {math&&<button type="button" className="math-entry__mode" aria-controls={padId}
-          aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?'Schowaj':'Pokaż cyfry'}</button>}
+          aria-expanded={open} aria-label={compact ? open?'Schowaj klawiaturę':'Pokaż cyfry' : undefined} title={open?'Schowaj klawiaturę':'Pokaż cyfry'} onClick={()=>setOpen(v=>!v)}>{compact ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d={open ? 'm6 9 6 6 6-6' : 'm6 15 6-6 6 6'}/></svg> : open?'Schowaj':'Pokaż cyfry'}</button>}
       </div>
       {cleared!==null&&value===''&&<button type="button" className="math-entry__mode" onClick={()=>{
         flushSync(()=>onChange(cleared));setCleared(null);field.current?.focus({preventScroll:true});

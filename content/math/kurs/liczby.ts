@@ -1499,7 +1499,7 @@ export const NUMBERS_CARDS: Flashcard[] = [
   card('c-num-pow-4', 'num-powers', 'pulapka', r`Ile to $-2^2$, a ile $(-2)^2$?`, r`$-2^2 = -4$, $(-2)^2 = 4$ — bez nawiasu minus nie jest częścią podstawy.`),
 
   card('c-num-root-1', 'num-roots', 'wzor', r`$\sqrt{a \cdot b} = \;?$`, r`$\sqrt{a} \cdot \sqrt{b}$ (dla $a, b \ge 0$).`),
-  card('c-num-root-2', 'num-roots', 'wzor', r`$a^{\frac{m}{n}} = \;?$`, r`$\sqrt[n]{a^m}$ — mianownik to stopień pierwiastka, licznik to potęga.`),
+  card('c-num-root-2', 'num-roots', 'wzor', r`Dla $a>0$, $m\in\mathbb Z$ i dodatniego naturalnego $n$: $a^{m/n}=?$`, r`$a^{m/n}=\sqrt[n]{a^m}$ — mianownik wykładnika to stopień pierwiastka, licznik to potęga.`),
   card('c-num-root-3', 'num-roots', 'metoda', r`Jak uprościć $\sqrt{72}$?`, r`Znajdź największy kwadrat dzielący liczbę: $72 = 36 \cdot 2$, więc $\sqrt{72} = 6\sqrt{2}$.`),
   card('c-num-root-4', 'num-roots', 'pulapka', r`Czy $\sqrt{a + b} = \sqrt{a} + \sqrt{b}$?`, r`Nie. $\sqrt{9 + 16} = 5$, a $\sqrt{9} + \sqrt{16} = 7$.`),
 

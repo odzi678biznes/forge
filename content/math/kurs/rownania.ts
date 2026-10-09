@@ -1137,7 +1137,7 @@ export const EQUATIONS_QUESTIONS: Question[] = [
     skill: 'eq-abs',
     kind: 'transfer',
     difficulty: 4,
-    prompt: r`Punkt $x$ leży na osi między $-2$ a $4$ i jest dwa razy bliżej punktu $4$ niż punktu $-2$. Oblicz $x$.`,
+    prompt: r`Punkt $x$ leży na osi między $-2$ a $4$. Jego odległość od $4$ stanowi połowę odległości od $-2$. Oblicz $x$.`,
     answer: 2,
     verify: () => (8 - 2) / 3,
     hints: [

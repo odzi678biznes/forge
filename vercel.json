@@ -4,6 +4,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/nauczyciel.ts": { "maxDuration": 60 }
+    "api/tutor.ts": { "maxDuration": 120 },
+    "api/nauczyciel.ts": { "maxDuration": 60 },
+    "api/lektor.ts": { "maxDuration": 60 }
   }
 }

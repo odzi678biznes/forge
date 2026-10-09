@@ -514,7 +514,7 @@ const NEW_QUESTIONS: Question[] = [
     answer: 6,
     verify: () => Math.sqrt(2 * 18),
     hints: ['Jaki warunek spełnia środkowy wyraz ciągu geometrycznego?', r`$x^2 = 2 \cdot 18$.`, r`$x^2 = 36$.`, 'Wyrazy są dodatnie.'],
-    steps: [r`$x^2 = 36$.`, r`$x = 6$.`],
+    steps: [r`Równe ilorazy: $x/2=18/x$, więc $x^2=36$.`, r`Wyrazy są dodatnie, zatem $x=6$ (odrzucamy $-6$).`],
     errors: [['10', 'Wzięta średnia arytmetyczna.', r`W ciągu geometrycznym $x^2 = ac$.`]],
   }),
   choice({
@@ -608,7 +608,7 @@ const NEW_QUESTIONS: Question[] = [
       return Math.min(5 - (-5 + d) / 2, 5 - (-5 - d) / 2);
     },
     hints: ['Jak zapisać trzy wyrazy arytmetyczne, żeby suma była prosta?', r`$b - r, b, b + r$: suma to trzy razy $b$, więc $b = 5$.`, r`Warunek geometryczny: $6^2 = (5 - r)(10 + r)$.`, r`$r^2 + 5r - 14 = 0$.`],
-    steps: [r`$r = 2$ lub $r = -7$, więc $a = 5 - r \in \{3, 12\}$.`, r`Sprawdzenie: $3, 6, 12$ oraz $12, 6, 3$ — oba geometryczne. Najmniejsze $a = 3$.`],
+    steps: [r`Zapisz $a=5-r$, $b=5$, $c=5+r$, bo suma trzech wyrazów arytmetycznych wynosi $3b=15$.`, r`Warunek geometryczny: $6^2=(5-r)(10+r)$, czyli $r^2+5r-14=0$. Stąd $r=2$ lub $r=-7$, więc $a\in\{3,12\}$.`, r`Sprawdzenie: $3, 6, 12$ oraz $12, 6, 3$ — oba geometryczne. Najmniejsze $a = 3$.`],
     errors: [['12', 'Wybrane większe z dwóch rozwiązań.', 'Pytanie dotyczy najmniejszej możliwej wartości.']],
   }),
 
@@ -801,7 +801,7 @@ const NEW_QUESTIONS: Question[] = [
       return [(4 + d) / 4, (4 - d) / 4].filter((x) => x > 0 && x < 2).reduce((a, b) => a + b, 0);
     },
     hints: ['Jaki jest iloraz szeregu i kiedy szereg ma sumę?', r`$q = x - 1$, warunek $|x - 1| < 1 \iff 0 < x < 2$.`, r`$\frac{1}{1 - (x - 1)} = 2x \iff 1 = 2x(2 - x)$.`, r`$2x^2 - 4x + 1 = 0$ — sprawdź oba pierwiastki z warunkiem.`],
-    steps: [r`$x = 1 \pm \frac{\sqrt2}{2}$ — oba w przedziale $(0, 2)$.`, r`Suma: $2$.`],
+    steps: [r`Iloraz $q=x-1$ spełnia $|q|<1$, więc $0<x<2$. Suma szeregu to $1/(2-x)$.`, r`$1/(2-x)=2x$ daje $2x^2-4x+1=0$, więc $x=1\pm\frac{\sqrt2}{2}$. Oba pierwiastki należą do $(0,2)$.`, r`Suma rozwiązań: $2$.`],
     errors: [['1', 'Odrzucony pierwiastek, który spełnia warunek zbieżności.', r`Oba pierwiastki leżą w $(0, 2)$.`]],
   }),
 ];
@@ -814,13 +814,13 @@ export const SEQ_QUESTIONS: Question[] = [...SEQUENCE_QUESTIONS, ...NEW_QUESTION
 
 export const SEQ_CARDS: Flashcard[] = [
   card('c-seq-bas-1', 'seq-basics', 'metoda', 'Jak zbadać monotoniczność ciągu?', r`Zbadaj znak $a_{n+1} - a_n$.`),
-  card('c-seq-bas-2', 'seq-basics', 'pulapka', r`„Który wyraz jest równy 25?” — co z rozwiązaniem $n = 7{,}5$?`, 'Żaden wyraz nie jest równy 25 — numer wyrazu musi być naturalny.'),
+  card('c-seq-bas-2', 'seq-basics', 'pulapka', r`„Który wyraz jest równy 25?” — co z rozwiązaniem $n=7{,}5$?`, 'To rozwiązanie odrzucasz: numer wyrazu musi być naturalny. Sprawdź też pozostałe rozwiązania równania, jeśli istnieją.'),
 
   card('c-seq-ar-1', 'seq-arithmetic', 'wzor', 'Ciąg arytmetyczny: n-ty wyraz i suma?', r`$a_n = a_1 + (n - 1)r$, $S_n = \frac{a_1 + a_n}{2} \cdot n$`),
   card('c-seq-ar-2', 'seq-arithmetic', 'wzor', 'Warunek: a, b, c kolejne wyrazy arytmetyczne?', r`$2b = a + c$`),
 
-  card('c-seq-ge-1', 'seq-geometric', 'wzor', 'Ciąg geometryczny: n-ty wyraz i suma?', r`$a_n = a_1 q^{n-1}$, $S_n = a_1 \frac{1 - q^n}{1 - q}$`),
-  card('c-seq-ge-2', 'seq-geometric', 'wzor', 'Warunek: a, b, c kolejne wyrazy geometryczne?', r`$b^2 = ac$`),
+  card('c-seq-ge-1', 'seq-geometric', 'wzor', 'Ciąg geometryczny: n-ty wyraz i suma?', r`$a_n=a_1q^{n-1}$. Dla $q\ne1$: $S_n=a_1\frac{1-q^n}{1-q}$; dla $q=1$: $S_n=na_1$.`),
+  card('c-seq-ge-2', 'seq-geometric', 'wzor', 'Kiedy trzy niezerowe liczby a, b, c są kolejnymi wyrazami ciągu geometrycznego?', r`Gdy $b^2=ac$, równoważnie $b/a=c/b$. Założenie niezerowych liczb jest istotne.`),
 
   card('c-seq-mix-1', 'seq-mixed', 'metoda', 'Trzy wyrazy arytmetyczne o znanej sumie — jak je zapisać?', r`$b - r, b, b + r$ — suma $3b$.`),
   card('c-seq-mix-2', 'seq-mixed', 'definicja', 'Stała kwota vs stały procent?', 'Stała kwota — ciąg arytmetyczny. Stały procent — geometryczny.'),

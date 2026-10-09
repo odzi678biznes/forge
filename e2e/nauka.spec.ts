@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { chooseSubject, open } from './helpers';
+import { M1, M2, operation, solveWorked, expectExpression, openWorkedMore, mockLearningApis } from './worked-helpers';
+test.beforeEach(async ({ page }) => mockLearningApis(page));
 
 /**
  * Prototyp nauki: feed kart prowadzących do zadania CKE.
@@ -8,30 +10,22 @@ import { chooseSubject, open } from './helpers';
  * nauczyciel z wyraźnie oznaczonym trybem demonstracyjnym.
  */
 
-test('błąd prowadzi do łatwiejszego kroku tego samego zadania CKE', async ({ page }) => {
+test('błędną operację można poprawić w tym samym zadaniu, korzystając z oddzielnej teorii', async ({ page }) => {
   await open(page);
   await chooseSubject(page, 'Matematyka');
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
 
-  const relacja = page.locator('.feed__krok');
-  await expect(relacja).toContainText('Krok 1/9');
-  await page.getByRole('button', { name: /Potęgę.*w nawiasie/ }).click();
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await expect(page.getByText('✓ Dobrze', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Dalej/ }).click();
-
-  // Kolejność: celowo zła (dodawanie przed mnożeniem).
-  await expect(page.locator('.karta__pytanie')).toContainText('Ułóż działania');
-  for (const t of ['dodawanie w nawiasie', 'potęga w nawiasie', 'mnożenie', 'potęga całego']) {
-    await page.locator('.kolejnosc__pula button', { hasText: t }).click();
-  }
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await expect(page.getByText('↺ Jeszcze nie', { exact: true })).toBeVisible();
-  await expect(page.locator('.feed__komunikat')).toContainText('Wracamy o krok');
-  await page.getByRole('button', { name: /Dalej/ }).click();
-
-  await expect(relacja).toContainText('Łatwiejszy krok');
-  await expect(page.locator('.karta__pytanie')).toContainText('Co liczysz wcześniej');
+  const progress = page.getByRole('progressbar', { name: 'Postęp obliczeń zadania' });
+  await operation(page, M1, 0, false);
+  await expect(page.locator('.worked-calculation__feedback--incorrect')).toBeVisible();
+  await expect(progress).toHaveAttribute('aria-valuenow', '0');
+  await expectExpression(page, M1.initialTex);
+  await openWorkedMore(page);
+  await page.getByRole('button', { name: 'Teoria — przypomnij regułę', exact: true }).click();
+  await expect(page.locator('.worked-calculation__theory')).toContainText('odwrotność');
+  await operation(page, M1, 0);
+  await expect(progress).toHaveAttribute('aria-valuenow', '1');
+  await expectExpression(page, M1.steps[0]!.apply().tex);
 });
 
 test('pominięcie nie daje postępu, a postęp zapisuje się sam', async ({ page }) => {
@@ -44,8 +38,8 @@ test('pominięcie nie daje postępu, a postęp zapisuje się sam', async ({ page
   await expect(page.locator('.feed__komunikat')).toContainText('nie liczy się do postępu');
   await expect(pasek).toHaveAttribute('aria-valuenow', '0');
 
-  await page.getByRole('button', { name: /n % 10.*n \/\/ 10/ }).click();
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
+  await page.locator('.opcja').filter({ has: page.locator('annotation[encoding="application/x-tex"]', { hasText: /^101$/ }) }).click();
+  await expect(page.getByText('✓ Dobrze', { exact: true })).toBeVisible();
   await expect(pasek).toHaveAttribute('aria-valuenow', '1');
 
   // Wyjście zawsze widoczne; po ponownym uruchomieniu lekcja jest „w trakcie”.
@@ -71,10 +65,8 @@ test('po serii Dziś prowadzi do następnej lekcji, a trening rotuje karty', asy
   await open(page);
   await chooseSubject(page, 'Matematyka');
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
-  for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Pomiń' }).click();
-  await page.getByRole('group', { name: 'Odpowiedzi A–D' }).getByRole('button', { name: /^B\./ }).click();
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await page.getByRole('button', { name: /Dalej/ }).click();
+  await solveWorked(page);
+  await page.locator('.feed__primary').getByRole('button', { name: 'Dalej →', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Seria skończona' })).toBeVisible();
   await page.getByRole('button', { name: 'Wróć do „Dziś”' }).click();
   await expect(page.getByRole('region', { name: 'Rekomendowana nauka' })).toContainText('Potęgi o wykładniku całkowitym');
@@ -94,10 +86,8 @@ test('po serii Dziś prowadzi do następnej lekcji, a trening rotuje karty', asy
   await expect(page.locator('.karta__pytanie')).not.toHaveText(pierwsza ?? '');
   await page.getByRole('button', { name: /Wyjdź/ }).click();
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();
-  for (let i = 0; i < 9; i++) await page.getByRole('button', { name: 'Pomiń' }).click();
-  await page.getByRole('group', { name: 'Odpowiedzi A–D' }).getByRole('button', { name: /^B\./ }).click();
-  await page.getByRole('button', { name: 'Sprawdź odpowiedź' }).click();
-  await page.getByRole('button', { name: /Dalej/ }).click();
+  await solveWorked(page,M2);
+  await page.locator('.feed__primary').getByRole('button', { name: 'Dalej →', exact: true }).click();
   await page.getByRole('button', { name: 'Wróć do „Dziś”' }).click();
   await expect(page.getByRole('region', { name: 'Rekomendowana nauka' })).toContainText('Pierwiastki i wykładnik wymierny');
   await page.getByRole('button', { name: /Rozpocznij lekcję|Kontynuuj lekcję|Zrób powtórkę/ }).click();

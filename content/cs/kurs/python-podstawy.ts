@@ -770,13 +770,13 @@ export const PY_QUESTIONS: Question[] = [
 
 export const PY_CARDS: Flashcard[] = [
   card('c-py-b-1', 'cs-py-basics', 'definicja', 'Co dają `17 // 5` i `17 % 5`?', '3 (dzielenie całkowite) i 2 (reszta).'),
-  card('c-py-b-2', 'cs-py-basics', 'pulapka', 'Jaki typ ma `10 / 2`?', 'float (5.0) — całkowity wynik daje `//`.'),
+  card('c-py-b-2', 'cs-py-basics', 'pulapka', 'Jaki typ mają `10 / 2`, `10 // 2` i `10.0 // 2`?', '`10 / 2` daje float 5.0; `10 // 2` daje int 5; `10.0 // 2` daje float 5.0. Operator // zaokrągla iloraz w dół, lecz nie zawsze zwraca int.'),
 
   card('c-py-c-1', 'cs-py-conditions', 'wzor', 'Warunek roku przestępnego?', '`(r % 4 == 0 and r % 100 != 0) or r % 400 == 0`'),
   card('c-py-c-2', 'cs-py-conditions', 'pulapka', 'Kolejność gałęzi if/elif?', 'Od najbardziej szczegółowej — wykonuje się tylko pierwsza prawdziwa.'),
 
   card('c-py-l-1', 'cs-py-loops', 'definicja', 'Jakie liczby daje `range(2, 6)`?', '2, 3, 4, 5 — bez szóstki.'),
-  card('c-py-l-2', 'cs-py-loops', 'metoda', 'Jak przejść po cyfrach liczby n?', '`while n > 0:` cyfra = `n % 10`, potem `n //= 10`.'),
+  card('c-py-l-2', 'cs-py-loops', 'metoda', 'Jak przejść po cyfrach dodatniej liczby całkowitej n?', '`while n > 0:` odczytaj cyfrę przez `n % 10`, potem `n //= 10`. Dla liczby ujemnej użyj najpierw `abs(n)`, a cyfrę liczby 0 obsłuż osobno.'),
 
   card('c-py-f-1', 'cs-py-functions', 'pulapka', 'print czy return w funkcji?', '`return` oddaje wynik programowi; bez niego funkcja zwraca None.'),
   card('c-py-f-2', 'cs-py-functions', 'metoda', 'Skąd wziąć pierwiastek w Pythonie?', '`import math` i `math.sqrt(x)`.'),

@@ -3,7 +3,7 @@ import {
   type Attempt,
   type Question,
   type SkillState,
-} from '@/data/types';
+} from '../data/types';
 
 /**
  * Awans kompetencji (Blueprint sek. 4.1).

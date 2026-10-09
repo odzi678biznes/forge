@@ -607,7 +607,7 @@ export const DB_CARDS: Flashcard[] = [
   card('c-db-a-1', 'cs-sql-aggregate', 'definicja', 'WHERE czy HAVING dla warunku na COUNT?', 'HAVING — działa po grupowaniu.'),
   card('c-db-a-2', 'cs-sql-aggregate', 'pulapka', 'COUNT(*) a COUNT(kolumna)?', 'COUNT(kolumna) pomija NULL.'),
 
-  card('c-db-j-1', 'cs-sql-join', 'metoda', 'Jak znaleźć wiersze bez pary w drugiej tabeli?', 'LEFT JOIN … WHERE prawa.id IS NULL (albo NOT IN z podzapytaniem).'),
+  card('c-db-j-1', 'cs-sql-join', 'metoda', 'Jak znaleźć wiersze bez pary w drugiej tabeli?', 'Użyj NOT EXISTS ze skorelowanym podzapytaniem albo LEFT JOIN … WHERE prawa.id IS NULL, jeśli prawa.id nie jest NULL w dopasowanych rekordach. NOT IN wymaga wykluczenia NULL z podzapytania.'),
   card('c-db-j-2', 'cs-sql-join', 'pulapka', 'Co daje JOIN bez warunku ON?', 'Iloczyn kartezjański: każdy wiersz z każdym.'),
 
   card('c-db-m-1', 'cs-sql-modify', 'definicja', 'Klucz podstawowy a klucz obcy?', 'Podstawowy identyfikuje wiersz; obcy wskazuje wiersz innej tabeli.'),

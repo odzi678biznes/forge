@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MISSION_SESSION_KEY, readMissionSession, type ArenaDraft, type MissionSession } from './mission-session';
 import { useNativeBack } from '@/platform/back-navigation';
 import {
   MasteryLevel,
@@ -67,6 +68,7 @@ import {
 
 export type Screen =
   | 'loading'
+  | 'tutor'
   | 'command-center'
   | 'arena'
   | 'summary'
@@ -225,6 +227,19 @@ export function useForge(deps: ForgeDeps = {}) {
     return runnerRef.current;
   };
 
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const submitting = useRef(false);
+  const advancing = useRef<string | null>(null);
+  const missionSubject = useRef<SubjectId>('math');
+  const [draft, setDraft] = useState<ArenaDraft | null>(null);
+  const [sessionSaveError, setSessionSaveError] = useState<string | null>(null);
+  const persistSession = useCallback((session: MissionSession | null) => {
+    const value = JSON.stringify(session);
+    saveQueue.current = saveQueue.current.catch(() => {}).then(() => port().setPreference(MISSION_SESSION_KEY, value));
+    void saveQueue.current.then(() => setSessionSaveError(null), () => setSessionSaveError('Nie udało się zapisać sesji. Zostaw tę kartę otwartą i spróbuj ponownie.'));
+    return saveQueue.current;
+  }, []);
+
   const [ready, setReady] = useState(false);
   const [screen, updateScreen] = useState<Screen>('loading');
   const screenTrail = useRef<Screen[]>([]);
@@ -331,19 +346,59 @@ export function useForge(deps: ForgeDeps = {}) {
       await s.init();
       await loadProfile(s, () => cancelled);
       if (cancelled) return;
+      const prefs = await s.loadPreferences();
+      const session = readMissionSession(prefs.find(p => p.key === MISSION_SESSION_KEY)?.value);
+      const finished = session && (await s.loadMissions()).some(m => m.id === session.mission.id && m.finishedAt !== null);
+      if (cancelled) return;
+      if (session && !finished) {
+        missionSubject.current = session.subject;
+        setSubjectState(session.subject);
+        setMission(session.mission);
+        setPlan(session.plan);
+        setCurrent(session.current);
+        // A crash after recording an attempt but before checkpointing must not grade it twice.
+        const recorded = (await s.loadAttempts()).find(a => a.missionId === session.mission.id && a.questionId === session.current.question.id);
+        const recovered: AnsweredStep | null = recorded ? {
+          selection: session.current, grade: { correctness: recorded.correctness, error: session.current.question.commonErrors.find(e => e.id === recorded.errorId) ?? null, note: 'Zapisana ocena Twojej odpowiedzi.' },
+          hintLevel: recorded.hintLevel, confidence: recorded.confidence,
+          transition: null, userAnswer: recorded.userAnswer,
+        } : null;
+        const feedback = session.feedback ?? recovered;
+        setSteps(feedback && !session.steps.some(x => x.selection.question.id === feedback.selection.question.id)
+          ? [...session.steps, feedback] : session.steps);
+        setFeedback(feedback);
+        setDraft(session.draft);
+        setDiagnosticQueue(session.diagnosticQueue);
+        setRecentSkillIds(session.recentSkillIds);
+        askedRef.current = new Set(session.asked);
+        startedAtRef.current = session.startedAt;
+        setMissionDeadline(session.deadline);
+        if (session.plan.kind === 'diagnostic') diagnosticMissionRef.current = { id: session.mission.id, subject: session.subject };
+      }
       setReady(true);
-      setScreen('command-center');
+      setScreen(session && !finished ? 'arena' : 'command-center');
     })();
     return () => {
       cancelled = true;
     };
   }, [loadProfile]);
 
+  useEffect(() => {
+    if (!ready) return;
+    if (mission && mission.finishedAt === null && current && plan) {
+      void persistSession({ version: 1, subject: missionSubject.current, mission, plan, current,
+        steps, feedback, draft: draft?.questionId === current.question.id ? draft : null,
+        diagnosticQueue, recentSkillIds, asked: [...askedRef.current],
+        startedAt: startedAtRef.current, deadline: missionDeadline });
+    }
+  }, [ready, mission, plan, current, steps, feedback, draft, diagnosticQueue, recentSkillIds, missionDeadline, persistSession]);
+
   /**
    * Po zmianie danych z zewnatrz: przeladowanie profilu i porzucenie stanu
    * misji, ktory moglby wskazywac na usuniete rekordy.
    */
   const reloadProfile = useCallback(async () => {
+    setDraft(null);
     diagnosticMissionRef.current = null;
     askedRef.current = new Set();
     setMission(null);
@@ -406,6 +461,17 @@ export function useForge(deps: ForgeDeps = {}) {
 
   const beginMission = useCallback(
     (chosen: MissionPlan) => {
+      if (mission && mission.finishedAt === null && current && plan) {
+        setSubjectState(missionSubject.current);
+        setScreen('arena');
+        return;
+      }
+      missionSubject.current = subject;
+      setDraft(null);
+      setDiagnosticQueue([]);
+      diagnosticMissionRef.current = null;
+      submitting.current = false;
+      advancing.current = null;
       askedRef.current = new Set();
       const m = startMission(chosen, `m-${Date.now()}`, Date.now());
       const first = pickNext(skillStates, recentSkillIds, chosen.focusSkillId, chosen.focusSkillIds);
@@ -425,7 +491,7 @@ export function useForge(deps: ForgeDeps = {}) {
       setCurrent(first);
       setScreen('arena');
     },
-    [pickNext, skillStates, recentSkillIds],
+    [pickNext, skillStates, recentSkillIds, mission, current, plan, subject],
   );
 
   /**
@@ -437,7 +503,9 @@ export function useForge(deps: ForgeDeps = {}) {
    */
   const submitAnswer = useCallback(
     async (userAnswer: string, hintLevel: HintLevel, confidence: Confidence) => {
-      if (!current || !mission || running) return;
+      if (!current || !mission || running || feedback || submitting.current || mission.finishedAt !== null) return;
+      submitting.current = true;
+      try {
 
       let result: Grade;
       let code: CodeFeedback | undefined;
@@ -465,7 +533,7 @@ export function useForge(deps: ForgeDeps = {}) {
 
       const now = Date.now();
       const attempt: Attempt = {
-        id: `a-${now}-${current.question.id}`,
+        id: `a-${mission.id}-${current.question.id}`,
         questionId: current.question.id,
         skillId: current.skill.id,
         missionId: mission.id,
@@ -496,16 +564,17 @@ export function useForge(deps: ForgeDeps = {}) {
         ...(code ? { code } : {}),
       };
 
+      await port().appendAttempt(attempt);
+      await port().saveSkillState(saved);
       setSkillStates(nextStates);
       setAttempts((prev) => [...prev, attempt]);
       setSteps((prev) => [...prev, step]);
       setFeedback(step);
       setRecentSkillIds((prev) => [current.skill.id, ...prev].slice(0, 10));
 
-      await port().appendAttempt(attempt);
-      await port().saveSkillState(saved);
+      } finally { submitting.current = false; }
     },
-    [current, mission, skillStates, running],
+    [current, mission, skillStates, running, feedback],
   );
 
   /**
@@ -546,6 +615,8 @@ export function useForge(deps: ForgeDeps = {}) {
         finishedAt: Date.now(),
       };
       await port().saveMission(finished);
+      await persistSession(null);
+      setDraft(null);
       setMission(finished);
       // Bez tego rytm tygodnia aktualizowal sie dopiero po przeladowaniu.
       setMissions((prev) => [...prev.filter((x) => x.id !== finished.id), finished]);
@@ -560,8 +631,11 @@ export function useForge(deps: ForgeDeps = {}) {
 
   /** Przejscie do kolejnego pytania albo domkniecie misji. */
   const advance = useCallback(async () => {
-    if (!mission || !plan) return;
+    if (!mission || !plan || !feedback || advancing.current === current?.question.id) return;
+    advancing.current = current?.question.id ?? null;
+    try {
     setFeedback(null);
+    setDraft(null);
 
     // Tryb diagnozy: kolejne pytanie bierzemy z ustalonej kolejki.
     if (diagnosticQueue.length > 0) {
@@ -592,9 +666,15 @@ export function useForge(deps: ForgeDeps = {}) {
     askedRef.current.add(next.question.id);
     startedAtRef.current = Date.now();
     setCurrent(next);
+    } catch {
+      advancing.current = null;
+      setFeedback(feedback);
+      setSessionSaveError('Nie udało się zapisać końca sesji. Spróbuj ponownie przejść dalej.');
+    }
   }, [
     mission,
     plan,
+    feedback,
     steps.length,
     current,
     recentSkillIds,
@@ -628,6 +708,10 @@ export function useForge(deps: ForgeDeps = {}) {
   );
 
   const startDiagnostic = useCallback(() => {
+    if (mission && mission.finishedAt === null) { setSubjectState(missionSubject.current); setScreen('arena'); return; }
+    missionSubject.current = subject;
+    advancing.current = null;
+    setDraft(null);
     const [first, ...rest] = diagnosticSet;
     const probe = first ? asProbe(first) : null;
     if (!probe) return;
@@ -658,7 +742,7 @@ export function useForge(deps: ForgeDeps = {}) {
     setFeedback(null);
     setCurrent(probe);
     setScreen('arena');
-  }, [diagnosticSet, asProbe, subject]);
+  }, [diagnosticSet, asProbe, subject, mission]);
 
   /**
    * Raport liczony wylacznie z prob nalezacych do misji diagnostycznej.
@@ -715,11 +799,6 @@ export function useForge(deps: ForgeDeps = {}) {
   );
 
   const toCommandCenter = useCallback(() => {
-    setMission(null);
-    setPlan(null);
-    setSteps([]);
-    setFeedback(null);
-    setMissionDeadline(null);
     setScreen('command-center');
   }, []);
 
@@ -877,6 +956,10 @@ export function useForge(deps: ForgeDeps = {}) {
 
   return {
     state,
+    draft,
+    setDraft,
+    sessionSaveError,
+    resumeMission: () => { setSubjectState(missionSubject.current); setScreen('arena'); },
     skills,
     topics,
     questions,

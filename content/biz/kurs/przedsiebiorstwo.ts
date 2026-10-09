@@ -707,7 +707,7 @@ export const FIRM_CARDS: Flashcard[] = [
   card('c-bp-s-1', 'biz-environment-swot', 'metoda', 'SWOT — wewnętrzne czy zewnętrzne?', 'S i W: wewnętrzne. O i T: zewnętrzne.'),
   card('c-bp-s-2', 'biz-environment-swot', 'definicja', 'Co chroni znak towarowy?', 'Oznaczenia odróżniające produkty: nazwę, logo.'),
 
-  card('c-bp-r-1', 'biz-profitability', 'wzor', 'Próg rentowności ilościowy?', '$Q = \\frac{K_{\\text{stałe}}}{c - k_{zm}}$'),
+  card('c-bp-r-1', 'biz-profitability', 'wzor', 'Próg rentowności ilościowy w modelu liniowym?', '$Q = \\frac{K_{\\text{stałe}}}{c-k_{zm}}$ przy stałej cenie c i jednostkowym koszcie zmiennym, gdy $c>k_{zm}$. Przy dodatnich kosztach stałych i $c\\le k_{zm}$ nie ma dodatniego progu pokrycia kosztów.'),
   card('c-bp-r-2', 'biz-profitability', 'wzor', 'Rentowność sprzedaży?', 'zysk : przychody · 100%.'),
 
   card('c-bp-f-1', 'biz-financing-risk', 'definicja', 'Anioł biznesu?', 'Prywatny inwestor: kapitał i doradztwo w zamian za udziały.'),

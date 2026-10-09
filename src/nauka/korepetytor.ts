@@ -26,9 +26,10 @@ export function raportKorepetytora(stan: StanNauki, l: Lekcja, przedmiot: string
           return {
             krok: k.pytanie.slice(0, 160),
             etap: k.etap,
-            poprawnaZaPierwszym: w.pierwsza === true,
+            // Only independent recall justifies reducing scaffolding.
+            poprawnaZaPierwszym: w.pierwsza === true && !w.wspomagana,
             proby: w.proby,
-            czasS: w.czas !== undefined ? Math.round(w.czas / 1000) : null,
+            czasS: w.czas !== undefined && !w.wspomagana ? Math.round(w.czas / 1000) : null,
           };
         })
     : [];

@@ -1,0 +1,64 @@
+.workspace { border:1px solid var(--line-strong); border-radius:16px; background:var(--bg-deep); padding:20px; display:grid; gap:16px; min-width:0; }
+.workspace h2 { font-size:1.15rem; margin:0 0 6px; }
+.workspace h3 { font-size:1.1rem; margin:12px 0 8px; }
+.workspace p { margin:6px 0; line-height:1.55; }
+.workspace__header { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+.workspace__header p,.workspace__small,.workspace__save { font-size:.85rem; color:var(--text-muted); }
+.workspace button { min-height:44px; border:1px solid var(--line-strong); border-radius:10px; background:var(--bg); color:var(--text); padding:8px 12px; font-size:.9rem; cursor:pointer; }
+.workspace button[aria-pressed=true],.workspace button[aria-current=step] { border-color:var(--progress); color:var(--progress); background:var(--bg-deep); }
+.workspace button:disabled { opacity:.5; cursor:default; }
+.workspace__modes,.workspace__actions,.workspace__plan nav { display:flex; flex-wrap:wrap; gap:8px; }
+.workspace label { display:block; margin-bottom:8px; font-size:.9rem; }
+.workspace textarea { display:block; width:100%; min-height:90px; resize:vertical; padding:12px; font:inherit; line-height:1.6; color:var(--text); background:var(--bg); border:1px solid var(--line-strong); border-radius:10px; margin-bottom:10px; }
+.workspace__plan { border-left:3px solid var(--progress); padding-left:14px; }
+.workspace__eyebrow { color:var(--progress); font-size:.85rem; }
+.workspace__history ol { padding-left:20px; max-height:260px; overflow:auto; }
+.workspace__history li { margin:12px 0; }
+.workspace code { white-space:pre-wrap; overflow-wrap:anywhere; }
+.workspace__history .workspace__actions { margin-top:8px; }
+.workspace__message,.workspace__preview { border:1px solid var(--progress); border-radius:10px; padding:12px; }
+.workspace__previous { margin-top:12px; color:var(--text-muted); font-size:.9rem; }
+.workspace__previous ol { padding-left:20px; }
+.workspace__previous span { white-space:pre-wrap; overflow-wrap:anywhere; }
+.workspace .teacher-companion { margin:0; padding:10px 12px; }
+.workspace .math-entry input { width:100%; font-size:1.15rem; padding:12px; }
+.workspace__coach-switch { margin-top:14px; border-top:1px solid var(--line-strong); padding-top:12px; }
+.workspace__coach-switch label { display:flex; align-items:center; gap:10px; min-height:44px; margin:0; }
+.workspace__coach-switch input { width:20px; height:20px; flex:none; accent-color:var(--progress); }
+.workspace__coach { border-left:3px solid var(--progress); padding:12px; background:var(--bg); border-radius:10px; }
+.workspace__coach .workspace__small { overflow-wrap:anywhere; }
+.workspace__footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.workspace__footer .teacher-companion--compact { border:0; background:transparent; padding:0; flex:1; justify-content:flex-start; flex-wrap:wrap; }
+.workspace--compact .math-entry__tools { justify-content:flex-end; }
+.workspace__icon,.workspace--compact .math-entry__tools .math-entry__mode { display:inline-flex; align-items:center; justify-content:center; width:44px; padding:8px; flex-shrink:0; }
+.workspace__syntax-help > summary { display:flex; align-items:center; justify-content:center; width:44px; min-height:44px; margin:8px 0; border:1px solid var(--line-strong); border-radius:10px; cursor:pointer; list-style:none; }
+.workspace__syntax-help > summary::-webkit-details-marker { display:none; }
+@media(max-width:540px) { .workspace { padding:14px; } .workspace__header { display:block; } .workspace__header>button { margin-top:8px; } }
+.course-notebook { width:min(100%,720px); overflow-y:auto; }
+.course-notebook > .btn { align-self:flex-end; }
+
+.workspace--simple { gap:12px; }
+.workspace__simple-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.workspace__simple-head h2 { margin:0; }
+.workspace__simple-head .workspace__actions { flex-wrap:nowrap; gap:4px; }
+.workspace__simple-input { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:start; }
+.workspace__simple-input .math-entry { min-width:0; }
+.workspace__simple-input .math-entry__tools { justify-content:flex-end; }
+.workspace--simple .workspace__calculate { min-height:52px; background:var(--progress); color:var(--bg-deep); font-weight:600; }
+.workspace__options { position:relative; }
+.workspace__options > summary { display:flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid var(--line-strong); border-radius:10px; cursor:pointer; list-style:none; font-size:1.4rem; }
+.workspace__options > summary::-webkit-details-marker { display:none; }
+.workspace__options > div { position:absolute; right:0; top:50px; z-index:5; width:min(280px,75vw); padding:14px; background:var(--bg-raised); border:1px solid var(--line-strong); border-radius:12px; box-shadow:0 8px 24px #0005; display:grid; gap:12px; }
+.workspace__options label { display:flex; align-items:center; gap:8px; margin:0; }
+.workspace__options input { width:20px; height:20px; flex-shrink:0; }
+.workspace__result { border-top:1px solid var(--line-strong); padding-top:12px; display:grid; gap:8px; }
+.workspace__result-source { color:var(--text-muted); overflow-wrap:anywhere; }
+.workspace__result-value { font-size:1.3rem; overflow-x:auto; }
+.workspace__result .workspace__actions { align-items:center; }
+.workspace--simple .workspace__coach { padding:0; border:0; background:none; }
+.workspace__simple-coach { color:var(--text-muted); font-size:.92rem; }
+.workspace__simple-coach p { margin:0; }
+.workspace__notation { display:grid; gap:10px; padding:12px; border:1px solid var(--line-strong); border-radius:10px; }
+.workspace--simple > .teacher-companion { border:0; background:none; padding:0; justify-content:flex-end; }
+.workspace--simple .workspace__history { display:grid; gap:12px; }
+.workspace--simple .workspace__message { border:0; border-left:2px solid var(--progress); padding:8px; font-size:.9rem; }

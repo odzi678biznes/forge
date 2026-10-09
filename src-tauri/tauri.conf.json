@@ -28,8 +28,9 @@
         "script-src": "'self' 'wasm-unsafe-eval'",
         "style-src": "'self' 'unsafe-inline'",
         "font-src": "'self' data:",
-        "img-src": "'self' data:",
-        "connect-src": "'self' ipc: http://ipc.localhost"
+        "img-src": "'self' data: blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://forge-teacher.vercel.app http://localhost:1420 http://127.0.0.1:1420",
+        "media-src": "'self' blob:"
       }
     }
   },

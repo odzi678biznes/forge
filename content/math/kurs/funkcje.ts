@@ -1090,7 +1090,7 @@ export const FUNCTIONS_CARDS: Flashcard[] = [
 
   card('c-fn-gr-1', 'fn-graph', 'metoda', 'Z której osi czytasz dziedzinę, a z której zbiór wartości?', r`Dziedzina i monotoniczność — oś $x$. Wartości i zbiór wartości — oś $y$.`),
   card('c-fn-gr-2', 'fn-graph', 'definicja', r`$f(x) > 0$ na wykresie?`, r`Te $x$, dla których wykres leży nad osią $x$.`),
-  card('c-fn-gr-3', 'fn-graph', 'metoda', r`Jak graficznie rozwiązać $f(x) = c$?`, r`Narysuj prostą $y = c$ i policz punkty wspólne z wykresem.`),
+  card('c-fn-gr-3', 'fn-graph', 'metoda', r`Jak graficznie rozwiązać $f(x) = c$?`, r`Narysuj prostą $y=c$ i odczytaj współrzędne $x$ wszystkich punktów wspólnych z wykresem. Liczba punktów mówi, ile jest rozwiązań.`),
 
   card('c-fn-sh-1', 'fn-shift', 'wzor', r`$y = f(x - a) + b$ to przesunięcie o?`, r`Wektor $[a, b]$: o $a$ w prawo i o $b$ w górę.`),
   card('c-fn-sh-2', 'fn-shift', 'pulapka', r`$f(x + 3)$ — w którą stronę?`, 'W LEWO o 3. Plus w nawiasie to ruch w stronę minusów.'),

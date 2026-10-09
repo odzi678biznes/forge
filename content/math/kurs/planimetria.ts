@@ -553,7 +553,7 @@ export const PLAN_QUESTIONS: Question[] = [
     },
     tolerance: 1e-9,
     hints: ['Na jakie części wysokość dzieli bok 14?', r`Na $x$ i $14 - x$ — powstają dwa trójkąty prostokątne.`, r`$h^2 = 13^2 - x^2 = 15^2 - (14 - x)^2$.`, r`Odejmij równania: $x = 5$.`],
-    steps: [r`$169 - x^2 = 225 - 196 + 28x - x^2 \Rightarrow x = 5$.`, r`$h = \sqrt{169 - 25} = 12$.`],
+    steps: [r`Wysokość dzieli bok $14$ na $x$ i $14-x$. Z twierdzenia Pitagorasa: $h^2=13^2-x^2=15^2-(14-x)^2$.`, r`$169 - x^2 = 225 - 196 + 28x - x^2 \Rightarrow x = 5$.`, r`$h = \sqrt{169 - 25} = 12$.`],
     errors: [['84', 'Podane pole zamiast wysokości.', 'Pole to ½ · 14 · h — pytanie jest o h.']],
   }),
 

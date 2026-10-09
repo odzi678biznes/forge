@@ -811,7 +811,7 @@ export const ALGEBRA_QUESTIONS: Question[] = [
       r`$2^3 + 1^3 = 8 + 1$.`,
       r`$27 - 9$.`,
     ],
-    steps: [r`$(2+1)^3 = 27$, $2^3 + 1^3 = 9$.`, r`$27 - 9 = 18$ — to są właśnie wyrazy $3a^2b + 3ab^2 = 12 + 6$.`],
+    steps: [r`$(2+1)^3 = 27$, $2^3 + 1^3 = 9$.`, r`$27 - 9 = 18$. We wzorze na sześcian sumy dla $a=2$, $b=1$ odpowiada to wyrazom $3a^2b + 3ab^2 = 3\cdot4\cdot1 + 3\cdot2\cdot1 = 12 + 6$.`],
     errors: [['0', r`Założenie, że $(a+b)^3 = a^3 + b^3$.`, r`$(a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3$.`]],
   }),
   numeric({
@@ -1158,6 +1158,6 @@ export const ALGEBRA_CARDS: Flashcard[] = [
   card('c-alg-cub-4', 'alg-cubes', 'wzor', r`$a^3 + b^3 = \;?$`, r`$(a+b)(a^2 - ab + b^2)$`),
 
   card('c-alg-irr-1', 'alg-irrational', 'wzor', r`$\sqrt{a^2} = \;?$`, r`$|a|$`),
-  card('c-alg-irr-2', 'alg-irrational', 'metoda', r`Jak usunąć niewymierność z $\frac{1}{\sqrt{a} - b}$?`, r`Pomnóż licznik i mianownik przez sprzężenie $\sqrt{a} + b$; w mianowniku wyjdzie $a - b^2$.`),
+  card('c-alg-irr-2', 'alg-irrational', 'metoda', r`Jak użyć sprzężenia w $\frac{1}{\sqrt a-b}$?`, r`Przy $a\ge0$, $\sqrt a-b\ne0$ oraz $\sqrt a+b\ne0$ pomnóż licznik i mianownik przez $\sqrt a+b$: otrzymasz $\frac{\sqrt a+b}{a-b^2}$. Gdy sprzężenie jest zerem, ta metoda jest niedozwolona — nie mnożymy przez $0/0$.`),
   card('c-alg-irr-3', 'alg-irrational', 'pulapka', r`Ile to $\sqrt{(\sqrt{3} - 2)^2}$?`, r`$2 - \sqrt{3}$, bo $\sqrt{3} - 2 < 0$.`),
 ];

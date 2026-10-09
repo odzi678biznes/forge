@@ -427,7 +427,7 @@ const NEW_QUESTIONS: Question[] = [
     },
     tolerance: 1e-4,
     hints: ['Co musi się stać z licznikiem w x = 1, żeby granica była skończona?', 'Musi się zerować (inaczej iloraz ucieka do nieskończoności).', r`$1 + a + 2 = 0$.`, r`Z $a = -3$: rozłóż licznik i skróć.`],
-    steps: [r`$x^2 - 3x + 2 = (x - 1)(x - 2)$.`, r`Granica: $1 - 2 = -1$.`],
+    steps: [r`Skończona granica wymaga wyzerowania licznika przy $x=1$: $1+a+2=0$, więc $a=-3$.`, r`$x^2 - 3x + 2 = (x - 1)(x - 2)$. Dla $x\ne1$ skracamy czynnik $x-1$.`, r`Granica: $1 - 2 = -1$.`],
     errors: [['-3', r`Podane $a$ zamiast granicy.`, 'Pytanie dotyczy wartości granicy.']],
   }),
 
@@ -591,7 +591,7 @@ const NEW_QUESTIONS: Question[] = [
     tolerance: 0.001,
     verify: () => 8 / 3,
     hints: ['Jakie wzory trzeba połączyć?', r`Iloczyn $x \cdot \sqrt{4 - x}$ i łańcuch dla pierwiastka.`, r`$f'(x) = \sqrt{4 - x} - \frac{x}{2\sqrt{4 - x}}$.`, r`Wspólny mianownik: $\frac{2(4 - x) - x}{2\sqrt{4 - x}}$.`],
-    steps: [r`$8 - 3x = 0$.`, r`$x = \frac83$.`],
+    steps: [r`$f'(x)=\sqrt{4-x}-\frac{x}{2\sqrt{4-x}}=\frac{8-3x}{2\sqrt{4-x}}$. Dla $x<4$ mianownik nie jest zerem.`, r`$8-3x=0$, zatem $x=\frac83\approx2{,}667$.`],
     errors: [['4', 'Podany koniec dziedziny.', 'W x = 4 pochodna nie istnieje — szukasz zera licznika.']],
   }),
 
@@ -695,7 +695,7 @@ const NEW_QUESTIONS: Question[] = [
     skill: 'deriv-monotonic',
     kind: 'typical',
     difficulty: 3,
-    prompt: r`Funkcja $f(x) = x^3 - 3x^2$ jest malejąca w przedziale $\langle a, b \rangle$. Podaj $b$.`,
+    prompt: r`Największym przedziałem, w którym funkcja $f(x) = x^3 - 3x^2$ jest malejąca, jest $\langle a, b \rangle$. Podaj $b$.`,
     answer: 2,
     verify: () => 6 / 3,
     hints: ['Jaka jest pochodna w postaci iloczynowej?', r`$f'(x) = 3x^2 - 6x = 3x(x - 2)$.`, r`Kiedy $3x(x - 2) \le 0$?`, 'Między pierwiastkami.'],
@@ -802,7 +802,7 @@ const NEW_QUESTIONS: Question[] = [
     answer: 3,
     verify: () => (9 - 3) / 2,
     hints: ['Jaki warunek konieczny musi zachodzić w ekstremum?', r`$f'(1) = 0$.`, r`$f'(x) = 3x^2 + 2ax - 9$, więc $3 + 2a - 9 = 0$.`, 'Wyznacz a i sprawdź zmianę znaku pochodnej.'],
-    steps: [r`$a = 3$: $f'(x) = 3(x + 3)(x - 1)$.`, r`Znak zmienia się w $x = 1$ — ekstremum jest.`],
+    steps: [r`Warunek konieczny: $f'(1)=3+2a-9=0$, więc $a=3$.`, r`Wtedy $f'(x)=3(x+3)(x-1)$. Znak pochodnej zmienia się w $x=1$ z ujemnego na dodatni — minimum rzeczywiście istnieje.`],
     errors: [['-3', 'Zły znak przy rozwiązywaniu równania.', r`$2a = 6$.`]],
   }),
 
@@ -962,7 +962,7 @@ export const DERIV_CARDS: Flashcard[] = [
   card('c-der-mon-1', 'deriv-monotonic', 'definicja', 'Znak pochodnej a monotoniczność?', 'f′ > 0 — rośnie, f′ < 0 — maleje.'),
   card('c-der-mon-2', 'deriv-monotonic', 'pulapka', 'Czy łączyć przedziały monotoniczności sumą?', 'Nie, jeśli funkcja nie jest monotoniczna na całej sumie (np. 1/x).'),
 
-  card('c-der-ext-1', 'deriv-extrema', 'definicja', 'Warunek ekstremum?', r`$f'(x_0) = 0$ i zmiana znaku $f'$ w $x_0$.`),
+  card('c-der-ext-1', 'deriv-extrema', 'metoda', 'Jak zmiana znaku pochodnej pozwala rozpoznać ekstremum?', r`Dla funkcji różniczkowalnej w otoczeniu $x_0$: zmiana znaku $f'$ z + na − daje maksimum, z − na + minimum. Samo $f'(x_0)=0$ nie wystarcza. Osobno sprawdź miejsca bez pochodnej, np. $|x|$ w 0.`),
   card('c-der-ext-2', 'deriv-extrema', 'pulapka', 'Wartość największa w przedziale domkniętym?', 'Porównaj ekstrema z wartościami na końcach przedziału.'),
 
   card('c-der-opt-1', 'deriv-optimization', 'metoda', 'Schemat zadania optymalizacyjnego?', 'Zmienna → funkcja celu → dziedzina → pochodna → znak (uzasadnienie) → odpowiedź na pytanie.'),

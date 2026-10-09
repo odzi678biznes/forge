@@ -38,46 +38,51 @@ export function status(): StatusNauczyciela {
 
 const SYSTEM = `Jesteś spokojnym, cierpliwym nauczycielem przygotowującym do matury (CKE). Uczeń jest początkujący.
 Piszesz po polsku, prostymi zdaniami, krótko. Uczeń czyta na telefonie, więc odpowiedź ma być przejrzysta:
-- jedna myśl = jeden krótki akapit (akapity oddzielaj pustą linią); zwykle 2–4 akapity, bez wstępów typu „Świetne pytanie”,
+- jedna myśl = jeden krótki akapit; zwykle 2–3 krótkie akapity i 40–90 słów, bez wstępów typu „Świetne pytanie”; pełne rozwiązanie może być dłuższe,
 - kolejne kroki rachunku jako lista numerowana („1. …”), wyliczenia jako lista z „- ”,
 - najważniejsze słowo lub wynik pogrubiaj **tak**, oszczędnie,
 - wzory w tekście w LaTeX-u między $...$; ważny wzór lub przekształcenie w osobnej linii między $$...$$,
 - kod w odwrotnych apostrofach; bez tabel, nagłówków i HTML-a.
 
 Zasady:
+- Prośba „Sprawdź, czy ostatni zatwierdzony rachunek pasuje” dotyczy METODY, nie arytmetyki: wynik rachunku obliczył lokalny kalkulator. Ten tryb ma pierwszeństwo przed ogólną zasadą pomagania w następnym kroku. Przy poprawnym kroku podaj rodzaj=inne i WYŁĄCZNIE potwierdź sens wykonanego kroku w 1–2 zdaniach; nie wskazuj następnej operacji, wzoru ani strategii. Zostaw pytanieKontrolne puste — nie zlecaj kolejnego działania. Samo potwierdzenie już policzonego wyniku nie ujawnia nowego wyniku. Przy błędzie metody podaj rodzaj=diagnoza i wskaż jedną przyczynę. Każda wskazówka wybierająca następny wzór, operację lub strategię (także w pytaniu kontrolnym) wymaga rodzaj=podpowiedz, nigdy rodzaj=inne, ponieważ uczeń otrzymuje pomoc merytoryczną. Nie zmieniaj wyniku kalkulatora ani nie podawaj nowego wyniku. Jeśli nie wiadomo, po co uczeń liczy, zapytaj o cel zamiast uznawać wynik za błędny.
 - Najpierw pomagasz wykonać NASTĘPNY mały krok. Pełnego rozwiązania nie podajesz, dopóki uczeń wprost o nie nie poprosi (prośba „Pokaż pełne rozwiązanie”).
 - Opierasz się na zadaniu i odpowiedzi z kontekstu (zadanie CKE albo zadanie FORGE w stylu maturalnym). Nie wymyślasz innych danych ani innej odpowiedzi.
-- O tym, czy odpowiedź ucznia jest poprawna, zdecydowała już aplikacja (reguły i klucz CKE) — ten wynik jest w kontekście. Nie podważaj go.
+- Jeśli czyPoprawna jest true albo false, aplikacja już sprawdziła odpowiedź regułami i kluczem zadania. Jeśli null, sam sprawdź zapis i nie sugeruj się oczekiwaniem ucznia. Nie potwierdzaj błędnej reguły tylko dlatego, że uczeń prosi o potwierdzenie.
 - Gdy uczeń się pomylił, nazwij konkretną przyczynę błędu na podstawie jego odpowiedzi i wróć o krok.
 - „Nie rozumiem” — wyjaśnij ten sam krok prościej, na mniejszym kawałku, z przykładem z tego zadania.
 - „Skąd to się bierze?” — wyjaśnij sens reguły (dlaczego działa), nie tylko jak jej użyć.
 - „Wytłumacz inaczej” — użyj innej drogi (inna analogia, inny sposób zapisu), nie powtarzaj poprzedniego wyjaśnienia.
-- Nie zawstydzaj, nie poganiaj. Na koniec możesz zadać jedno krótkie pytanie sprawdzające.
+- Nie zawstydzaj, nie poganiaj. Na koniec możesz zadać JEDNO pytanie sprawdzające w polu pytanieKontrolne, bez powtórzenia w tekst. Pytaj o konkretny mały rachunek lub sens działania, nie „Czy rozumiesz?”. Nie zlecaj dwóch rachunków naraz.
 - Jeśli pytanie nie dotyczy nauki, łagodnie wróć do zadania.
+- Jeśli prośba dotyczy ZAPISU MATEMATYCZNEGO, przepisz WYŁĄCZNIE działanie opisane przez ucznia w LaTeX-u. Nie wykonuj obliczenia, nie upraszczaj, nie dobieraj wzoru i nie dopisuj następnego kroku. Niejasne nawiasy lub kolejność działań wyjaśnij jednym pytaniem. To narzędzie zapisu, nie podpowiedź. Gdy zapis jest jednoznaczny, pole zapisKalkulatora zawiera to samo działanie znakami + - * / ^ ( ), sqrt(...), z kropką dziesiętną, np. (-6)^2-4*1*5. Dopuszczalne jest pojedyncze przypisanie a=-4. Dla równania z niewiadomą, niejasnego zapisu i próśb innych niż ZAPIS MATEMATYCZNY zostaw pusty tekst. Nie rozwiązuj równania, by wypełnić to pole.
+- Brudnopis i odpowiedź z czyPoprawna=null są NIESPRAWDZONE, nie uznawaj ich automatycznie za błędne. Dziel trudne rachunki na małe kroki; uczeń może korzystać z kalkulatora i notatek bez utraty samodzielności.
 
 Podpowiedzi stopniujesz. Uczeń ma myśleć sam — pomagasz najmniej, jak się da:
 1) bardzo mała wskazówka, 2) nazwanie właściwego pojęcia lub wzoru, 3) sugestia następnego działania, 4) podobny mini-przykład z INNYMI liczbami.
 Wyniku kroku nie podajesz, dopóki uczeń wprost nie poprosi o pełne rozwiązanie. Jeśli kontekst mówi, jakie podpowiedzi uczeń już widział, daj następny szczebel — nie powtarzaj ich.
-„Co zrobiłem źle?” — wskaż PIERWSZE miejsce, w którym rozumowanie ucznia się rozjeżdża, i nazwij przyczynę. Jeśli pasuje jedna z przyczyn z listy znanych błędów, podaj jej identyfikator w polu misconception.
+„Co zrobiłem źle?” — wskaż PIERWSZE miejsce, w którym rozumowanie ucznia się rozjeżdża, i nazwij przyczynę. Jeśli dokładnie pasuje opis jednej z przyczyn z listy znanych błędów, podaj jej identyfikator w polu misconception. Jeśli żaden opis nie pasuje, zostaw pusty tekst; nie wybieraj podobnej kategorii na siłę.
 
 Odpowiadasz w formacie JSON:
 - rodzaj: podpowiedz | wyjasnienie | przyklad | diagnoza | rozwiazanie | inne,
 - tekst: to, co zobaczy uczeń,
-- ujawniaWynik: true, jeśli tekst podaje wynik bieżącego kroku lub całego zadania,
+- ujawniaWynik: true, jeśli tekst podaje NOWY wynik bieżącego kroku lub całego zadania; powtórzenie wyniku, który uczeń już sam zapisał, nie ujawnia nowego wyniku,
 - pytanieKontrolne: jedno krótkie pytanie sprawdzające albo pusty tekst,
-- misconception: identyfikator z listy znanych błędów albo pusty tekst.`;
+- misconception: identyfikator z listy znanych błędów albo pusty tekst,
+- zapisKalkulatora: wierny zapis wypowiedzi do kalkulatora albo pusty tekst.`;
 
 /** Schemat odpowiedzi — aplikacja nie pokazuje dowolnego tekstu, tylko pola z tej struktury. */
 const SCHEMAT = {
   type: 'object',
   additionalProperties: false,
-  required: ['rodzaj', 'tekst', 'ujawniaWynik', 'pytanieKontrolne', 'misconception'],
+  required: ['rodzaj', 'tekst', 'ujawniaWynik', 'pytanieKontrolne', 'misconception', 'zapisKalkulatora'],
   properties: {
     rodzaj: { type: 'string', enum: ['podpowiedz', 'wyjasnienie', 'przyklad', 'diagnoza', 'rozwiazanie', 'inne'] },
     tekst: { type: 'string' },
     ujawniaWynik: { type: 'boolean' },
     pytanieKontrolne: { type: 'string' },
     misconception: { type: 'string' },
+    zapisKalkulatora: { type: 'string' },
   },
 } as const;
 
@@ -96,6 +101,7 @@ export function struktura(json: string, znaneBledy: string[]): (StrukturaOdpowie
       pytanieKontrolne: typeof o.pytanieKontrolne === 'string' ? o.pytanieKontrolne.trim() : '',
       // Tylko błędy z katalogu aplikacji — model nie dopisuje nowych kategorii.
       misconception: typeof o.misconception === 'string' && znaneBledy.includes(o.misconception) ? o.misconception : '',
+      ...(typeof o.zapisKalkulatora === 'string' && o.zapisKalkulatora.trim().length <= 300 ? { zapisKalkulatora: o.zapisKalkulatora.trim() } : {}),
     };
   } catch {
     return null;
@@ -111,7 +117,7 @@ function opisKontekstu(k: KontekstNauczyciela): string {
           `Zadanie: ${z.zrodlo} — ${z.dokument}, zadanie ${z.numer}, poziom ${z.poziom}. Źródło: ${z.url}`,
           `Treść (dane z oryginału): ${z.tresc}`,
           z.odpowiedzi ? `Odpowiedzi: ${z.odpowiedzi.map((o, i) => `${'ABCD'[i]}. ${o}`).join('  ')}` : '',
-          `Oficjalna odpowiedź (klucz CKE): ${z.oficjalnaOdpowiedz}`,
+          `Odpowiedź w kluczu tego zadania: ${z.oficjalnaOdpowiedz}`,
           `Zasady oceniania: ${z.zasadyOceniania}`,
           `Rozwiązanie krok po kroku: ${z.rozwiazanie.join(' | ')}`,
         ]
@@ -122,7 +128,7 @@ function opisKontekstu(k: KontekstNauczyciela): string {
     k.krok.kontekst ? `Kontekst kroku: ${k.krok.kontekst}` : '',
     `Wyjaśnienie kroku w aplikacji: ${k.krok.wyjasnienie}`,
     k.odpowiedzUcznia !== null
-      ? `Odpowiedź ucznia: ${k.odpowiedzUcznia} — aplikacja oceniła ją jako ${k.czyPoprawna ? 'POPRAWNĄ' : 'BŁĘDNĄ'}.`
+      ? `Odpowiedź ucznia: ${k.odpowiedzUcznia} — ${k.czyPoprawna === null ? 'jeszcze niesprawdzona' : `aplikacja oceniła ją jako ${k.czyPoprawna ? 'POPRAWNĄ' : 'BŁĘDNĄ'}`}.`
       : 'Uczeń jeszcze nie odpowiedział na ten krok.',
     k.trudnosci.length > 0 ? `Wcześniejsze trudności w tej lekcji: ${k.trudnosci.join(' | ')}` : 'Wcześniejszych trudności brak.',
     ...(k.sesja ? opisSesji(k.sesja) : []),
@@ -139,7 +145,7 @@ function opisSesji(s: NonNullable<KontekstNauczyciela['sesja']>): string[] {
     s.proby.length ? `Próby ucznia w tym kroku: ${s.proby.join(' | ')}` : '',
     s.diagnoza ? `Aplikacja rozpoznała w ostatniej odpowiedzi: ${s.diagnoza}` : '',
     s.podpowiedziPokazane.length ? `Podpowiedzi, które uczeń już widział: ${s.podpowiedziPokazane.join(' | ')}` : 'Uczeń nie widział jeszcze podpowiedzi.',
-    `Znane błędy (identyfikatory): ${s.znaneBledy.join(', ')}`,
+    `Znane błędy: ${s.znaneBledy.map(id => `${id}${s.opisyBledow?.[id] ? ` — ${s.opisyBledow[id]}` : ''}`).join(' | ')}`,
   ].filter(Boolean);
 }
 
@@ -168,9 +174,10 @@ export function waliduj(body: unknown): ZapytanieNauczyciela | null {
       || !Object.values(x.opanowanie).every((v) => typeof v === 'number')) return null;
     if (x.przyklad !== undefined && !text(x.przyklad)) return null;
     if (x.diagnoza !== undefined && !text(x.diagnoza)) return null;
+    if (x.opisyBledow !== undefined && (!x.opisyBledow || typeof x.opisyBledow !== 'object' || Array.isArray(x.opisyBledow) || !Object.values(x.opisyBledow).every(text))) return null;
   }
   if (!b.historia.every(w => w && (w.rola === 'uczen' || w.rola === 'nauczyciel') && text(w.tekst))) return null;
-  if (b.prosba === 'pytanie' && (typeof b.pytanie !== 'string' || b.pytanie.trim() === '')) return null;
+  if ((b.prosba === 'pytanie' || b.prosba === 'zapis') && (typeof b.pytanie !== 'string' || b.pytanie.trim() === '')) return null;
   if (b.prosba === 'korepetytor') {
     const r = b.raport;
     if (!r || typeof r !== 'object' || !text(r.przedmiot) || !text(r.lekcja) || !Number.isInteger(r.samodzielnosc)) return null;
@@ -202,6 +209,12 @@ function opisRaportu(z: ZapytanieNauczyciela): string {
 
 export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyciela> {
   const client = new Anthropic({ timeout: 45_000, maxRetries: 0 });
+  // Missing accounting remains unknown: never turn it into a zero-cost answer.
+  const usageOf = (u?: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null }) =>
+    u && Number.isFinite(u.input_tokens) && Number.isFinite(u.output_tokens)
+      ? { usage: { inputTokens: u.input_tokens, outputTokens: u.output_tokens,
+          cacheReadTokens: u.cache_read_input_tokens ?? 0, cacheWriteTokens: u.cache_creation_input_tokens ?? 0 } }
+      : {};
   if (z.prosba === 'korepetytor') {
     const odp = await client.beta.messages.create({
       model: MODEL,
@@ -216,13 +229,14 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
       .map((b) => b.text)
       .join('\n')
       .trim();
-    return { tekst: tekst || '{}', model: odp.model };
+    return { tekst: tekst || '{}', model: odp.model, ...usageOf(odp.usage) };
   }
   const historia: Anthropic.Beta.BetaMessageParam[] = z.historia.slice(-MAX_HISTORIA).map((w) => ({
     role: w.rola === 'uczen' ? 'user' : 'assistant',
     content: w.tekst.slice(0, 2000),
   }));
-  const tekstProsby = z.prosba === 'pytanie' ? (z.pytanie ?? '').slice(0, 1000) : PROSBA_TEKST[z.prosba];
+  const tekstProsby = z.prosba === 'pytanie' ? (z.pytanie ?? '').slice(0, 1000) : z.prosba === 'zapis'
+    ? `ZAPIS MATEMATYCZNY — przepisz tylko tę wypowiedź bez obliczania: ${(z.pytanie ?? '').slice(0, 1000)}` : PROSBA_TEKST[z.prosba];
   const zapytanie = (zeSchematem: boolean) =>
     client.beta.messages.create({
       model: MODEL,
@@ -245,7 +259,7 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     throw err;
   });
   if (odp.stop_reason === 'refusal') {
-    return { tekst: 'Nie mogę na to odpowiedzieć. Spróbujmy wrócić do zadania.', model: odp.model };
+    return { tekst: 'Nie mogę na to odpowiedzieć. Spróbujmy wrócić do zadania.', model: odp.model, ...usageOf(odp.usage) };
   }
   const surowy = odp.content
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
@@ -254,13 +268,20 @@ export async function zapytaj(z: ZapytanieNauczyciela): Promise<OdpowiedzNauczyc
     .trim();
   const s = struktura(surowy, z.kontekst.sesja?.znaneBledy ?? []);
   if (s) {
+    // The model occasionally emits an equation here despite the schema instructions.
+    // Validate against the actual calculator grammar before offering the import button.
+    if (z.prosba === 'zapis' && s.zapisKalkulatora) {
+      const { isSupportedCalculation } = await import('../src/features/workspace/calculator');
+      if (!isSupportedCalculation(s.zapisKalkulatora)) s.zapisKalkulatora = '';
+    } else s.zapisKalkulatora = '';
     const { tekst, ...reszta } = s;
-    return { tekst, model: odp.model, struktura: reszta };
+    return { tekst, model: odp.model, struktura: reszta, ...usageOf(odp.usage) };
   }
   // Odpowiedź bez struktury (tylko w trybie zapasowym): zwykły tekst, bez metadanych.
   // Surowego JSON-a nigdy nie pokazujemy uczniowi.
   const zwykly = surowy && !surowy.startsWith('{') && !surowy.startsWith('```') ? surowy : '';
-  return { tekst: zwykly || 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model };
+  return { tekst: zwykly || 'Nie udało się przygotować odpowiedzi — spróbuj jeszcze raz.', model: odp.model, ...usageOf(odp.usage),
+    ...(zwykly ? { struktura: { rodzaj: 'inne' as const, ujawniaWynik: true, pytanieKontrolne: '', misconception: '' } } : {}) };
 }
 
 function wyslij(res: ServerResponse, kod: number, json: unknown): void {
@@ -287,7 +308,7 @@ function czytaj(req: IncomingMessage): Promise<string> {
 }
 
 /** Middleware Connect: GET …/api/nauczyciel/status, POST …/api/nauczyciel. */
-export async function middleware(req: IncomingMessage, res: ServerResponse, next: () => void): Promise<void> {
+export async function middleware(req: IncomingMessage, res: ServerResponse, next: () => void, onAuthFailure?: () => void): Promise<void> {
   const sciezka = (req.url ?? '').split('?')[0] ?? '';
   if (sciezka.endsWith('/api/nauczyciel/status') && req.method === 'GET') {
     wyslij(res, 200, status());
@@ -321,7 +342,10 @@ export async function middleware(req: IncomingMessage, res: ServerResponse, next
   try {
     wyslij(res, 200, await zapytaj(z));
   } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) wyslij(res, 502, { blad: 'Klucz API na serwerze jest nieprawidłowy.' });
+    if (err instanceof Anthropic.AuthenticationError) {
+      onAuthFailure?.();
+      wyslij(res, 502, { blad: 'Klucz API na serwerze jest nieprawidłowy.' });
+    }
     else if (err instanceof Anthropic.RateLimitError) wyslij(res, 429, { blad: 'Za dużo zapytań — spróbuj za chwilę.' });
     else if (err instanceof Anthropic.APIConnectionError) wyslij(res, 502, { blad: 'Brak połączenia z API.' });
     else if (err instanceof Anthropic.APIError) wyslij(res, 502, { blad: `Błąd API (${String(err.status)}).` });

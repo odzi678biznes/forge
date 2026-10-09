@@ -344,14 +344,14 @@ export const FIN_QUESTIONS: Question[] = [
     kind: 'typical',
     difficulty: 3,
     prompt: 'Który sposób zapłaty jest przykładem pieniądza bezgotówkowego?',
-    choices: ['przelew z rachunku bankowego', 'zapłata banknotem 100 zł', 'zapłata monetami', 'wręczenie czeku gotówkowego do wypłaty w kasie'],
+    choices: ['przelew z rachunku bankowego', 'zapłata banknotem 100 zł', 'zapłata monetami', 'zapłata banknotami wypłaconymi z bankomatu'],
     answer: 'A',
     hints: ['Czy przy tej płatności do rąk sprzedawcy trafiają banknoty lub monety?', 'Pieniądz bezgotówkowy to zapis na rachunku.', 'Która płatność zmienia tylko salda na kontach?', 'Przelew, karta, BLIK.'],
     steps: ['Przelew przesuwa pieniądz między rachunkami — to pieniądz bezgotówkowy.', 'Banknoty i monety to gotówka.'],
     errors: [
       ['B', 'Banknot to gotówka.', 'Bezgotówkowy jest przelew.'],
       ['C', 'Monety to gotówka.', 'Bezgotówkowy jest przelew.'],
-      ['D', 'Czek gotówkowy służy do wypłaty gotówki.', 'Bezgotówkowy jest przelew.'],
+      ['D', 'Bankomat wypłaca gotówkę; późniejsza płatność tymi banknotami jest gotówkowa.', 'Bezgotówkowy jest przelew między rachunkami.'],
     ],
   }),
   choice({
@@ -977,8 +977,8 @@ export const FIN_CARDS: Flashcard[] = [
   card('c-bf-h-1', 'biz-household', 'definicja', 'Poduszka finansowa?', 'Oszczędności na 3–6 miesięcy wydatków na nieprzewidziane sytuacje.'),
   card('c-bf-h-2', 'biz-household', 'pulapka', 'Czym grozi spłacanie długu nowym długiem?', 'Spiralą zadłużenia — dług i koszty rosną.'),
 
-  card('c-bf-b-1', 'biz-banking', 'definicja', 'Co obejmuje RRSO?', 'Odsetki i wszystkie opłaty (prowizje, ubezpieczenia) — całkowity koszt kredytu w skali roku.'),
-  card('c-bf-b-2', 'biz-banking', 'wzor', 'Odsetki netto z lokaty?', 'kwota · r · miesiące/12 · 0,81 (podatek 19%).'),
+  card('c-bf-b-1', 'biz-banking', 'definicja', 'Co oznacza RRSO?', 'Rzeczywista roczna stopa oprocentowania wyraża całkowity koszt kredytu jako procent całkowitej kwoty kredytu w stosunku rocznym. Uwzględnia m.in. odsetki, prowizje i wymagane usługi dodatkowe; nie oznacza każdej dobrowolnej opłaty ani samej kwoty kosztu.'),
+  card('c-bf-b-2', 'biz-banking', 'wzor', 'Odsetki netto: stała roczna stopa r, brak kapitalizacji w okresie i podatek 19%?', 'W uproszczeniu, bez zaokrągleń: kwota × r × miesiące/12 × 0,81. Stopę r zapisz jako ułamek; przy kapitalizacji w trakcie okresu potrzebny jest inny rachunek.'),
 
   card('c-bf-c-1', 'biz-compound-saving', 'wzor', 'Procent składany?', '$K_n = K_0 (1 + r)^n$'),
   card('c-bf-c-2', 'biz-compound-saving', 'metoda', 'Reguła 72?', 'Lata do podwojenia ≈ 72 : oprocentowanie (%).'),
@@ -989,6 +989,6 @@ export const FIN_CARDS: Flashcard[] = [
   card('c-bf-u-1', 'biz-insurance', 'wzor', 'Zasada proporcji?', 'odszkodowanie = szkoda · suma ubezpieczenia : wartość mienia.'),
   card('c-bf-u-2', 'biz-insurance', 'definicja', 'OC a AC?', 'OC (obowiązkowe): szkody wyrządzone innym. AC (dobrowolne): szkody we własnym aucie.'),
 
-  card('c-bf-k-1', 'biz-consumer-protection', 'definicja', 'Odstąpienie od umowy na odległość?', '14 dni bez podania przyczyny.'),
+  card('c-bf-k-1', 'biz-consumer-protection', 'definicja', 'Odstąpienie konsumenta od umowy na odległość?', 'Co do zasady 14 dni bez podania przyczyny. Istnieją ustawowe wyjątki, np. towar wykonany według indywidualnej specyfikacji konsumenta; nie jest to prawo zwrotu każdej rzeczy.'),
   card('c-bf-k-2', 'biz-consumer-protection', 'definicja', 'Gdzie po pomoc w sporze z bankiem?', 'Rzecznik Finansowy (po odrzuceniu reklamacji).'),
 ];

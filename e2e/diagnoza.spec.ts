@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { answerAnything, chooseSubject, open, otworzPlan } from './helpers';
+import { mockLearningApis } from './worked-helpers';
+
+test.beforeEach(async ({ page }) => mockLearningApis(page));
 
 /** Wejście w diagnozę na ekranie planu dnia - jego tekst mówi, czy plan jest przyjęty. */
 const diagnosisEntry = (page: Page) => page.getByRole('region', { name: 'Inne formy treningu' });

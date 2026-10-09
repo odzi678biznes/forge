@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { wantsTutor } from '@/features/tutor/client';
+import type { StudentModel } from '@/features/tutor/types';
 import { DzisView } from '@/nauka/DzisView';
+import { findResumableFeed, localFeedCheckpoints, type ResumeFeed } from '@/nauka/feed-session';
+import { flushLessonDraftWrites } from '@/nauka/lesson-draft';
 import { FeedView, type Tryb } from '@/nauka/FeedView';
 import { useNauka } from '@/nauka/useNauka';
-import { LEKCJE, lekcja as lekcjaNauki } from '@/nauka/lekcje';
+import { PRACTICE_LEKCJE as LEKCJE, practiceLesson as lekcjaNauki } from '@/nauka/practice-course';
 import { odlozonaTeraz, postep as postepNauki, powtorkaNaTeraz, wybierzTrening } from '@/nauka/silnik';
 import { spojnyPostep } from '@/nauka/spojny-postep';
 import { useSesja } from '@/nauka/sesja/useSesja';
@@ -56,6 +60,7 @@ const SUBJECT_IDS = Object.keys(CORPORA) as SubjectId[];
 
 const ALL_SKILLS = [...MATH_CORPUS.skills, ...CS_CORPUS.skills, ...BIZ_CORPUS.skills];
 const ALL_QUESTIONS = [...MATH_CORPUS.questions, ...CS_CORPUS.questions, ...BIZ_CORPUS.questions];
+const TutorView = lazy(() => import('@/features/tutor/TutorView'));
 
 export function App() {
   const forge = useForge();
@@ -74,6 +79,30 @@ export function App() {
   const portRef = useRef(forge.storage);
   portRef.current = forge.storage;
   const port = useCallback(() => portRef.current(), []);
+  const tutorLink = useRef(wantsTutor());
+  const [startTutorNow, setStartTutorNow] = useState(false);
+  const consumeTutorStart = useCallback(() => setStartTutorNow(false), []);
+  useEffect(() => {
+    if (tutorLink.current && state.screen !== 'loading') { tutorLink.current = false; goTo('tutor'); }
+  }, [state.screen, goTo]);
+  useEffect(() => {
+    if (state.screen === 'tutor' && !location.hash.startsWith('#tutor-scan=')) history.replaceState(history.state, '', location.pathname + location.search + '#tutor');
+    else if (state.screen !== 'loading' && location.hash === '#tutor' && !tutorLink.current) history.replaceState(history.state, '', location.pathname + location.search);
+  }, [state.screen]);
+  const tutorCursor = useRef('');
+  const [tutorSyncError, setTutorSyncError] = useState('');
+  const synchronizeTutor = useCallback((student: StudentModel) => {
+    const last = student.appliedSubmissionIds.at(-1) ?? '';
+    if (!last || last === tutorCursor.current) return;
+    void (async () => {
+      const storage = port(), existing = new Map((await storage.loadSkillStates()).map(s => [s.skillId, s]));
+      for (const evidence of Object.values(student.skills)) {
+        const before = existing.get(evidence.state.skillId);
+        if ((evidence.state.lastAttemptAt ?? 0) > (before?.lastAttemptAt ?? 0)) await storage.saveSkillState(evidence.state);
+      }
+      tutorCursor.current = last; setTutorSyncError(''); await forge.reloadProfile();
+    })().catch(() => setTutorSyncError('Profil tutora jest zapisany na serwerze. Nie udało się zaktualizować lokalnej mapy kursu.'));
+  }, [port, forge.reloadProfile]);
   const { stan: stanNauki, zmien: zmienNauke } = useNauka(port, state.screen !== 'loading');
   const spojny = useMemo(
     () => spojnyPostep(stanNauki, state.skillStates, forge.lessonProgress),
@@ -143,6 +172,17 @@ export function App() {
   );
 
   // --- Prototyp nauki: feed kart dla sześciu lekcji próbki -------------------
+  const [resumableFeed, setResumableFeed] = useState<ResumeFeed | null>(null);
+  useEffect(() => {
+    if (state.screen !== 'command-center' || !stanNauki) { setResumableFeed(null); return; }
+    let live = true;
+    void flushLessonDraftWrites().then(() => port().loadPreferences()).then(prefs => {
+      if (live) setResumableFeed(findResumableFeed([...prefs, ...localFeedCheckpoints()], stanNauki, LEKCJE.filter(l => l.przedmiot === state.subject)));
+    }).catch(() => {
+      if (live) setResumableFeed(findResumableFeed(localFeedCheckpoints(), stanNauki, LEKCJE.filter(l => l.przedmiot === state.subject)));
+    });
+    return () => { live = false; };
+  }, [state.screen, state.subject, stanNauki, port]);
   const [feed, setFeed] = useState<{ skillId: string; tryb: Tryb; returnToMap: boolean } | null>(null);
   const otworzFeed = (skillId: string, tryb: Tryb) => {
     const cel = tryb === 'trening' && stanNauki
@@ -195,6 +235,10 @@ export function App() {
   }
 
   // --- Ekrany skupienia: bez nawigacji wokół (sek. 7.2) -----------------------
+  if (state.screen === 'tutor') return <ErrorBoundary onHome={toCommandCenter}><Suspense fallback={<p className="boot">Wczytywanie AI Tutora…</p>}>
+    {tutorSyncError && <p role="alert">{tutorSyncError}</p>}
+    <TutorView initialStates={spojny.states} onStudent={synchronizeTutor} autoStart={startTutorNow} onConsumeStart={consumeTutorStart} onBack={toCommandCenter} />
+  </Suspense></ErrorBoundary>;
 
   if (state.screen === 'sesja' && postepV2) {
     return (
@@ -224,6 +268,7 @@ export function App() {
         <ErrorBoundary onHome={toCommandCenter}>
         <FeedView
           key={`${feed.skillId}-${feed.tryb}`}
+          storage={forge.storage}
           lekcja={l}
           tryb={feed.tryb}
           stan={stanNauki}
@@ -253,6 +298,14 @@ export function App() {
   if (state.screen === 'arena' && state.current && state.plan) {
     return (
       <Arena
+        sessionId={state.mission?.id ?? 'practice'}
+        storage={forge.storage}
+        draft={forge.draft}
+        {...(spojny.states.get(state.current.skill.id) ? { skillState: spojny.states.get(state.current.skill.id)! } : {})}
+        attempts={forge.attempts}
+        onDraft={forge.setDraft}
+        onPause={toCommandCenter}
+        saveError={forge.sessionSaveError}
         mathematical={state.subject === 'math'}
         selection={state.current}
         step={state.step}
@@ -497,12 +550,17 @@ export function App() {
     case 'command-center':
       page = (
         <DzisView
+          resume={resumableFeed && LEKCJE.some(l => l.skillId === resumableFeed.skillId && l.przedmiot === state.subject) ? { title: resumableFeed.title, onResume: () => {
+            setFeed({ skillId: resumableFeed.skillId, tryb: resumableFeed.tryb, returnToMap: false });
+            goTo('nauka');
+          } } : null}
           przedmiot={state.subject}
           przedmiotNazwa={SUBJECT_LABELS[state.subject]}
           stan={stanNauki}
           onStart={otworzFeed}
           onWiecej={() => goTo('plan')}
           onKurs={() => goTo('course')}
+          onTutor={() => { setStartTutorNow(true); goTo('tutor'); }}
           nextCourse={course.ordered.find((s) => !lekcjaNauki(s.id) && course.lessonOf.has(s.id) && !course.lessonsDone.has(s.id)) ?? null}
           sprawdzian={sprawdzian ? { nazwa: sprawdzian.topic.name, onStart: () => beginMission(sprawdzianDzialu(sprawdzian.topic, sprawdzian.skills)) } : null}
           onCourseLesson={forge.openLesson}
@@ -579,6 +637,10 @@ export function App() {
         {inStats && <nav className="tabs" aria-label="Zakładki statystyk">
           {statTabs.map((t) => <button key={t.screen} type="button" className={state.screen === t.screen ? 'tabs__item tabs__item--on' : 'tabs__item'} aria-current={state.screen === t.screen ? 'page' : undefined} onClick={() => goTo(t.screen)}>{t.label}</button>)}
         </nav>}
+        {state.mission?.finishedAt === null && state.current && <aside className="card" aria-label="Przerwana sesja">
+          <p>{state.mission.title} · pytanie {state.step} z {state.plan?.questionCount}. Twoje odpowiedzi i rachunki czekają.</p>
+          <button type="button" className="btn btn--primary" onClick={forge.resumeMission}>Wznów przerwaną sesję</button>
+        </aside>}
         {page}
       </ErrorBoundary>
     </Shell>

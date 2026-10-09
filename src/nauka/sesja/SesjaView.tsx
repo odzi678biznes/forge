@@ -145,7 +145,8 @@ export function SesjaView(props: Props) {
       },
     };
   };
-  const poOdpowiedziAI = (o: Odpowiedz, _p: Prosba) => {
+  const poOdpowiedziAI = (o: Odpowiedz, prosba: Prosba) => {
+    if (prosba === 'zapis') return;
     setAiWKroku(true);
     const tag = o.struktura?.misconception;
     if (tag) zmien(zapiszBlad(postep, tag, Date.now()));

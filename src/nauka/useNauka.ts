@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StoragePort } from '@/data/storage-port';
 import { nowyStan, type StanNauki } from './silnik';
+import { migratePracticeCourse } from './practice-course';
 
 /**
  * Stan prototypu nauki zapisywany AUTOMATYCZNIE po każdej odpowiedzi.
@@ -30,8 +31,11 @@ export function useNauka(port: () => StoragePort, gotowy: boolean) {
     let anulowane = false;
     void port()
       .loadPreferences()
-      .then((prefs) => {
-        if (!anulowane) setStan(wczytaj(prefs.find((p) => p.key === KLUCZ)?.value));
+      .then(async (prefs) => {
+        const original = wczytaj(prefs.find((p) => p.key === KLUCZ)?.value);
+        const migrated = migratePracticeCourse(original);
+        if (migrated !== original) await port().setPreference(KLUCZ, JSON.stringify(migrated)).catch(() => undefined);
+        if (!anulowane) setStan(migrated);
       })
       .catch(() => {
         if (!anulowane) setStan(nowyStan());

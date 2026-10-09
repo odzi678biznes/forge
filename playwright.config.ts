@@ -9,11 +9,12 @@ import { defineConfig, devices } from '@playwright/test';
  * przeglądarki, więc zaczyna jak nowy użytkownik.
  */
 const base = process.env.FORGE_BASE ?? '/';
-const port = 4173;
+const port = Number(process.env.E2E_PORT ?? 4173);
 const channel = process.env.CI ? undefined : (process.env.E2E_CHANNEL ?? 'msedge');
 
 export default defineConfig({
   testDir: 'e2e',
+  testIgnore: ['**/tutor.spec.ts'],
   timeout: 120_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,

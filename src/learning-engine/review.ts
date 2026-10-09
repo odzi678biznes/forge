@@ -1,4 +1,4 @@
-import { MasteryLevel, type SkillState } from '@/data/types';
+import { MasteryLevel, type SkillState } from '../data/types';
 
 /**
  * Kolejka powtorek (Blueprint sek. 8: "powtorki 1 / 7 / 21 dni").

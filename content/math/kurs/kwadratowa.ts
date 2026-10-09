@@ -662,7 +662,7 @@ const NEW_QUESTIONS: Question[] = [
       return n;
     },
     hints: ['Rozwiąż każdą nierówność osobno — co wychodzi z pierwszej?', r`$x(x - 5) \le 0 \iff x \in \langle 0, 5 \rangle$.`, r`$x^2 > 9 \iff x < -3$ lub $x > 3$.`, 'Weź część wspólną obu zbiorów.'],
-    steps: [r`Część wspólna: $x \in (3, 5\rangle$.`, r`Liczby całkowite: $4$ i $5$.`],
+    steps: [r`$x(x-5)\le0$ daje $x\in\langle0,5\rangle$, a $x^2>9$ daje $x<-3$ lub $x>3$.`, r`Część wspólna: $x \in (3, 5\rangle$. Liczby całkowite: $4$ i $5$.`],
     errors: [['6', 'Uwzględniona tylko pierwsza nierówność.', 'Oba warunki muszą zachodzić jednocześnie.']],
   }),
 
@@ -926,7 +926,7 @@ const NEW_QUESTIONS: Question[] = [
       return NaN;
     },
     hints: ['Jakie trzy warunki trzeba zapisać?', r`$\Delta > 0$, $x_1 + x_2 > 0$, $x_1 x_2 > 0$.`, r`$\Delta > 0 \iff m < -1 \vee m > 2$; suma $2m > 0$; iloczyn $m + 2 > 0$.`, r`Część wspólna: $m > 2$.`],
-    steps: [r`Warunki dają $m > 2$.`, r`Najmniejsza całkowita: $3$.`],
+    steps: [r`Dwa różne pierwiastki: $\Delta=4m^2-4m-8>0$, czyli $(m-2)(m+1)>0$: $m<-1$ lub $m>2$.`, r`Oba dodatnie: suma $2m>0$ i iloczyn $m+2>0$. Część wspólna wszystkich warunków to $m>2$.`, r`Najmniejsza całkowita: $3$.`],
     errors: [['2', r`Dla $m = 2$ jest $\Delta = 0$ — pierwiastki nie są różne.`, r`Dwa różne pierwiastki wymagają $\Delta > 0$.`]],
   }),
   numeric({
@@ -966,7 +966,7 @@ const NEW_QUESTIONS: Question[] = [
       return n;
     },
     hints: ['Jakie warunki trzeba zapisać dla dwóch różnych pierwiastków ujemnych?', r`$m \ne 0$, $\Delta > 0$, $x_1 + x_2 < 0$, $x_1x_2 > 0$.`, r`$\Delta = 4 - 4m > 0 \iff m < 1$; iloczyn $\frac{1}{m} > 0 \iff m > 0$.`, 'Czy jakaś liczba całkowita spełnia jednocześnie m > 0 i m < 1?'],
-    steps: [r`Warunki dają $0 < m < 1$.`, 'W tym przedziale nie ma liczb całkowitych — odpowiedź 0.'],
+    steps: [r`Dla $m=0$ równanie jest liniowe, więc nie ma dwóch pierwiastków. Dla $m\ne0$: $\Delta=4-4m>0$ daje $m<1$.`, r`Oba pierwiastki ujemne wymagają sumy $-2/m<0$ i iloczynu $1/m>0$, zatem $m>0$. Razem: $0<m<1$.`, 'W tym przedziale nie ma liczb całkowitych — odpowiedź 0.'],
     errors: [['10', r`Uwzględniony tylko warunek $\Delta > 0$.`, 'Przy pytaniu o znaki pierwiastków potrzebne są też warunki na sumę i iloczyn.']],
   }),
 ];
@@ -992,7 +992,7 @@ export const QUAD_CARDS: Flashcard[] = [
   card('c-quad-inq-1', 'quad-ineq', 'metoda', 'Nierówność kwadratowa w trzech krokach?', 'Miejsca zerowe → szkic paraboli (znak a) → odczyt, gdzie wykres jest nad albo pod osią.'),
   card('c-quad-inq-2', 'quad-ineq', 'pulapka', r`Dla $a < 0$ parabola jest nad osią…`, 'MIĘDZY miejscami zerowymi — odwrotnie niż dla a > 0.'),
 
-  card('c-quad-opt-1', 'quad-optim', 'metoda', 'Największa i najmniejsza wartość na przedziale?', r`Porównaj wartości na końcach i w wierzchołku — ten ostatni tylko, gdy $p$ należy do przedziału.`),
+  card('c-quad-opt-1', 'quad-optim', 'metoda', 'Największa i najmniejsza wartość funkcji kwadratowej na przedziale domkniętym i ograniczonym?', r`Porównaj wartości na obu końcach oraz w wierzchołku — ten ostatni tylko, gdy jego argument $p$ należy do przedziału.`),
   card('c-quad-opt-2', 'quad-optim', 'definicja', 'Prostokąt o danym obwodzie i największym polu?', 'Kwadrat.'),
 
   card('c-quad-vie-1', 'quad-vieta', 'wzor', 'Wzory Viète’a?', r`$x_1 + x_2 = -\frac{b}{a}$, $x_1 x_2 = \frac{c}{a}$.`),

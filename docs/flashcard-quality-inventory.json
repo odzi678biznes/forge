@@ -1,0 +1,2182 @@
+[
+  {
+    "id": "c-tc-r-1",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 988,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-r-2",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 989,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-g-1",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 991,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-g-2",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 992,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-d-1",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 994,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-d-2",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 995,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-s-1",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 997,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-tc-s-2",
+    "file": "content/cs/kurs/techniki.ts",
+    "line": 998,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-s-1",
+    "file": "content/cs/kurs/struktury.ts",
+    "line": 534,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-s-2",
+    "file": "content/cs/kurs/struktury.ts",
+    "line": 535,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-g-1",
+    "file": "content/cs/kurs/struktury.ts",
+    "line": 537,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-g-2",
+    "file": "content/cs/kurs/struktury.ts",
+    "line": 538,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-so-s-1",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 693,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-so-s-2",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 694,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-so-m-1",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 696,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-so-m-2",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 697,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-so-b-1",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 699,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-so-b-2",
+    "file": "content/cs/kurs/sortowanie.ts",
+    "line": 700,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-n-1",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 582,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-n-2",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 583,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-c-1",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 585,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-c-2",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 586,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-s-1",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 588,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ne-s-2",
+    "file": "content/cs/kurs/sieci.ts",
+    "line": 589,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-a-1",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 565,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-a-2",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 566,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-r-1",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 568,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-r-2",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 569,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-l-1",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 571,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-re-l-2",
+    "file": "content/cs/kurs/reprezentacja.ts",
+    "line": 572,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-b-1",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 772,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-b-2",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 773,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-py-c-1",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 775,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-c-2",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 776,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-l-1",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 778,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-l-2",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 779,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-py-f-1",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 781,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-py-f-2",
+    "file": "content/cs/kurs/python-podstawy.ts",
+    "line": 782,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-p-1",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1118,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-p-2",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1119,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-g-1",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1121,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-g-2",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1122,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-b-1",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1124,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-b-2",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1125,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-h-1",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1127,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-h-2",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1128,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-x-1",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1130,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-nm-x-2",
+    "file": "content/cs/kurs/liczby.ts",
+    "line": 1131,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-a-1",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 894,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-a-2",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 895,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-s-1",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 897,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-s-2",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 898,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-d-1",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 900,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-d-2",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 901,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-dt-f-1",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 903,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-dt-f-2",
+    "file": "content/cs/kurs/dane.ts",
+    "line": 904,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-s-1",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 604,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-s-2",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 605,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-a-1",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 607,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-a-2",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 608,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-j-1",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 610,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-db-j-2",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 611,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-m-1",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 613,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-db-m-2",
+    "file": "content/cs/kurs/bazy-danych.ts",
+    "line": 614,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ar-f-1",
+    "file": "content/cs/kurs/arkusz.ts",
+    "line": 414,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ar-f-2",
+    "file": "content/cs/kurs/arkusz.ts",
+    "line": 415,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ar-a-1",
+    "file": "content/cs/kurs/arkusz.ts",
+    "line": 417,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-ar-a-2",
+    "file": "content/cs/kurs/arkusz.ts",
+    "line": 418,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-for-1",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 910,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-for-2",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 911,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-for-3",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 912,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-two-1",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 914,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-lin-two-2",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 915,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-lin-par-1",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 917,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-par-2",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 918,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-lin-par-3",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 919,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-mod-1",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 921,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-mod-2",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 922,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-lin-prm-1",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 924,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-lin-prm-2",
+    "file": "content/math/kurs/liniowa.ts",
+    "line": 925,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-order-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1491,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-order-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1492,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-order-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1493,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-order-4",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1494,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pow-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1496,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pow-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1497,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pow-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1498,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pow-4",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1499,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-root-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1501,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-root-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1502,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-num-root-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1503,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-root-4",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1504,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pct-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1506,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pct-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1507,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pct-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1508,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-pct-4",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1509,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-abs-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1511,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-abs-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1512,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-abs-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1513,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-abs-4",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1514,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-apx-1",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1516,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-apx-2",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1517,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-num-apx-3",
+    "file": "content/math/kurs/liczby.ts",
+    "line": 1518,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-frm-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 981,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-frm-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 982,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-frm-3",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 983,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-dis-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 985,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-dis-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 986,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-dis-3",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 987,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-ver-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 989,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-ver-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 990,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-inq-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 992,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-inq-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 993,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-opt-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 995,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-quad-opt-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 996,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-vie-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 998,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-vie-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 999,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-vie-3",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 1000,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-prm-1",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 1002,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-quad-prm-2",
+    "file": "content/math/kurs/kwadratowa.ts",
+    "line": 1003,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-bas-1",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1087,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-bas-2",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1088,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-bas-3",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1089,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-gr-1",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1091,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-gr-2",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1092,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-gr-3",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1093,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-fn-sh-1",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1095,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-sh-2",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1096,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-tr-1",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1098,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-tr-2",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1099,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-co-1",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1101,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-fn-co-2",
+    "file": "content/math/kurs/funkcje.ts",
+    "line": 1102,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-bas-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 816,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-bas-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 817,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-seq-ar-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 819,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-ar-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 820,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-ge-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 822,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-seq-ge-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 823,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-seq-mix-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 825,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-mix-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 826,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-lim-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 828,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-lim-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 829,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-ser-1",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 831,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-seq-ser-2",
+    "file": "content/math/kurs/ciagi.ts",
+    "line": 832,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-d-1",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 616,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-d-2",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 617,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-l-1",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 619,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-geo-l-2",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 620,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-f-1",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 622,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-f-2",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 623,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-c-1",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 625,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-c-2",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 626,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-p-1",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 628,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-geo-p-2",
+    "file": "content/math/kurs/analityczna.ts",
+    "line": 629,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cnt-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 811,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cnt-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 812,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cl-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 814,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cl-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 815,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cp-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 817,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cp-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 818,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cd-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 820,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-cd-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 821,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-bn-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 823,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-bn-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 824,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-st-1",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 826,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-prb-st-2",
+    "file": "content/math/kurs/prawdopodobienstwo.ts",
+    "line": 827,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-lim-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 950,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-lim-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 951,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-bas-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 953,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-bas-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 954,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-rul-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 956,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-rul-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 957,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-tan-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 959,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-tan-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 960,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-mon-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 962,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-mon-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 963,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-ext-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 965,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-der-ext-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 966,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-opt-1",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 968,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-der-opt-2",
+    "file": "content/math/kurs/pochodne.ts",
+    "line": 969,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-ang-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 999,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-ang-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1000,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-tri-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1002,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-tri-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1003,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-sim-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1005,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-sim-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1006,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-quad-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1008,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-quad-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1009,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-circ-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1011,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-circ-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1012,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-ins-1",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1014,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-plan-ins-2",
+    "file": "content/math/kurs/planimetria.ts",
+    "line": 1015,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-pr-1",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 836,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-pr-2",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 837,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-py-1",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 839,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-py-2",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 840,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-an-1",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 842,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-an-2",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 843,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-st-so-1",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 845,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-so-2",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 846,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-adv-1",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 848,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-st-adv-2",
+    "file": "content/math/kurs/stereometria.ts",
+    "line": 849,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-lin-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1345,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-lin-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1346,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-lin-3",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1347,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-ineq-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1349,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-ineq-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1350,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-ineq-3",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1351,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-sys-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1353,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-sys-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1354,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-sys-3",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1355,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-rat-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1357,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-rat-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1358,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-rat-3",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1359,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-abs-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1361,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-abs-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1362,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-abs-3",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1363,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-par-1",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1365,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-eq-par-2",
+    "file": "content/math/kurs/rownania.ts",
+    "line": 1366,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-v-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1169,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-v-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1170,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-i-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1172,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-i-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1173,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-o-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1175,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-o-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1176,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-a-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1178,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-a-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1179,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-l-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1181,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-l-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1182,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-r-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1184,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-r-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1185,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-f-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1187,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-f-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1188,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-e-1",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1190,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-trig-e-2",
+    "file": "content/math/kurs/trygonometria.ts",
+    "line": 1191,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-alg-exp-1",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1142,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-exp-2",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1143,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-exp-3",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1144,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-exp-4",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1145,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-fac-1",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1147,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-fac-2",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1148,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-fac-3",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1149,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-rat-1",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1151,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-rat-2",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1152,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-rat-3",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1153,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-cub-1",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1155,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-cub-2",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1156,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-cub-3",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1157,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-cub-4",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1158,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-irr-1",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1160,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-alg-irr-2",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1161,
+    "decision": "fix",
+    "applied": true
+  },
+  {
+    "id": "c-alg-irr-3",
+    "file": "content/math/kurs/wyrazenia.ts",
+    "line": 1162,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-inv-1",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 513,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-inv-2",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 514,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-sh-1",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 516,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-sh-2",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 517,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-in-1",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 519,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-rat-in-2",
+    "file": "content/math/kurs/wymierne.ts",
+    "line": 520,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-fn-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 963,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-fn-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 964,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-fn-3",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 965,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-eq-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 967,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-eq-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 968,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-mod-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 970,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-exp-mod-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 971,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-b-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 973,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-b-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 974,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-p-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 976,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-log-p-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 977,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-log-p-3",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 978,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-f-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 980,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-f-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 981,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-e-1",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 983,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-log-e-2",
+    "file": "content/math/kurs/wykladnicza.ts",
+    "line": 984,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-bas-1",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 842,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-bas-2",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 843,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-div-1",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 845,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-div-2",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 846,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-div-3",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 847,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-root-1",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 849,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-root-2",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 850,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-eq-1",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 852,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-eq-2",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 853,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-inq-1",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 855,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-poly-inq-2",
+    "file": "content/math/kurs/wielomiany.ts",
+    "line": 856,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-prf-1",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 623,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-prf-2",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 624,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-gprf-1",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 626,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-gprf-2",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 627,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-vec-1",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 629,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-u-vec-2",
+    "file": "content/math/kurs/uzupelnienia.ts",
+    "line": 630,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-k-1",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 636,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-k-2",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 637,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-b-1",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 639,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-b-2",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 640,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-f-1",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 642,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-f-2",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 643,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-g-1",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 645,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bg-g-2",
+    "file": "content/biz/kurs/makro.ts",
+    "line": 646,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bk-e-1",
+    "file": "content/biz/kurs/kompetencje.ts",
+    "line": 308,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bk-e-2",
+    "file": "content/biz/kurs/kompetencje.ts",
+    "line": 309,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bk-s-1",
+    "file": "content/biz/kurs/kompetencje.ts",
+    "line": 311,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bk-s-2",
+    "file": "content/biz/kurs/kompetencje.ts",
+    "line": 312,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-m-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 974,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-m-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 975,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-h-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 977,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-h-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 978,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-b-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 980,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-bf-b-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 981,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-bf-c-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 983,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-c-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 984,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-i-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 986,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-i-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 987,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-u-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 989,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-u-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 990,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bf-k-1",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 992,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-bf-k-2",
+    "file": "content/biz/kurs/finanse.ts",
+    "line": 993,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-b-1",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 449,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-b-2",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 450,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-p-1",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 452,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-p-2",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 453,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-t-1",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 455,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bj-t-2",
+    "file": "content/biz/kurs/projekty.ts",
+    "line": 456,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-m-1",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 724,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-m-2",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 725,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-c-1",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 727,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-c-2",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 728,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-f-1",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 730,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-f-2",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 731,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-w-1",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 733,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-w-2",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 734,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-e-1",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 736,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bw-e-2",
+    "file": "content/biz/kurs/praca.ts",
+    "line": 737,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-t-1",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 701,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-t-2",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 702,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-m-1",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 704,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-m-2",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 705,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-s-1",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 707,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-s-2",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 708,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-r-1",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 710,
+    "decision": "clarify",
+    "applied": true
+  },
+  {
+    "id": "c-bp-r-2",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 711,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-f-1",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 713,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bp-f-2",
+    "file": "content/biz/kurs/przedsiebiorstwo.ts",
+    "line": 714,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-r-1",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 612,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-r-2",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 613,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-p-1",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 615,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-p-2",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 616,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-c-1",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 618,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-c-2",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 619,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-s-1",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 621,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bm-s-2",
+    "file": "content/biz/kurs/rynek.ts",
+    "line": 622,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-f-1",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 581,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-f-2",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 582,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-h-1",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 584,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-h-2",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 585,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-o-1",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 587,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-o-2",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 588,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-c-1",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 590,
+    "decision": "reviewed-no-finding"
+  },
+  {
+    "id": "c-bz-c-2",
+    "file": "content/biz/kurs/zarzadzanie.ts",
+    "line": 591,
+    "decision": "reviewed-no-finding"
+  }
+]
